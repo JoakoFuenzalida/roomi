@@ -1,0 +1,76 @@
+/* Roomi — tokens de color MD3 (light + dark) — pega en app/globals.css */
+
+:root {
+  --background: #FFFBFA;      --surface: #FFFBFA;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-low: #FFF4F1;
+  --surface-container: #FBEDE9;
+  --surface-container-high: #F7E5E0;
+  --on-surface: #0F172A;      --on-surface-variant: #6E605C;
+  --outline: #D9C9C4;         --outline-variant: #EFE1DD;
+  --primary: #FF6B6B;         --on-primary: #FFFFFF;
+  --primary-container: #FFEDEB; --on-primary-container: #5C1414;
+  --secondary: #0F172A;       --on-secondary: #FFFFFF;
+  --secondary-container: #E9ECF3; --on-secondary-container: #0F172A;
+  --error: #D92D20;           --error-container: #FEE4E2;
+  --on-error-container: #7A1710;
+  --success: #12A150;         --success-container: #DCFBE7;
+  --on-success-container: #054F31;
+  --warning: #B45309;         --warning-container: #FEF3C7;
+  --on-warning-container: #7C4A02;
+  --radius-card: 14px;        --radius-pill: 999px;
+}
+
+.dark {
+  --background: #161211;      --surface: #161211;
+  --surface-container-lowest: #100C0B;
+  --surface-container-low: #1E1917;
+  --surface-container: #241D1B;
+  --surface-container-high: #2F2724;
+  --on-surface: #F3E7E4;      --on-surface-variant: #D4C2BE;
+  --outline: #9C8B87;         --outline-variant: #40342F;
+  --primary: #FF8A8A;         --on-primary: #5E1216;
+  --primary-container: #7A2528; --on-primary-container: #FFDAD7;
+  --secondary: #C7CCDA;       --on-secondary: #1B2130;
+  --secondary-container: #2B3040; --on-secondary-container: #DEE2EE;
+  --error: #FFB4AB;           --error-container: #5C1A15;
+  --on-error-container: #FFDAD6;
+  --success: #7DDBA3;         --success-container: #0C3D25;
+  --on-success-container: #B8F0CE;
+  --warning: #FCD34D;         --warning-container: #40320F;
+  --on-warning-container: #FDE9A8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary-container: var(--on-secondary-container);
+  --color-error: var(--error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+  --color-success: var(--success);
+  --color-success-container: var(--success-container);
+  --color-on-success-container: var(--on-success-container);
+  --color-warning: var(--warning);
+  --color-warning-container: var(--warning-container);
+  --color-on-warning-container: var(--on-warning-container);
+  --radius-card: 14px;
+  --radius-pill: 999px;
+  --font-display: "Fredoka", sans-serif;
+  --font-sans: "DM Sans", sans-serif;
+}

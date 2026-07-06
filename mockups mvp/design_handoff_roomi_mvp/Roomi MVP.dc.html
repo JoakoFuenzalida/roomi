@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#efe9e6;font-family:'DM Sans',system-ui,sans-serif}
+.theme-light{
+--bg:#FFFBFA;--surface:#FFFBFA;--surface-c-lowest:#FFFFFF;--surface-c-low:#FFF4F1;--surface-c:#FBEDE9;--surface-c-high:#F7E5E0;
+--on-surface:#0F172A;--on-surface-var:#6E605C;--outline:#D9C9C4;--outline-var:#EFE1DD;
+--primary:#FF6B6B;--on-primary:#FFFFFF;--primary-container:#FFEDEB;--on-primary-container:#5C1414;
+--secondary:#0F172A;--on-secondary:#FFFFFF;--secondary-container:#E9ECF3;--on-secondary-container:#0F172A;
+--error:#D92D20;--error-container:#FEE4E2;--on-error-container:#7A1710;
+--success:#12A150;--success-container:#DCFBE7;--on-success-container:#054F31;
+--warning:#B45309;--warning-container:#FEF3C7;--on-warning-container:#7C4A02;
+}
+.theme-dark{
+--bg:#161211;--surface:#161211;--surface-c-lowest:#100C0B;--surface-c-low:#1E1917;--surface-c:#241D1B;--surface-c-high:#2F2724;
+--on-surface:#F3E7E4;--on-surface-var:#D4C2BE;--outline:#9C8B87;--outline-var:#40342F;
+--primary:#FF8A8A;--on-primary:#5E1216;--primary-container:#7A2528;--on-primary-container:#FFDAD7;
+--secondary:#C7CCDA;--on-secondary:#1B2130;--secondary-container:#2B3040;--on-secondary-container:#DEE2EE;
+--error:#FFB4AB;--error-container:#5C1A15;--on-error-container:#FFDAD6;
+--success:#7DDBA3;--success-container:#0C3D25;--on-success-container:#B8F0CE;
+--warning:#FCD34D;--warning-container:#40320F;--on-warning-container:#FDE9A8;
+}
+@keyframes rmpop{0%{transform:scale(.4);opacity:0}55%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
+@keyframes rmring{0%{transform:scale(.6);opacity:.55}100%{transform:scale(1.9);opacity:0}}
+@keyframes rmshim{100%{background-position:200% 0}}
+.dv-turn{padding:44px 48px 40px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 26px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#0F172A;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#0F172A}
+.dv-opts{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:11px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#0F172A;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-opt:target .dv-oid{background:#FF6B6B;color:#fff}
+.dv-next{margin:26px 0 0;font:12px/1.6 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+.dv-next a{color:#c0473f;text-decoration:none;font-family:ui-monospace,Menlo,monospace;font-size:11px}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t4">
+<div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Saldar deudas · prioridad: /compras/deudas (deudor + acreedor) + sheet “Marcar deuda como pagada” (modo claro)</span></div>
+<div class="dv-opts">
+
+<!-- ============ 4a  /compras/deudas ============ -->
+<div class="dv-opt" id="4a">
+<div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>/compras/deudas — <b>“Marqué pagado” (deudor)</b> vs <b>“Ya me pagó” (acreedor)</b> + estado pendiente</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="/compras/deudas" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+  <div style="flex:1;overflow-y:auto;padding:8px 20px 28px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+      <div style="width:38px;height:38px;border-radius:12px;background:var(--surface-c);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--on-surface)">‹</div>
+      <div style="font-family:'Fredoka';font-weight:600;font-size:24px;letter-spacing:-.5px">Deudas</div>
+    </div>
+    <div style="color:var(--on-surface-var);font-size:13px;margin-bottom:20px;padding-left:2px">Depa Ñuñoa · 4 pendientes</div>
+
+    <div style="display:flex;flex-direction:column;gap:11px">
+
+      <!-- ACREEDOR: Javiera te debe -->
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:14px">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div style="width:34px;height:34px;border-radius:999px;flex:none;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">JA</div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px"><b>Javiera</b> te debe</div><div style="font-size:12px;color:var(--on-surface-var);margin-top:2px">Agua · Cerveza</div></div>
+          <div style="font-family:'Fredoka';font-weight:600;font-size:17px;color:var(--success)">+$2.500</div>
+        </div>
+        <button style="width:100%;margin-top:12px;background:transparent;color:var(--on-surface);border:1.5px solid var(--outline);font-family:'DM Sans';font-weight:600;font-size:14px;padding:11px;border-radius:999px;cursor:pointer">Ya me pagó</button>
+      </div>
+
+      <!-- ACREEDOR: Cata te debe -->
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:14px">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div style="width:34px;height:34px;border-radius:999px;flex:none;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">CA</div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px"><b>Cata</b> te debe</div><div style="font-size:12px;color:var(--on-surface-var);margin-top:2px">Detergente</div></div>
+          <div style="font-family:'Fredoka';font-weight:600;font-size:17px;color:var(--success)">+$900</div>
+        </div>
+        <button style="width:100%;margin-top:12px;background:transparent;color:var(--on-surface);border:1.5px solid var(--outline);font-family:'DM Sans';font-weight:600;font-size:14px;padding:11px;border-radius:999px;cursor:pointer">Ya me pagó</button>
+      </div>
+
+      <!-- DEUDOR: le debes a Benja -->
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:14px">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div style="width:34px;height:34px;border-radius:999px;flex:none;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">BE</div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px">Le debes a <b>Benja</b></div><div style="font-size:12px;color:var(--on-surface-var);margin-top:2px">Papel higiénico · Esponjas</div></div>
+          <div style="font-family:'Fredoka';font-weight:600;font-size:17px;color:var(--error)">−$1.800</div>
+        </div>
+        <button style="width:100%;margin-top:12px;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:700;font-size:14px;padding:12px;border-radius:999px;box-shadow:0 3px 9px rgba(255,107,107,.3);cursor:pointer">Marqué pagado</button>
+      </div>
+
+      <!-- DEUDOR pendiente de confirmación -->
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--warning);border-radius:14px;padding:14px">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div style="width:34px;height:34px;border-radius:999px;flex:none;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">FE</div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px">Le pagaste a <b>Feña</b></div><div style="font-size:12px;color:var(--on-surface-var);margin-top:2px">Trapeador · hace 3 h</div></div>
+          <div style="font-family:'Fredoka';font-weight:600;font-size:17px;color:var(--on-surface-var);text-decoration:line-through">$1.200</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:12px;background:var(--warning-container);color:var(--on-warning-container);border-radius:10px;padding:9px 12px">
+          <svg viewBox="0 0 24 24" fill="none" style="width:17px;height:17px;flex:none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M12 8v4.5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="flex:1;font-size:12.5px;font-weight:600">Esperando que Feña confirme</span>
+          <span style="font-size:12px;font-weight:700;color:var(--primary);cursor:pointer">Deshacer</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- balance neto -->
+    <div style="font-family:'Fredoka';font-weight:600;font-size:15px;margin:24px 0 10px">Balance neto</div>
+    <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:4px 14px">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 0"><div style="width:26px;height:26px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">MB</div><span style="flex:1;font-size:14px;font-weight:600">Martín (tú)</span><span style="font-weight:700;font-size:14px;color:var(--success)">+$400</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--outline-var)"><div style="width:26px;height:26px;border-radius:999px;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">JA</div><span style="flex:1;font-size:14px">Javiera</span><span style="font-weight:700;font-size:14px;color:var(--error)">−$2.500</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--outline-var)"><div style="width:26px;height:26px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">BE</div><span style="flex:1;font-size:14px">Benja</span><span style="font-weight:700;font-size:14px;color:var(--success)">+$1.800</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--outline-var)"><div style="width:26px;height:26px;border-radius:999px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">CA</div><span style="flex:1;font-size:14px">Cata</span><span style="font-weight:700;font-size:14px;color:var(--error)">−$900</span></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 4b  Sheet Marcar deuda como pagada ============ -->
+<div class="dv-opt" id="4b">
+<div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a>Sheet “Marcar deuda como pagada” · <b>toca un tag de “Cómo pagaste”</b> (opcional)</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="Sheet: marcar deuda pagada" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif">
+  <div style="position:absolute;inset:0;padding:52px 20px;opacity:.5">
+    <div style="font-family:'Fredoka';font-weight:600;font-size:24px;margin-bottom:16px">Deudas</div>
+    <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;margin-bottom:11px;height:74px"></div>
+    <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;height:74px"></div>
+  </div>
+  <div style="position:absolute;inset:0;background:rgba(15,23,42,.45)"></div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:28px 28px 0 0;padding:12px 22px 30px;box-shadow:0 -10px 40px rgba(15,23,42,.25)">
+    <div style="width:40px;height:5px;border-radius:999px;background:var(--outline-var);margin:0 auto 16px"></div>
+    <div style="font-family:'Fredoka';font-weight:600;font-size:20px">Marcar deuda como pagada</div>
+    <div style="color:var(--on-surface-var);font-size:13px;margin-top:2px;margin-bottom:20px">Confirma que ya saldaste esta deuda.</div>
+
+    <!-- summary -->
+    <div style="background:var(--surface-c);border-radius:14px;padding:16px;display:flex;align-items:center;gap:13px">
+      <div style="width:44px;height:44px;border-radius:999px;flex:none;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">BE</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px">Le pagaste a <b>Benja</b></div>
+        <div style="font-size:12px;color:var(--on-surface-var);margin-top:2px">Papel higiénico · Esponjas</div>
+      </div>
+      <div style="font-family:'Fredoka';font-weight:600;font-size:22px">$1.800</div>
+    </div>
+
+    <!-- payment method tag -->
+    <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin:20px 0 4px">¿Cómo pagaste? <span style="font-weight:400">· opcional</span></div>
+    <div style="display:flex;gap:9px;margin-top:8px">
+      <sc-for list="{{ payMethods }}" as="m" hint-placeholder-count="3">
+        <sc-if value="{{ m.selected }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ m.onSelect }}" style="flex:1;border:1.5px solid var(--primary);background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:600;font-size:13.5px;padding:11px 8px;border-radius:12px;cursor:pointer">{{ m.label }}</button>
+        </sc-if>
+        <sc-if value="{{ m.notSelected }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ m.onSelect }}" style="flex:1;border:1.5px solid var(--outline);background:transparent;color:var(--on-surface);font-family:'DM Sans';font-weight:600;font-size:13.5px;padding:11px 8px;border-radius:12px;cursor:pointer">{{ m.label }}</button>
+        </sc-if>
+      </sc-for>
+    </div>
+
+    <!-- note -->
+    <div style="display:flex;align-items:center;gap:9px;margin-top:20px;background:var(--secondary-container);color:var(--on-secondary-container);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.4">
+      <span style="font-size:15px">🔔</span><span>Le vamos a avisar a <b>Benja</b> para que confirme.</span>
+    </div>
+
+    <button style="width:100%;margin-top:20px;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:700;font-size:16px;padding:16px;border-radius:999px;box-shadow:0 6px 16px rgba(255,107,107,.3);cursor:pointer">Confirmar pago</button>
+  </div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Valida y sigo: push visual “Cata registró que te pagó…” con [Sí, confirmar]/[Reportar error] · mini-sheet de detalle desde “Estado de cuentas” con “Marcar todo como pagado” · estado “error reportado” · modo oscuro de <a class="dv-oid" href="#4a">/compras/deudas</a>.</p>
+</section>
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Módulo Compras · prioridad: /compras + sheet “Marcar como comprado” (modo claro)</span></div>
+<div class="dv-opts">
+
+<!-- ============ 3a  /compras ============ -->
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>/compras — 3 secciones + FAB · <b>bottom nav ahora con 5 tabs</b> (1er item deslizado = swipe-to-delete)</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="/compras" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+  <div style="flex:1;overflow-y:auto;padding:6px 20px 110px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-family:'Fredoka';font-weight:600;font-size:26px;letter-spacing:-.5px">Compras</div>
+      <div style="width:30px;height:30px;color:var(--primary)"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+    </div>
+
+    <!-- POR COMPRAR -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-family:'Fredoka';font-weight:600;font-size:15px">Por comprar</div>
+      <span style="background:var(--primary-container);color:var(--on-primary-container);font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px">4</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <!-- swiped item revealing delete -->
+      <div style="position:relative;border-radius:14px;overflow:hidden">
+        <div style="position:absolute;inset:0;background:var(--error);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;color:#fff;font-weight:700;font-size:13px;gap:6px">
+          <svg viewBox="0 0 24 24" fill="none" style="width:19px;height:19px"><path d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Borrar
+        </div>
+        <div style="position:relative;transform:translateX(-84px);background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px">
+          <div style="width:38px;height:38px;border-radius:12px;flex:none;background:var(--primary-container);color:var(--primary);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" style="width:19px;height:19px"><path d="M6 7h12l-1 13H7L6 7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:15px">Papel higiénico</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap">
+              <span style="background:var(--primary-container);color:var(--on-primary-container);font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:999px">🔁 le toca a Benja</span>
+            </div>
+            <div style="font-size:11.5px;color:var(--on-surface-var);margin-top:5px">Agregó Javiera · hace 2 días</div>
+          </div>
+        </div>
+      </div>
+      <!-- normal items -->
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;border-radius:12px;flex:none;background:var(--surface-c);color:var(--on-surface-var);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" style="width:19px;height:19px"><path d="M6 7h12l-1 13H7L6 7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px">Lavaloza</div><div style="font-size:11.5px;color:var(--on-surface-var);margin-top:3px">Agregó tú · hace 5 horas</div></div>
+        <button style="width:38px;height:38px;flex:none;border-radius:999px;border:1.5px solid var(--primary);background:transparent;color:var(--primary);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;border-radius:12px;flex:none;background:var(--surface-c);color:var(--on-surface-var);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" style="width:19px;height:19px"><path d="M6 7h12l-1 13H7L6 7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px">Esponjas</div><div style="font-size:11.5px;color:var(--on-surface-var);margin-top:3px">Agregó Cata · ayer</div></div>
+        <button style="width:38px;height:38px;flex:none;border-radius:999px;border:1.5px solid var(--primary);background:transparent;color:var(--primary);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;border-radius:12px;flex:none;background:var(--surface-c);color:var(--on-surface-var);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" style="width:19px;height:19px"><path d="M6 7h12l-1 13H7L6 7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px">Cerveza 🍺</div><div style="font-size:11.5px;color:var(--on-surface-var);margin-top:3px">Agregó Benja · hace 3 horas</div></div>
+        <button style="width:38px;height:38px;flex:none;border-radius:999px;border:1.5px solid var(--primary);background:transparent;color:var(--primary);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+
+    <!-- ULTIMAS COMPRAS -->
+    <div style="font-family:'Fredoka';font-weight:600;font-size:15px;margin:24px 0 10px">Últimas compras</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px">Agua · 6 bidones</div><div style="font-size:11.5px;color:var(--on-surface-var);margin-top:3px">Compró Javiera · hace 2 días</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex">
+            <div style="width:22px;height:22px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1.5px solid var(--surface-c-lowest)">MB</div>
+            <div style="width:22px;height:22px;border-radius:999px;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1.5px solid var(--surface-c-lowest);margin-left:-7px">JA</div>
+            <div style="width:22px;height:22px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1.5px solid var(--surface-c-lowest);margin-left:-7px">BE</div>
+          </div>
+          <div style="font-weight:700;font-size:14px">$3.200</div>
+        </div>
+      </div>
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px">Cerveza 🍺</div><div style="font-size:11.5px;color:var(--on-surface-var);margin-top:3px">Compró Benja · hace 4 días</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex">
+            <div style="width:22px;height:22px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1.5px solid var(--surface-c-lowest)">MB</div>
+            <div style="width:22px;height:22px;border-radius:999px;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1.5px solid var(--surface-c-lowest);margin-left:-7px">JA</div>
+            <div style="width:22px;height:22px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;border:1.5px solid var(--surface-c-lowest);margin-left:-7px">+3</div>
+          </div>
+          <div style="font-weight:700;font-size:14px">$8.900</div>
+        </div>
+      </div>
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px">Detergente</div><div style="font-size:11.5px;color:var(--on-surface-var);margin-top:3px">Compró tú · hace 5 días</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex">
+            <div style="width:22px;height:22px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1.5px solid var(--surface-c-lowest)">MB</div>
+            <div style="width:22px;height:22px;border-radius:999px;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1.5px solid var(--surface-c-lowest);margin-left:-7px">JA</div>
+            <div style="width:22px;height:22px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;border:1.5px solid var(--surface-c-lowest);margin-left:-7px">+2</div>
+          </div>
+          <div style="font-weight:700;font-size:14px">$5.490</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTADO DE CUENTAS -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 10px">
+      <div style="font-family:'Fredoka';font-weight:600;font-size:15px">Estado de cuentas</div>
+      <span style="font-size:13px;font-weight:600;color:var(--primary)">Ver todo</span>
+    </div>
+    <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:4px 14px">
+      <div style="display:flex;align-items:center;gap:11px;padding:12px 0">
+        <div style="width:30px;height:30px;border-radius:999px;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">JA</div>
+        <div style="flex:1;font-size:14px"><b>Javiera</b> te debe</div>
+        <div style="font-weight:700;font-size:14px;color:var(--success)">+$2.500</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:12px 0;border-top:1px solid var(--outline-var)">
+        <div style="width:30px;height:30px;border-radius:999px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">CA</div>
+        <div style="flex:1;font-size:14px"><b>Cata</b> te debe</div>
+        <div style="font-weight:700;font-size:14px;color:var(--success)">+$900</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:12px 0;border-top:1px solid var(--outline-var)">
+        <div style="width:30px;height:30px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">BE</div>
+        <div style="flex:1;font-size:14px">Le debes a <b>Benja</b></div>
+        <div style="font-weight:700;font-size:14px;color:var(--error)">−$1.800</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- extended FAB -->
+  <div style="position:absolute;right:20px;bottom:100px;display:flex;align-items:center;gap:8px;background:var(--primary);color:var(--on-primary);padding:14px 20px;border-radius:999px;font-family:'DM Sans';font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(255,107,107,.45)"><span style="font-size:20px;line-height:1">＋</span>Agregar item</div>
+
+  <!-- 5-tab bottom nav -->
+  <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--surface-c-lowest);border-top:1px solid var(--outline-var);display:flex;padding:10px 4px 22px">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:10.5px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:22px;height:22px"><rect x="3.5" y="5" width="17" height="15" rx="3.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Hoy</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:10.5px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:22px;height:22px"><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tareas</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--primary);font-size:10.5px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:22px;height:22px"><path d="M6 7h12l-1 13H7L6 7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Compras</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:10.5px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:22px;height:22px"><path d="M4 11l8-6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hogar</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:10.5px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:22px;height:22px"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Perfil</div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 3b  Sheet Marcar como comprado ============ -->
+<div class="dv-opt" id="3b">
+<div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Sheet “Marcar como comprado” · <b>toca los chips de payers</b> (split se recalcula solo)</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="Sheet: marcar comprado" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif">
+  <!-- dimmed background -->
+  <div style="position:absolute;inset:0;padding:52px 20px;opacity:.5;filter:saturate(.9)">
+    <div style="font-family:'Fredoka';font-weight:600;font-size:26px;margin-bottom:16px">Compras</div>
+    <div style="font-family:'Fredoka';font-weight:600;font-size:15px;margin-bottom:10px">Por comprar</div>
+    <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;margin-bottom:9px;height:64px"></div>
+    <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:13px 14px;height:64px"></div>
+  </div>
+  <div style="position:absolute;inset:0;background:rgba(15,23,42,.45)"></div>
+
+  <!-- sheet -->
+  <div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:28px 28px 0 0;padding:12px 22px 30px;box-shadow:0 -10px 40px rgba(15,23,42,.25)">
+    <div style="width:40px;height:5px;border-radius:999px;background:var(--outline-var);margin:0 auto 16px"></div>
+    <div style="font-family:'Fredoka';font-weight:600;font-size:20px">Marcar como comprado</div>
+    <div style="color:var(--on-surface-var);font-size:13px;margin-top:2px;margin-bottom:20px">Registra el gasto y quién paga.</div>
+
+    <!-- item prefilled -->
+    <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin-bottom:6px">Item</div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--surface-c);border-radius:12px;padding:13px 14px;color:var(--on-surface-var)">
+      <svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px;color:var(--primary)"><path d="M6 7h12l-1 13H7L6 7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="flex:1;font-size:15px;font-weight:600;color:var(--on-surface)">Papel higiénico</span>
+      <svg viewBox="0 0 24 24" fill="none" style="width:16px;height:16px"><rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2"/></svg>
+    </div>
+
+    <!-- price -->
+    <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin:16px 0 6px">Precio (CLP)</div>
+    <div style="display:flex;align-items:center;border:1.5px solid var(--primary);border-radius:12px;padding:12px 16px;background:var(--surface-c-lowest)">
+      <span style="font-family:'Fredoka';font-weight:600;font-size:24px;color:var(--on-surface-var);margin-right:6px">$</span>
+      <span style="font-family:'Fredoka';font-weight:600;font-size:24px">{{ priceLabel }}</span>
+    </div>
+
+    <!-- payers -->
+    <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin:18px 0 10px">¿Quiénes pagan?</div>
+    <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:2px">
+      <sc-for list="{{ payersList }}" as="p" hint-placeholder-count="5">
+        <sc-if value="{{ p.selected }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ p.onToggle }}" style="flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;border:none;background:transparent;cursor:pointer">
+            <div style="position:relative;width:52px;height:52px;border-radius:999px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;box-shadow:0 3px 9px rgba(255,107,107,.35)">{{ p.ini }}<div style="position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;border-radius:999px;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border:2px solid var(--surface)">✓</div></div>
+            <span style="font-size:11px;font-weight:600;color:var(--on-surface)">{{ p.name }}</span>
+          </button>
+        </sc-if>
+        <sc-if value="{{ p.notSelected }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ p.onToggle }}" style="flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;border:none;background:transparent;cursor:pointer;opacity:.55">
+            <div style="width:52px;height:52px;border-radius:999px;background:var(--surface-c);color:var(--on-surface-var);border:1.5px dashed var(--outline);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">{{ p.ini }}</div>
+            <span style="font-size:11px;font-weight:600;color:var(--on-surface-var)">{{ p.name }}</span>
+          </button>
+        </sc-if>
+      </sc-for>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--primary);margin-top:12px">{{ splitText }}</div>
+
+    <!-- buyer -->
+    <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin:18px 0 6px">¿Quién compró?</div>
+    <div style="display:flex;align-items:center;gap:10px;border:1.5px solid var(--outline);border-radius:12px;padding:12px 14px;background:var(--surface-c-lowest)">
+      <div style="width:26px;height:26px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">MB</div>
+      <span style="flex:1;font-size:15px;font-weight:600">Tú (Martín)</span>
+      <span style="color:var(--on-surface-var);font-size:14px">▾</span>
+    </div>
+
+    <button style="width:100%;margin-top:22px;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:700;font-size:16px;padding:16px;border-radius:999px;box-shadow:0 6px 16px rgba(255,107,107,.3);cursor:pointer">Registrar compra</button>
+  </div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Valida y sigo con el resto: sheet “Agregar item” · <a class="dv-oid" href="#3a">/compras/[itemId]</a> detalle · /compras/deudas · modo oscuro de /compras y el sheet · nav de 5 tabs propagado a todas las pantallas · nota de animación “marqué comprado”.</p>
+</section>
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Modo oscuro · Landing · Auth · Nueva tarea · Tokens & notas</span></div>
+<div class="dv-opts">
+
+<!-- ============ 2a  /hoy dark ============ -->
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>/hoy — modo oscuro (toca “Listo”)</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#000;box-shadow:0 22px 55px rgba(0,0,0,.4);flex:none">
+<div class="theme-dark" data-screen-label="/hoy (dark)" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+  <div style="flex:1;overflow-y:auto;padding:6px 20px 100px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;color:var(--primary)"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+        <span style="font-family:'Fredoka';font-weight:700;font-size:20px;letter-spacing:-.4px;display:inline-flex;align-items:baseline">room<span style="position:relative;display:inline-block">i<span style="position:absolute;left:50%;top:.05em;transform:translateX(-50%);width:.24em;height:.24em;border-radius:50%;background:var(--primary)"></span></span></span>
+      </div>
+      <div style="width:40px;height:40px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">MB</div>
+    </div>
+    <div style="margin-bottom:18px">
+      <div style="font-family:'Fredoka';font-weight:600;font-size:26px;letter-spacing:-.5px">Buenas, Martín 👋</div>
+      <div style="color:var(--on-surface-var);font-size:14px;margin-top:2px">Miércoles 8 · te toca poco hoy, tranqui.</div>
+    </div>
+    <div style="background:var(--surface-c-low);border:1px solid var(--outline-var);border-radius:18px;padding:6px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px">
+        <div style="font-weight:600;font-size:16px">Tus tareas para hoy</div>
+        <span style="background:var(--primary-container);color:var(--on-primary-container);font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px">{{ pendingCount }}</span>
+      </div>
+      <sc-if value="{{ notAllDone }}" hint-placeholder-val="{{ true }}">
+      <sc-for list="{{ tasks }}" as="task" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid var(--outline-var)">
+          <div style="width:40px;height:40px;border-radius:13px;flex:none;background:var(--primary-container);color:var(--primary);display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M4 12l8-6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 10.5V18h11v-7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}"><div style="font-weight:600;font-size:15px;text-decoration:line-through;color:var(--on-surface-var)">{{ task.title }}</div></sc-if>
+            <sc-if value="{{ task.notDone }}" hint-placeholder-val="{{ true }}"><div style="font-weight:600;font-size:15px">{{ task.title }}</div></sc-if>
+            <div style="display:flex;align-items:center;gap:7px;margin-top:4px;flex-wrap:wrap">
+              <span style="background:var(--secondary-container);color:var(--on-secondary-container);font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px">{{ task.home }}</span>
+              <span style="font-size:12px;font-weight:600;color:var(--on-surface-var)">{{ task.points }} pts</span>
+              <sc-if value="{{ task.pendingOverdue }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:700;color:var(--error)">· Venció ayer</span></sc-if>
+              <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:700;color:var(--success)">· ¡Listo!</span></sc-if>
+            </div>
+          </div>
+          <sc-if value="{{ task.notDone }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ task.onDone }}" style="flex:none;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:700;font-size:14px;padding:10px 18px;border-radius:999px;box-shadow:0 3px 9px rgba(0,0,0,.35);cursor:pointer">Listo</button>
+          </sc-if>
+          <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}">
+            <div style="position:relative;flex:none;width:42px;height:42px">
+              <div style="position:absolute;inset:0;border-radius:999px;background:var(--success);animation:rmring .55s ease-out"></div>
+              <div style="position:absolute;inset:0;border-radius:999px;background:var(--success-container);color:var(--success);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;animation:rmpop .45s cubic-bezier(.2,1.3,.5,1)">✓</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+      </sc-if>
+      <sc-if value="{{ allDone }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 10px 34px;gap:12px">
+          <div style="width:88px;height:88px;border-radius:999px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;color:var(--primary);animation:rmpop .5s cubic-bezier(.2,1.3,.5,1)">
+            <div style="width:48px;height:48px"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+          </div>
+          <div style="font-family:'Fredoka';font-weight:600;font-size:22px">Todo limpio ✨</div>
+          <div style="color:var(--on-surface-var);font-size:14px;max-width:230px;line-height:1.5">No te toca nada más hoy. Anda a echarte no más 🛋️</div>
+        </div>
+      </sc-if>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--on-surface-var);margin-top:16px">Mañana te toca <b style="color:var(--on-surface)">trapear la cocina</b> 🧹</div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--surface-c-low);border-top:1px solid var(--outline-var);display:flex;padding:10px 8px 22px">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--primary);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><rect x="3.5" y="5" width="17" height="15" rx="3.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Hoy</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tareas</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M4 11l8-6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hogar</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Perfil</div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 2b  /hogar dark ============ -->
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>/hogar — modo oscuro</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#000;box-shadow:0 22px 55px rgba(0,0,0,.4);flex:none">
+<div class="theme-dark" data-screen-label="/hogar (dark)" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+  <div style="flex:1;overflow-y:auto;padding:6px 20px 100px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-family:'Fredoka';font-weight:600;font-size:26px;letter-spacing:-.5px">Hogar</div>
+      <div style="width:30px;height:30px;color:var(--primary)"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+    </div>
+    <div style="background:var(--surface-c-low);border:1px solid var(--outline-var);border-radius:16px;padding:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Fredoka';font-weight:600;font-size:19px">Depa Ñuñoa</div>
+        <span style="background:var(--primary-container);color:var(--on-primary-container);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px">Activo</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+        <div style="display:flex">
+          <div style="width:32px;height:32px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--surface-c-low)">MB</div>
+          <div style="width:32px;height:32px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--surface-c-low);margin-left:-9px">JA</div>
+          <div style="width:32px;height:32px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--surface-c-low);margin-left:-9px">BE</div>
+          <div style="width:32px;height:32px;border-radius:999px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--surface-c-low);margin-left:-9px">CA</div>
+        </div>
+        <span style="font-size:13px;color:var(--on-surface-var)">4 miembros</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:16px;background:var(--surface-c);border-radius:12px;padding:5px 5px 5px 14px">
+        <span style="flex:1;font-size:13px;font-weight:600;font-family:ui-monospace,monospace;color:var(--on-surface-var);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">roomi.cl/j/x7k2</span>
+        <button onClick="{{ copyInvite }}" style="flex:none;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:600;font-size:13px;padding:8px 15px;border-radius:999px;cursor:pointer">{{ copyLabel }}</button>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--on-surface-var);margin-bottom:8px">Orden de rotación</div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0">
+            <span style="width:20px;font-size:13px;font-weight:700;color:var(--primary)">1</span>
+            <div style="width:30px;height:30px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">MB</div>
+            <span style="flex:1;font-size:14px;font-weight:600">Martín <span style="color:var(--on-surface-var);font-weight:400">(tú)</span></span>
+            <span style="background:var(--primary);color:var(--on-primary);font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px">Le toca</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0;border-top:1px solid var(--outline-var)">
+            <span style="width:20px;font-size:13px;font-weight:700;color:var(--on-surface-var)">2</span>
+            <div style="width:30px;height:30px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">JA</div>
+            <span style="flex:1;font-size:14px;font-weight:600">Javiera</span>
+            <span style="font-size:12px;color:var(--on-surface-var)">Sigue</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0;border-top:1px solid var(--outline-var)">
+            <span style="width:20px;font-size:13px;font-weight:700;color:var(--on-surface-var)">3</span>
+            <div style="width:30px;height:30px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">BE</div>
+            <span style="flex:1;font-size:14px;font-weight:600">Benja <span style="color:var(--on-surface-var);font-weight:400">· admin</span></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0;border-top:1px solid var(--outline-var)">
+            <span style="width:20px;font-size:13px;font-weight:700;color:var(--on-surface-var)">4</span>
+            <div style="width:30px;height:30px;border-radius:999px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">CA</div>
+            <span style="flex:1;font-size:14px;font-weight:600">Cata</span>
+          </div>
+        </div>
+      </div>
+      <button style="width:100%;margin-top:14px;background:transparent;color:var(--error);border:none;font-family:'DM Sans';font-weight:600;font-size:14px;padding:10px;border-radius:999px;cursor:pointer">Salir del hogar</button>
+    </div>
+    <div style="background:var(--surface-c-low);border:1px solid var(--outline-var);border-radius:16px;padding:16px;margin-top:12px;display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;border-radius:13px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-family:'Fredoka';font-weight:600;font-size:18px">CP</div>
+      <div style="flex:1"><div style="font-weight:600;font-size:16px">Casa Playa</div><div style="font-size:13px;color:var(--on-surface-var)">3 miembros · verano no más</div></div>
+      <span style="color:var(--on-surface-var);font-size:20px">›</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
+      <button style="background:transparent;color:var(--on-surface);border:1.5px solid var(--outline);font-family:'DM Sans';font-weight:600;font-size:15px;padding:13px;border-radius:999px;cursor:pointer">Crear otro hogar</button>
+      <button style="background:transparent;color:var(--primary);border:none;font-family:'DM Sans';font-weight:600;font-size:15px;padding:8px;border-radius:999px;cursor:pointer">Unirme con código</button>
+    </div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--surface-c-low);border-top:1px solid var(--outline-var);display:flex;padding:10px 8px 22px">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><rect x="3.5" y="5" width="17" height="15" rx="3.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Hoy</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tareas</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--primary);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M4 11l8-6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hogar</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Perfil</div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 2c  Landing ============ -->
+<div class="dv-opt" id="2c">
+<div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Landing (/) — pre-login</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="Landing" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px 32px">
+    <div style="width:132px;height:132px;border-radius:40px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;color:var(--primary);box-shadow:0 12px 30px rgba(255,107,107,.22)">
+      <div style="width:74px;height:74px"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+    </div>
+    <div style="font-family:'Fredoka';font-weight:700;font-size:46px;letter-spacing:-1px;margin-top:26px;display:inline-flex;align-items:baseline">room<span style="position:relative;display:inline-block">i<span style="position:absolute;left:50%;top:.05em;transform:translateX(-50%);width:.24em;height:.24em;border-radius:50%;background:var(--primary)"></span></span></div>
+    <div style="font-family:'Fredoka';font-weight:500;font-size:21px;line-height:1.3;margin-top:14px;max-width:250px">Convivencia que se organiza sola.</div>
+    <div style="color:var(--on-surface-var);font-size:14px;line-height:1.5;margin-top:12px;max-width:250px">El aseo rota solo entre los roommates. Se acabó pelear por quién lava la loza.</div>
+  </div>
+  <div style="flex:none;padding:0 28px 40px;display:flex;flex-direction:column;gap:12px">
+    <button style="border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:700;font-size:16px;padding:16px;border-radius:999px;box-shadow:0 6px 16px rgba(255,107,107,.35);cursor:pointer">Crear cuenta</button>
+    <button style="background:transparent;color:var(--on-surface);border:1.5px solid var(--outline);font-family:'DM Sans';font-weight:600;font-size:16px;padding:15px;border-radius:999px;cursor:pointer">Entrar</button>
+    <div style="text-align:center;font-size:11px;color:var(--on-surface-var);margin-top:6px;line-height:1.5">Al continuar aceptas los términos y la<br>política de privacidad de roomi.</div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 2d  /registro ============ -->
+<div class="dv-opt" id="2d">
+<div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>/registro — error inline en el email</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="/registro" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+  <div style="flex:1;overflow-y:auto;padding:8px 28px 28px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <div style="width:38px;height:38px;border-radius:12px;background:var(--surface-c);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--on-surface)">‹</div>
+      <div style="width:30px;height:30px;color:var(--primary)"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+    </div>
+    <div style="font-family:'Fredoka';font-weight:600;font-size:28px;letter-spacing:-.6px">Crea tu cuenta</div>
+    <div style="color:var(--on-surface-var);font-size:14px;margin-top:4px;margin-bottom:26px">Te toma menos que lavar un plato.</div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin-bottom:6px">Nombre</div>
+        <div style="border:1.5px solid var(--outline);border-radius:12px;padding:14px 15px;font-size:15px;background:var(--surface-c-lowest)">Martín Barra</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin-bottom:6px">Email</div>
+        <div style="border:1.5px solid var(--error);border-radius:12px;padding:14px 15px;font-size:15px;background:var(--error-container);color:var(--on-error-container)">martin@correo</div>
+        <div style="font-size:12px;font-weight:600;color:var(--error);margin-top:6px">Ese correo no se ve válido 🤔</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin-bottom:6px">Contraseña</div>
+        <div style="border:1.5px solid var(--outline);border-radius:12px;padding:14px 15px;font-size:15px;background:var(--surface-c-lowest);color:var(--on-surface-var);letter-spacing:3px">••••••••</div>
+      </div>
+    </div>
+    <button style="width:100%;margin-top:26px;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:700;font-size:16px;padding:16px;border-radius:999px;box-shadow:0 6px 16px rgba(255,107,107,.3);cursor:pointer">Crear cuenta</button>
+    <div style="text-align:center;font-size:14px;color:var(--on-surface-var);margin-top:20px">¿Ya tienes cuenta? <b style="color:var(--primary)">Entrar</b></div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 2e  /login ============ -->
+<div class="dv-opt" id="2e">
+<div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>/login — error inline en la contraseña</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="/login" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+  <div style="flex:1;overflow-y:auto;padding:8px 28px 28px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px">
+      <div style="width:38px;height:38px;border-radius:12px;background:var(--surface-c);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--on-surface)">‹</div>
+      <div style="width:30px;height:30px;color:var(--primary)"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+    </div>
+    <div style="font-family:'Fredoka';font-weight:600;font-size:28px;letter-spacing:-.6px">Hola de nuevo 👋</div>
+    <div style="color:var(--on-surface-var);font-size:14px;margin-top:4px;margin-bottom:26px">La casa te echaba de menos.</div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin-bottom:6px">Email</div>
+        <div style="border:1.5px solid var(--outline);border-radius:12px;padding:14px 15px;font-size:15px;background:var(--surface-c-lowest)">martin@correo.cl</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin-bottom:6px">Contraseña</div>
+        <div style="border:1.5px solid var(--error);border-radius:12px;padding:14px 15px;font-size:15px;background:var(--error-container);color:var(--on-error-container);letter-spacing:3px">••••••</div>
+        <div style="font-size:12px;font-weight:600;color:var(--error);margin-top:6px">Contraseña incorrecta. Intenta de nuevo.</div>
+      </div>
+    </div>
+    <button style="width:100%;margin-top:26px;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:700;font-size:16px;padding:16px;border-radius:999px;box-shadow:0 6px 16px rgba(255,107,107,.3);cursor:pointer">Entrar</button>
+    <button style="width:100%;margin-top:8px;background:transparent;color:var(--primary);border:none;font-family:'DM Sans';font-weight:600;font-size:14px;padding:10px;border-radius:999px;cursor:pointer">¿Olvidaste tu contraseña?</button>
+    <div style="text-align:center;font-size:14px;color:var(--on-surface-var);margin-top:14px">¿No tienes cuenta? <b style="color:var(--primary)">Crear cuenta</b></div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 2f  /tareas/nueva ============ -->
+<div class="dv-opt" id="2f">
+<div class="dv-olabel"><a class="dv-oid" href="#2f">2f</a>/tareas/nueva — <b>elige frecuencia y ajusta puntos</b></div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="/tareas/nueva" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+  <div style="flex:1;overflow-y:auto;padding:8px 24px 28px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+      <div style="width:38px;height:38px;border-radius:12px;background:var(--surface-c);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--on-surface)">✕</div>
+      <div style="font-family:'Fredoka';font-weight:600;font-size:18px">Nueva tarea</div>
+      <div style="width:38px"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin-bottom:6px">Título</div>
+        <div style="border:1.5px solid var(--outline);border-radius:12px;padding:14px 15px;font-size:15px;background:var(--surface-c-lowest);color:var(--on-surface-var)">Ej: Lavar la loza</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin-bottom:10px">Frecuencia</div>
+        <div style="display:flex;flex-wrap:wrap;gap:9px">
+          <sc-for list="{{ freqs }}" as="f" hint-placeholder-count="4">
+            <sc-if value="{{ f.selected }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ f.onSelect }}" style="border:1.5px solid var(--primary);background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:600;font-size:14px;padding:10px 18px;border-radius:999px;cursor:pointer">{{ f.label }}</button>
+            </sc-if>
+            <sc-if value="{{ f.notSelected }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ f.onSelect }}" style="border:1.5px solid var(--outline);background:transparent;color:var(--on-surface);font-family:'DM Sans';font-weight:600;font-size:14px;padding:10px 18px;border-radius:999px;cursor:pointer">{{ f.label }}</button>
+            </sc-if>
+          </sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--on-surface-var);margin-bottom:4px">Puntos</div>
+        <div style="font-size:12px;color:var(--on-surface-var);margin-bottom:12px">Cuánto suma al completarla.</div>
+        <div style="display:flex;align-items:center;gap:20px">
+          <button onClick="{{ decPts }}" style="width:48px;height:48px;border-radius:15px;border:1.5px solid var(--outline);background:transparent;color:var(--on-surface);font-size:26px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+          <div style="font-family:'Fredoka';font-weight:600;font-size:34px;min-width:44px;text-align:center">{{ points }}</div>
+          <button onClick="{{ incPts }}" style="width:48px;height:48px;border-radius:15px;border:none;background:var(--primary);color:var(--on-primary);font-size:26px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(255,107,107,.3)">+</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;background:var(--secondary-container);color:var(--on-secondary-container);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.4">
+        <span style="font-size:16px">🔄</span><span>Se asigna sola por rotación. Cada roommate toma su turno.</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex:none;padding:12px 24px 34px;border-top:1px solid var(--outline-var);background:var(--bg)">
+    <button style="width:100%;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:700;font-size:16px;padding:16px;border-radius:999px;box-shadow:0 6px 16px rgba(255,107,107,.3);cursor:pointer">Crear tarea</button>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 2g  Tokens + notas ============ -->
+<div class="dv-opt" id="2g">
+<div class="dv-olabel"><a class="dv-oid" href="#2g">2g</a>CSS variables (globals.css) + notas de interacción</div>
+<div class="theme-light" style="width:600px;display:flex;flex-direction:column;gap:16px">
+
+  <div style="background:#0F172A;border-radius:16px;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1)">
+      <span style="width:11px;height:11px;border-radius:999px;background:#FF6B6B"></span>
+      <span style="color:#fff;font-family:ui-monospace,monospace;font-size:12px;font-weight:600">globals.css · Tailwind v4</span>
+    </div>
+    <pre style="margin:0;padding:16px;overflow-x:auto;color:#E7E1DE;font-family:ui-monospace,Menlo,monospace;font-size:11px;line-height:1.65">:root {
+  --background: #FFFBFA;      --surface: #FFFBFA;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-low: #FFF4F1;
+  --surface-container: #FBEDE9;
+  --surface-container-high: #F7E5E0;
+  --on-surface: #0F172A;      --on-surface-variant: #6E605C;
+  --outline: #D9C9C4;         --outline-variant: #EFE1DD;
+  --primary: #FF6B6B;         --on-primary: #FFFFFF;
+  --primary-container: #FFEDEB; --on-primary-container: #5C1414;
+  --secondary: #0F172A;       --on-secondary: #FFFFFF;
+  --secondary-container: #E9ECF3; --on-secondary-container: #0F172A;
+  --error: #D92D20;           --error-container: #FEE4E2;
+  --on-error-container: #7A1710;
+  --success: #12A150;         --success-container: #DCFBE7;
+  --on-success-container: #054F31;
+  --radius-card: 14px;        --radius-pill: 999px;
+}
+.dark {
+  --background: #161211;      --surface: #161211;
+  --surface-container-lowest: #100C0B;
+  --surface-container-low: #1E1917;
+  --surface-container: #241D1B;
+  --surface-container-high: #2F2724;
+  --on-surface: #F3E7E4;      --on-surface-variant: #D4C2BE;
+  --outline: #9C8B87;         --outline-variant: #40342F;
+  --primary: #FF8A8A;         --on-primary: #5E1216;
+  --primary-container: #7A2528; --on-primary-container: #FFDAD7;
+  --secondary: #C7CCDA;       --on-secondary: #1B2130;
+  --secondary-container: #2B3040; --on-secondary-container: #DEE2EE;
+  --error: #FFB4AB;           --error-container: #5C1A15;
+  --on-error-container: #FFDAD6;
+  --success: #7DDBA3;         --success-container: #0C3D25;
+  --on-success-container: #B8F0CE;
+}
+@theme inline {
+  --color-primary: var(--primary);
+  --color-surface: var(--surface);
+  --color-on-surface: var(--on-surface);
+  --font-display: "Fredoka", sans-serif;
+  --font-sans: "DM Sans", sans-serif;
+}</pre>
+  </div>
+
+  <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px">
+    <div style="font-family:'Fredoka';font-weight:600;font-size:16px;color:var(--on-surface)">Notas de interacción</div>
+
+    <div style="display:flex;gap:12px">
+      <div style="width:36px;height:36px;border-radius:11px;flex:none;background:var(--success-container);color:var(--success);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800">✓</div>
+      <div style="font-size:13px;line-height:1.55;color:var(--on-surface-var)"><b style="color:var(--on-surface)">Tocar “Listo”.</b> Check con pop + ring de éxito, se suma el puntaje y la tarea rota al siguiente en el orden del hogar. Actualización optimista: se marca al toque y se sincroniza en segundo plano.</div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <div style="width:36px;height:36px;border-radius:11px;flex:none;background:var(--primary-container);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px">◷</div>
+      <div style="font-size:13px;line-height:1.55;color:var(--on-surface-var)"><b style="color:var(--on-surface)">Vencida vs pendiente vs recién completada.</b> <span style="color:var(--error);font-weight:600">Vencida</span> = “Venció ayer” en color error. <span style="font-weight:600;color:var(--on-surface)">Pendiente</span> = chip del hogar + puntos, tono neutral. <span style="color:var(--success);font-weight:600">Recién completada</span> = título tachado, check verde con animación y “¡Listo!”.</div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <div style="width:36px;height:36px;border-radius:11px;flex:none;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:16px">⚡</div>
+      <div style="font-size:13px;line-height:1.55;color:var(--on-surface-var)"><b style="color:var(--on-surface)">Offline (PWA).</b> Marcar tareas funciona sin conexión: se guarda local y se sube al reconectar. Al cargar datos se muestran skeletons (nunca spinners) y un banner sutil “Sin conexión — se guardó local”.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Pídeme lo que falte: modo oscuro de <a class="dv-oid" href="#1c">/tareas</a> también · pantalla /perfil · estados de carga (skeletons) reales · o exportar todo a PDF/PPTX.</p>
+</section>
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Roomi MVP · 3 pantallas críticas + design system (modo claro)</span></div>
+<div class="dv-opts">
+
+<!-- ============ 1a  DESIGN SYSTEM ============ -->
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Paleta · tipografía · componentes</div>
+<div class="theme-light" style="width:600px;background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:20px;overflow:hidden;font-family:'DM Sans',sans-serif;color:var(--on-surface)">
+
+  <div style="display:flex;align-items:center;gap:12px;padding:22px 24px;background:var(--primary-container)">
+    <div style="width:38px;height:38px;color:var(--primary)">
+      <svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg>
+    </div>
+    <div style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:26px;color:var(--on-primary-container);letter-spacing:-.5px;display:inline-flex;align-items:baseline">room<span style="position:relative;display:inline-block">i<span style="position:absolute;left:50%;top:.05em;transform:translateX(-50%);width:.24em;height:.24em;border-radius:50%;background:var(--primary)"></span></span></div>
+    <div style="margin-left:auto;font-size:12px;font-weight:600;color:var(--on-primary-container);opacity:.7">mini design system · v1</div>
+  </div>
+
+  <div style="padding:22px 24px;display:flex;flex-direction:column;gap:24px">
+
+    <!-- palette -->
+    <div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;margin-bottom:12px">Paleta · modo claro</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        <div style="border:1px solid var(--outline-var);border-radius:12px;overflow:hidden"><div style="height:44px;background:#FF6B6B"></div><div style="padding:6px 8px;font-size:10px"><div style="font-weight:600">primary</div><div style="color:var(--on-surface-var);font-family:ui-monospace,monospace">#FF6B6B</div></div></div>
+        <div style="border:1px solid var(--outline-var);border-radius:12px;overflow:hidden"><div style="height:44px;background:#FFEDEB"></div><div style="padding:6px 8px;font-size:10px"><div style="font-weight:600">primary-container</div><div style="color:var(--on-surface-var);font-family:ui-monospace,monospace">#FFEDEB</div></div></div>
+        <div style="border:1px solid var(--outline-var);border-radius:12px;overflow:hidden"><div style="height:44px;background:#0F172A"></div><div style="padding:6px 8px;font-size:10px"><div style="font-weight:600">on-surface / ink</div><div style="color:var(--on-surface-var);font-family:ui-monospace,monospace">#0F172A</div></div></div>
+        <div style="border:1px solid var(--outline-var);border-radius:12px;overflow:hidden"><div style="height:44px;background:#FFFBFA;border-bottom:1px solid var(--outline-var)"></div><div style="padding:6px 8px;font-size:10px"><div style="font-weight:600">surface</div><div style="color:var(--on-surface-var);font-family:ui-monospace,monospace">#FFFBFA</div></div></div>
+        <div style="border:1px solid var(--outline-var);border-radius:12px;overflow:hidden"><div style="height:44px;background:#FBEDE9"></div><div style="padding:6px 8px;font-size:10px"><div style="font-weight:600">surface-container</div><div style="color:var(--on-surface-var);font-family:ui-monospace,monospace">#FBEDE9</div></div></div>
+        <div style="border:1px solid var(--outline-var);border-radius:12px;overflow:hidden"><div style="height:44px;background:#E9ECF3"></div><div style="padding:6px 8px;font-size:10px"><div style="font-weight:600">secondary-container</div><div style="color:var(--on-surface-var);font-family:ui-monospace,monospace">#E9ECF3</div></div></div>
+        <div style="border:1px solid var(--outline-var);border-radius:12px;overflow:hidden"><div style="height:44px;background:#12A150"></div><div style="padding:6px 8px;font-size:10px"><div style="font-weight:600">success</div><div style="color:var(--on-surface-var);font-family:ui-monospace,monospace">#12A150</div></div></div>
+        <div style="border:1px solid var(--outline-var);border-radius:12px;overflow:hidden"><div style="height:44px;background:#D92D20"></div><div style="padding:6px 8px;font-size:10px"><div style="font-weight:600">error</div><div style="color:var(--on-surface-var);font-family:ui-monospace,monospace">#D92D20</div></div></div>
+      </div>
+    </div>
+
+    <!-- typography -->
+    <div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;margin-bottom:12px">Tipografía</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="border:1px solid var(--outline-var);border-radius:12px;padding:14px">
+          <div style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:34px;letter-spacing:-.5px;line-height:1">Aa roomi</div>
+          <div style="margin-top:8px;font-size:12px;font-weight:600">Fredoka</div>
+          <div style="font-size:11px;color:var(--on-surface-var);line-height:1.5">display · títulos · wordmark<br>weights 500 / 600 / 700</div>
+        </div>
+        <div style="border:1px solid var(--outline-var);border-radius:12px;padding:14px">
+          <div style="font-family:'DM Sans',sans-serif;font-weight:500;font-size:30px;line-height:1">Aa 123</div>
+          <div style="margin-top:8px;font-size:12px;font-weight:600">DM Sans</div>
+          <div style="font-size:11px;color:var(--on-surface-var);line-height:1.5">UI · body · números<br>weights 400 / 500 / 600 / 700</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--on-surface-var)">
+        <div><span style="font-family:'Fredoka';font-weight:600;font-size:24px;color:var(--on-surface)">Título 24 · Fredoka 600</span></div>
+        <div><span style="font-weight:600;font-size:17px;color:var(--on-surface)">Card title 17 · DM Sans 600</span></div>
+        <div><span style="font-weight:400;font-size:15px;color:var(--on-surface)">Body 15 · DM Sans 400</span> &nbsp; <span style="font-weight:500;font-size:13px">Label 13/500</span> &nbsp; <span style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px">Micro 11</span></div>
+      </div>
+    </div>
+
+    <!-- components -->
+    <div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;margin-bottom:12px">Componentes</div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start">
+        <!-- buttons -->
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button style="border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:600;font-size:14px;padding:11px 22px;border-radius:999px;box-shadow:0 3px 10px rgba(255,107,107,.35);cursor:pointer">Primary</button>
+          <button style="background:transparent;color:var(--on-surface);border:1.5px solid var(--outline);font-family:'DM Sans';font-weight:600;font-size:14px;padding:10px 22px;border-radius:999px;cursor:pointer">Outline</button>
+          <button style="background:transparent;color:var(--primary);border:none;font-family:'DM Sans';font-weight:600;font-size:14px;padding:11px 14px;border-radius:999px;cursor:pointer">Ghost</button>
+        </div>
+        <!-- input + chip -->
+        <div style="display:flex;flex-direction:column;gap:8px;width:180px">
+          <div style="font-size:11px;font-weight:600;color:var(--on-surface-var)">Nombre</div>
+          <div style="border:1.5px solid var(--outline);border-radius:12px;padding:11px 13px;font-size:14px;color:var(--on-surface-var);background:var(--surface-c-lowest)">Martín Barra</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
+            <span style="background:var(--primary);color:var(--on-primary);font-size:11px;font-weight:600;padding:5px 11px;border-radius:999px">Semanal</span>
+            <span style="background:var(--secondary-container);color:var(--on-secondary-container);font-size:11px;font-weight:600;padding:5px 11px;border-radius:999px">Depa Ñuñoa</span>
+          </div>
+        </div>
+        <!-- avatar + fab -->
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:center">
+          <div style="display:flex">
+            <div style="width:34px;height:34px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid var(--surface-c-lowest)">MB</div>
+            <div style="width:34px;height:34px;border-radius:999px;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid var(--surface-c-lowest);margin-left:-10px">JA</div>
+            <div style="width:34px;height:34px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--surface-c-lowest);margin-left:-10px">+2</div>
+          </div>
+          <div style="width:52px;height:52px;border-radius:18px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 6px 16px rgba(255,107,107,.4)">＋</div>
+        </div>
+      </div>
+      <!-- card + skeleton -->
+      <div style="display:flex;gap:14px;margin-top:14px">
+        <div style="flex:1;background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:600;font-size:15px">Card 14px radius</div><span style="background:var(--primary-container);color:var(--on-primary-container);font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px">3 pts</span></div>
+          <div style="font-size:12px;color:var(--on-surface-var);margin-top:4px">Superficie, borde outline-variant, sombra suave.</div>
+        </div>
+        <div style="flex:1;background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:9px">
+          <div style="height:11px;width:70%;border-radius:6px;background:linear-gradient(90deg,var(--surface-c) 25%,var(--surface-c-high) 37%,var(--surface-c) 63%);background-size:200% 100%;animation:rmshim 1.3s infinite"></div>
+          <div style="height:11px;width:45%;border-radius:6px;background:linear-gradient(90deg,var(--surface-c) 25%,var(--surface-c-high) 37%,var(--surface-c) 63%);background-size:200% 100%;animation:rmshim 1.3s infinite"></div>
+          <div style="height:11px;width:88%;border-radius:6px;background:linear-gradient(90deg,var(--surface-c) 25%,var(--surface-c-high) 37%,var(--surface-c) 63%);background-size:200% 100%;animation:rmshim 1.3s infinite"></div>
+          <div style="font-size:10px;color:var(--on-surface-var);margin-top:2px">Loading = skeleton, nunca spinner</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- spacing -->
+    <div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;margin-bottom:10px">Spacing · escala 4px</div>
+      <div style="display:flex;align-items:flex-end;gap:12px">
+        <div style="text-align:center"><div style="width:4px;height:4px;background:var(--primary);border-radius:2px;margin:0 auto"></div><div style="font-size:10px;color:var(--on-surface-var);margin-top:5px">4</div></div>
+        <div style="text-align:center"><div style="width:8px;height:8px;background:var(--primary);border-radius:2px;margin:0 auto"></div><div style="font-size:10px;color:var(--on-surface-var);margin-top:5px">8</div></div>
+        <div style="text-align:center"><div style="width:12px;height:12px;background:var(--primary);border-radius:3px;margin:0 auto"></div><div style="font-size:10px;color:var(--on-surface-var);margin-top:5px">12</div></div>
+        <div style="text-align:center"><div style="width:16px;height:16px;background:var(--primary);border-radius:4px;margin:0 auto"></div><div style="font-size:10px;color:var(--on-surface-var);margin-top:5px">16</div></div>
+        <div style="text-align:center"><div style="width:24px;height:24px;background:var(--primary);border-radius:5px;margin:0 auto"></div><div style="font-size:10px;color:var(--on-surface-var);margin-top:5px">24</div></div>
+        <div style="text-align:center"><div style="width:32px;height:32px;background:var(--primary);border-radius:6px;margin:0 auto"></div><div style="font-size:10px;color:var(--on-surface-var);margin-top:5px">32</div></div>
+        <div style="margin-left:auto;font-size:11px;color:var(--on-surface-var);align-self:center">radius · cards <b style="color:var(--on-surface)">14</b> · pills <b style="color:var(--on-surface)">999</b></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ============ 1b  /hoy ============ -->
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>/hoy — vista principal · <b>toca “Listo” en las tareas</b></div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="/hoy" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+
+  <!-- status bar -->
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600">
+    <span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span>
+  </div>
+
+  <!-- content -->
+  <div style="flex:1;overflow-y:auto;padding:6px 20px 100px">
+    <!-- app header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;color:var(--primary)"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+        <span style="font-family:'Fredoka';font-weight:700;font-size:20px;letter-spacing:-.4px;display:inline-flex;align-items:baseline">room<span style="position:relative;display:inline-block">i<span style="position:absolute;left:50%;top:.05em;transform:translateX(-50%);width:.24em;height:.24em;border-radius:50%;background:var(--primary)"></span></span></span>
+      </div>
+      <div style="width:40px;height:40px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">MB</div>
+    </div>
+
+    <!-- greeting -->
+    <div style="margin-bottom:18px">
+      <div style="font-family:'Fredoka';font-weight:600;font-size:26px;letter-spacing:-.5px">Buenas, Martín 👋</div>
+      <div style="color:var(--on-surface-var);font-size:14px;margin-top:2px">Miércoles 8 · te toca poco hoy, tranqui.</div>
+    </div>
+
+    <!-- tasks card -->
+    <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:18px;padding:6px 16px;box-shadow:0 2px 10px rgba(15,23,42,.05)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px">
+        <div style="font-weight:600;font-size:16px">Tus tareas para hoy</div>
+        <span style="background:var(--primary-container);color:var(--on-primary-container);font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px">{{ pendingCount }}</span>
+      </div>
+
+      <sc-if value="{{ notAllDone }}" hint-placeholder-val="{{ true }}">
+      <sc-for list="{{ tasks }}" as="task" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid var(--outline-var)">
+          <div style="width:40px;height:40px;border-radius:13px;flex:none;background:var(--primary-container);color:var(--primary);display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M4 12l8-6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 10.5V18h11v-7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}"><div style="font-weight:600;font-size:15px;text-decoration:line-through;color:var(--on-surface-var)">{{ task.title }}</div></sc-if>
+            <sc-if value="{{ task.notDone }}" hint-placeholder-val="{{ true }}"><div style="font-weight:600;font-size:15px">{{ task.title }}</div></sc-if>
+            <div style="display:flex;align-items:center;gap:7px;margin-top:4px;flex-wrap:wrap">
+              <span style="background:var(--secondary-container);color:var(--on-secondary-container);font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px">{{ task.home }}</span>
+              <span style="font-size:12px;font-weight:600;color:var(--on-surface-var)">{{ task.points }} pts</span>
+              <sc-if value="{{ task.pendingOverdue }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:700;color:var(--error)">· Venció ayer</span></sc-if>
+              <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:700;color:var(--success)">· ¡Listo!</span></sc-if>
+            </div>
+          </div>
+          <sc-if value="{{ task.notDone }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ task.onDone }}" style="flex:none;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:700;font-size:14px;padding:10px 18px;border-radius:999px;box-shadow:0 3px 9px rgba(255,107,107,.35);cursor:pointer">Listo</button>
+          </sc-if>
+          <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}">
+            <div style="position:relative;flex:none;width:42px;height:42px">
+              <div style="position:absolute;inset:0;border-radius:999px;background:var(--success);animation:rmring .55s ease-out"></div>
+              <div style="position:absolute;inset:0;border-radius:999px;background:var(--success-container);color:var(--success);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;animation:rmpop .45s cubic-bezier(.2,1.3,.5,1)">✓</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ allDone }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 10px 34px;gap:12px">
+          <div style="width:88px;height:88px;border-radius:999px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;color:var(--primary);animation:rmpop .5s cubic-bezier(.2,1.3,.5,1)">
+            <div style="width:48px;height:48px"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+          </div>
+          <div style="font-family:'Fredoka';font-weight:600;font-size:22px">Todo limpio ✨</div>
+          <div style="color:var(--on-surface-var);font-size:14px;max-width:230px;line-height:1.5">No te toca nada más hoy. Anda a echarte no más 🛋️</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="text-align:center;font-size:12px;color:var(--on-surface-var);margin-top:16px">Mañana te toca <b style="color:var(--on-surface)">trapear la cocina</b> 🧹</div>
+  </div>
+
+  <!-- bottom nav -->
+  <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--surface-c-lowest);border-top:1px solid var(--outline-var);display:flex;padding:10px 8px 22px">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--primary);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><rect x="3.5" y="5" width="17" height="15" rx="3.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Hoy</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tareas</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M4 11l8-6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hogar</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Perfil</div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 1c  /tareas ============ -->
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>/tareas — lista del hogar activo (vista Admin, con FAB)</div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="/tareas" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+
+  <div style="flex:1;overflow-y:auto;padding:6px 20px 100px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-family:'Fredoka';font-weight:600;font-size:26px;letter-spacing:-.5px">Tareas</div>
+      <div style="width:30px;height:30px;color:var(--primary)"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+    </div>
+
+    <!-- home filter -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto">
+      <span style="flex:none;background:var(--primary);color:var(--on-primary);font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px">Depa Ñuñoa</span>
+      <span style="flex:none;background:var(--surface-c);color:var(--on-surface-var);font-size:13px;font-weight:600;padding:7px 15px;border-radius:999px">Casa Playa</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <!-- card -->
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:15px;box-shadow:0 2px 8px rgba(15,23,42,.04)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="font-weight:600;font-size:16px">Lavar la loza</div><span style="background:var(--primary-container);color:var(--on-primary-container);font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">3 pts</span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+          <div style="width:26px;height:26px;border-radius:999px;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">JA</div>
+          <span style="font-size:13px;color:var(--on-surface-var)">Le toca a <b style="color:var(--on-surface)">Javiera</b></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+          <span style="background:var(--secondary-container);color:var(--on-secondary-container);font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px">Diaria</span>
+          <span style="font-size:12px;color:var(--on-surface-var)">· Vence hoy</span>
+        </div>
+      </div>
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:15px;box-shadow:0 2px 8px rgba(15,23,42,.04)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="font-weight:600;font-size:16px">Sacar la basura</div><span style="background:var(--primary-container);color:var(--on-primary-container);font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">2 pts</span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+          <div style="width:26px;height:26px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">MB</div>
+          <span style="font-size:13px;color:var(--on-surface-var)">Le toca a <b style="color:var(--on-surface)">ti</b></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+          <span style="background:var(--secondary-container);color:var(--on-secondary-container);font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px">Cada 2 días</span>
+          <span style="font-size:12px;font-weight:700;color:var(--error)">· Venció ayer</span>
+        </div>
+      </div>
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:15px;box-shadow:0 2px 8px rgba(15,23,42,.04)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="font-weight:600;font-size:16px">Limpiar el baño</div><span style="background:var(--primary-container);color:var(--on-primary-container);font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">5 pts</span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+          <div style="width:26px;height:26px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">BE</div>
+          <span style="font-size:13px;color:var(--on-surface-var)">Le toca a <b style="color:var(--on-surface)">Benja</b></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+          <span style="background:var(--secondary-container);color:var(--on-secondary-container);font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px">Semanal</span>
+          <span style="font-size:12px;color:var(--on-surface-var)">· Vence el sábado</span>
+        </div>
+      </div>
+      <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:14px;padding:15px;box-shadow:0 2px 8px rgba(15,23,42,.04)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="font-weight:600;font-size:16px">Trapear pisos</div><span style="background:var(--primary-container);color:var(--on-primary-container);font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px">4 pts</span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+          <div style="width:26px;height:26px;border-radius:999px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">CA</div>
+          <span style="font-size:13px;color:var(--on-surface-var)">Le toca a <b style="color:var(--on-surface)">Cata</b></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:11px">
+          <span style="background:var(--secondary-container);color:var(--on-secondary-container);font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px">Quincenal</span>
+          <span style="font-size:12px;color:var(--on-surface-var)">· Vence en 6 días</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAB (admin) -->
+  <div style="position:absolute;right:20px;bottom:100px;width:56px;height:56px;border-radius:19px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 8px 20px rgba(255,107,107,.45)">＋</div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--surface-c-lowest);border-top:1px solid var(--outline-var);display:flex;padding:10px 8px 22px">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><rect x="3.5" y="5" width="17" height="15" rx="3.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Hoy</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--primary);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tareas</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M4 11l8-6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hogar</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Perfil</div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ============ 1d  /hogar ============ -->
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>/hogar — hogares, invitación y rotación · <b>toca “Copiar”</b></div>
+<div style="position:relative;width:390px;height:844px;border-radius:46px;background:#0F172A;box-shadow:0 22px 55px rgba(15,23,42,.28);flex:none">
+<div class="theme-light" data-screen-label="/hogar" style="position:absolute;inset:5px;border-radius:41px;overflow:hidden;background:var(--bg);color:var(--on-surface);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column">
+  <div style="height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 6px;font-size:14px;font-weight:600"><span>9:41</span><span style="letter-spacing:2px;font-size:12px">●●● &nbsp;⌃ &nbsp;▂▄▆</span></div>
+
+  <div style="flex:1;overflow-y:auto;padding:6px 20px 100px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-family:'Fredoka';font-weight:600;font-size:26px;letter-spacing:-.5px">Hogar</div>
+      <div style="width:30px;height:30px;color:var(--primary)"><svg viewBox="0 0 48 48" fill="none" style="width:100%;height:100%"><path d="M8 40 8 24 24 9 40 24 40 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="15" r="4.6" fill="currentColor"/><circle cx="40" cy="15" r="4.6" fill="currentColor"/><circle cx="24" cy="22.5" r="5" fill="currentColor"/><path d="M15 40v-1a9 9 0 0 1 18 0v1z" fill="currentColor"/></svg></div>
+    </div>
+
+    <!-- hogar activo -->
+    <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(15,23,42,.05)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Fredoka';font-weight:600;font-size:19px">Depa Ñuñoa</div>
+        <span style="background:var(--primary-container);color:var(--on-primary-container);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px">Activo</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+        <div style="display:flex">
+          <div style="width:32px;height:32px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--surface-c-lowest)">MB</div>
+          <div style="width:32px;height:32px;border-radius:999px;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--surface-c-lowest);margin-left:-9px">JA</div>
+          <div style="width:32px;height:32px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--surface-c-lowest);margin-left:-9px">BE</div>
+          <div style="width:32px;height:32px;border-radius:999px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--surface-c-lowest);margin-left:-9px">CA</div>
+        </div>
+        <span style="font-size:13px;color:var(--on-surface-var)">4 miembros</span>
+      </div>
+
+      <!-- invite -->
+      <div style="display:flex;align-items:center;gap:8px;margin-top:16px;background:var(--surface-c);border-radius:12px;padding:5px 5px 5px 14px">
+        <span style="flex:1;font-size:13px;font-weight:600;font-family:ui-monospace,monospace;color:var(--on-surface-var);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">roomi.cl/j/x7k2</span>
+        <button onClick="{{ copyInvite }}" style="flex:none;border:none;background:var(--primary);color:var(--on-primary);font-family:'DM Sans';font-weight:600;font-size:13px;padding:8px 15px;border-radius:999px;cursor:pointer">{{ copyLabel }}</button>
+      </div>
+
+      <!-- members rotation -->
+      <div style="margin-top:16px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--on-surface-var);margin-bottom:8px">Orden de rotación</div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0">
+            <span style="width:20px;font-size:13px;font-weight:700;color:var(--primary)">1</span>
+            <div style="width:30px;height:30px;border-radius:999px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">MB</div>
+            <span style="flex:1;font-size:14px;font-weight:600">Martín <span style="color:var(--on-surface-var);font-weight:400">(tú)</span></span>
+            <span style="background:var(--primary);color:var(--on-primary);font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px">Le toca</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0;border-top:1px solid var(--outline-var)">
+            <span style="width:20px;font-size:13px;font-weight:700;color:var(--on-surface-var)">2</span>
+            <div style="width:30px;height:30px;border-radius:999px;background:#0F172A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">JA</div>
+            <span style="flex:1;font-size:14px;font-weight:600">Javiera</span>
+            <span style="font-size:12px;color:var(--on-surface-var)">Sigue</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0;border-top:1px solid var(--outline-var)">
+            <span style="width:20px;font-size:13px;font-weight:700;color:var(--on-surface-var)">3</span>
+            <div style="width:30px;height:30px;border-radius:999px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">BE</div>
+            <span style="flex:1;font-size:14px;font-weight:600">Benja <span style="color:var(--on-surface-var);font-weight:400">· admin</span></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0;border-top:1px solid var(--outline-var)">
+            <span style="width:20px;font-size:13px;font-weight:700;color:var(--on-surface-var)">4</span>
+            <div style="width:30px;height:30px;border-radius:999px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">CA</div>
+            <span style="flex:1;font-size:14px;font-weight:600">Cata</span>
+          </div>
+        </div>
+      </div>
+
+      <button style="width:100%;margin-top:14px;background:transparent;color:var(--error);border:none;font-family:'DM Sans';font-weight:600;font-size:14px;padding:10px;border-radius:999px;cursor:pointer">Salir del hogar</button>
+    </div>
+
+    <!-- segundo hogar -->
+    <div style="background:var(--surface-c-lowest);border:1px solid var(--outline-var);border-radius:16px;padding:16px;margin-top:12px;display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;border-radius:13px;background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;font-family:'Fredoka';font-weight:600;font-size:18px">CP</div>
+      <div style="flex:1"><div style="font-weight:600;font-size:16px">Casa Playa</div><div style="font-size:13px;color:var(--on-surface-var)">3 miembros · verano no más</div></div>
+      <span style="color:var(--on-surface-var);font-size:20px">›</span>
+    </div>
+
+    <!-- acciones -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
+      <button style="background:transparent;color:var(--on-surface);border:1.5px solid var(--outline);font-family:'DM Sans';font-weight:600;font-size:15px;padding:13px;border-radius:999px;cursor:pointer">Crear otro hogar</button>
+      <button style="background:transparent;color:var(--primary);border:none;font-family:'DM Sans';font-weight:600;font-size:15px;padding:8px;border-radius:999px;cursor:pointer">Unirme con código</button>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--surface-c-lowest);border-top:1px solid var(--outline-var);display:flex;padding:10px 8px 22px">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><rect x="3.5" y="5" width="17" height="15" rx="3.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Hoy</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tareas</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--primary);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><path d="M4 11l8-6 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hogar</div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--on-surface-var);font-size:11px;font-weight:600"><svg viewBox="0 0 24 24" fill="none" style="width:23px;height:23px"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="2"/><path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Perfil</div>
+  </div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Aprueba o pide cambios y sigo con: modo oscuro de <a class="dv-oid" href="#1b">1b</a> y <a class="dv-oid" href="#1d">1d</a> · Landing + /login + /registro · /tareas/nueva · bloque de CSS variables para globals.css · notas de interacción completas.</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { done:{}, copied:false, freq:'WEEKLY', points:3,
+    price:6000, payers:{ mb:true, ja:true, be:true, ca:true, fe:true }, payMethod:null };
+  renderVals(){
+    const done = this.state.done;
+    const fmt = (n) => n.toLocaleString('es-CL');
+    const members = [
+      { id:'mb', name:'Martín', ini:'MB' },
+      { id:'ja', name:'Javiera', ini:'JA' },
+      { id:'be', name:'Benja', ini:'BE' },
+      { id:'ca', name:'Cata', ini:'CA' },
+      { id:'fe', name:'Feña', ini:'FE' },
+    ];
+    const payers = this.state.payers;
+    const togglePayer = (id) => this.setState(s => ({ payers: { ...s.payers, [id]: !s.payers[id] } }));
+    const payersList = members.map(m => ({ ...m, selected: !!payers[m.id], notSelected: !payers[m.id], onToggle: () => togglePayer(m.id) }));
+    const selectedCount = payersList.filter(p => p.selected).length;
+    const perPerson = selectedCount > 0 ? Math.round(this.state.price / selectedCount) : 0;
+    const splitText = selectedCount > 0
+      ? ('Se divide en $' + fmt(perPerson) + ' por persona entre ' + selectedCount)
+      : 'Elige al menos a una persona';
+    const priceLabel = fmt(this.state.price);
+    const raw = [
+      {id:'t1',title:'Lavar la loza',home:'Depa Ñuñoa',points:3,overdue:false},
+      {id:'t2',title:'Sacar la basura',home:'Depa Ñuñoa',points:2,overdue:true},
+      {id:'t3',title:'Limpiar el baño',home:'Depa Ñuñoa',points:5,overdue:false},
+    ];
+    const complete = (id) => this.setState(s => ({ done: { ...s.done, [id]: true } }));
+    const tasks = raw.map(t => {
+      const d = !!done[t.id];
+      return { ...t, done:d, notDone:!d,
+        pendingOverdue: t.overdue && !d,
+        onDone: () => complete(t.id) };
+    });
+    const freqs = [['DAILY','Diaria'],['WEEKLY','Semanal'],['BIWEEKLY','Quincenal'],['MONTHLY','Mensual']]
+      .map(([value,label]) => ({ value, label, selected: this.state.freq === value, notSelected: this.state.freq !== value, onSelect: () => this.setState({ freq: value }) }));
+    const clampPts = (n) => Math.max(1, Math.min(10, n));
+    const pending = tasks.filter(t => !t.done).length;
+    const allDone = pending === 0;
+    return {
+      tasks, allDone, notAllDone: !allDone,
+      pendingCount: allDone ? '0' : String(pending),
+      freqs,
+      points: this.state.points,
+      incPts: () => this.setState(s => ({ points: clampPts(s.points + 1) })),
+      decPts: () => this.setState(s => ({ points: clampPts(s.points - 1) })),
+      payersList, splitText, priceLabel,
+      payMethods: ['Transferencia','Efectivo','Otro'].map(m => ({
+        label: m, selected: this.state.payMethod === m, notSelected: this.state.payMethod !== m,
+        onSelect: () => this.setState(s => ({ payMethod: s.payMethod === m ? null : m }))
+      })),
+      copyLabel: this.state.copied ? '¡Copiado!' : 'Copiar',
+      copyInvite: () => {
+        try { navigator.clipboard.writeText('roomi.cl/j/x7k2'); } catch(e){}
+        this.setState({ copied:true });
+        setTimeout(() => this.setState({ copied:false }), 1600);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
