@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============ USUARIOS Y HOGARES ============
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  hashedPassword String?
+  name           String
+  image          String?
+  createdAt      DateTime @default(now())
+
+  memberships    Membership[]
+  taskExecutions TaskExecution[]
+  pushSubs       PushSubscription[]
+}
+
+model Household {
+  id         String   @id @default(cuid())
+  name       String
+  inviteCode String   @unique @default(cuid())
+  createdAt  DateTime @default(now())
+
+  members Membership[]
+  tasks   Task[]
+}
+
+enum HouseholdRole {
+  ADMIN
+  MEMBER
+}
+
+model Membership {
+  id              String        @id @default(cuid())
+  userId          String
+  householdId     String
+  role            HouseholdRole @default(MEMBER)
+  rotationOrder   Int
+  onVacationUntil DateTime?
+  joinedAt        DateTime      @default(now())
+  leftAt          DateTime?
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household     Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  assignedTasks Task[]    @relation("nextAssignee")
+
+  @@unique([userId, householdId])
+  @@index([householdId, leftAt, rotationOrder])
+}
+
+// ============ TAREAS + ROTACIÓN ============
+
+enum TaskFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+model Task {
+  id          String        @id @default(cuid())
+  householdId String
+  title       String
+  frequency   TaskFrequency
+  points      Int           @default(1)
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+
+  nextAssigneeMembershipId String?
+  nextDueDate              DateTime
+  cycleNumber              Int      @default(0)
+
+  household    Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  nextAssignee Membership?     @relation("nextAssignee", fields: [nextAssigneeMembershipId], references: [id])
+  executions   TaskExecution[]
+
+  @@index([householdId, active, nextDueDate])
+}
+
+model TaskExecution {
+  id            String   @id @default(cuid())
+  taskId        String
+  completedById String
+  cycleNumber   Int
+  wasAssigned   Boolean
+  photoUrl      String?
+  pointsEarned  Int
+  completedAt   DateTime @default(now())
+
+  task        Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  completedBy User @relation(fields: [completedById], references: [id])
+
+  @@unique([taskId, cycleNumber])
+  @@index([completedById, completedAt])
+}
+
+// ============ PUSH ============
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
