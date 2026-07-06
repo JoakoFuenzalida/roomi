@@ -22,7 +22,7 @@ export const inviteCodeSchema = z.object({
 export const taskSchema = z.object({
   title: z.string().trim().min(2, "Título muy corto").max(50, "Máx 50 caracteres"),
   frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"], {
-    errorMap: () => ({ message: "Selecciona una frecuencia válida" })
+    message: "Selecciona una frecuencia válida"
   }),
   points: z.coerce.number().int().min(1, "Mínimo 1").max(100, "Máx 100").default(1),
 });

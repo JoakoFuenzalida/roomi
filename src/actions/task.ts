@@ -23,7 +23,7 @@ export async function createTask(householdId: string, prevState: any, formData: 
   });
 
   if (!parse.success) {
-    return { error: parse.error.errors[0].message };
+    return { error: parse.error.issues[0].message };
   }
 
   const { title, frequency, points } = parse.data;
