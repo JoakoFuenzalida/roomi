@@ -73,8 +73,8 @@ model Task {
   active      Boolean       @default(true)
   createdAt   DateTime      @default(now())
 
-  dayOfWeek  Int? // 0-6 (0=domingo), para WEEKLY / BIWEEKLY
-  dayOfMonth Int? // 1-31, para MONTHLY
+  daysOfWeek  Int[] @default([]) // 0-6 (0=domingo), para WEEKLY / BIWEEKLY. Vacío = 1 vez por período.
+  daysOfMonth Int[] @default([]) // 1-31, para MONTHLY. Vacío = 1 vez por período.
 
   nextAssigneeMembershipId String?
   nextDueDate              DateTime

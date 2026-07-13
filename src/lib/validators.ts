@@ -35,17 +35,17 @@ export const taskSchema = z
       .min(1, "Mínimo 1")
       .max(100, "Máx 100")
       .default(1),
-    dayOfWeek: z.coerce.number().int().min(0).max(6).nullable().optional(),
-    dayOfMonth: z.coerce.number().int().min(1).max(31).nullable().optional(),
+    daysOfWeek: z.array(z.coerce.number().int().min(0).max(6)).default([]),
+    daysOfMonth: z.array(z.coerce.number().int().min(1).max(31)).default([]),
   })
   .refine(
     (v) =>
       v.frequency === "DAILY" ||
       v.frequency === "MONTHLY" ||
-      v.dayOfWeek != null,
-    { message: "Elige un día de la semana", path: ["dayOfWeek"] },
+      v.daysOfWeek.length > 0,
+    { message: "Elige al menos un día de la semana", path: ["daysOfWeek"] },
   )
   .refine(
-    (v) => v.frequency !== "MONTHLY" || v.dayOfMonth != null,
-    { message: "Elige un día del mes", path: ["dayOfMonth"] },
+    (v) => v.frequency !== "MONTHLY" || v.daysOfMonth.length > 0,
+    { message: "Elige al menos un día del mes", path: ["daysOfMonth"] },
   );

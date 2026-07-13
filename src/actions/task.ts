@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { requireUser, assertMemberOf } from "@/lib/session";
 import { taskSchema } from "@/lib/validators";
-import { addInterval, computeInitialDueDate } from "@/lib/rotation";
+import { computeInitialDueDate, computeNextDueDate } from "@/lib/rotation";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { TaskFrequency } from "@/generated/prisma/client";
@@ -16,22 +16,29 @@ export async function createTask(
   const user = await requireUser();
   await assertMemberOf(user.id, householdId);
 
-  const rawDow = formData.get("dayOfWeek");
-  const rawDom = formData.get("dayOfMonth");
+  const daysOfWeekRaw = formData
+    .getAll("daysOfWeek")
+    .map((v) => Number(v))
+    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+
+  const daysOfMonthRaw = formData
+    .getAll("daysOfMonth")
+    .map((v) => Number(v))
+    .filter((n) => Number.isInteger(n) && n >= 1 && n <= 31);
 
   const parse = taskSchema.safeParse({
     title: formData.get("title"),
     frequency: formData.get("frequency"),
     points: formData.get("points"),
-    dayOfWeek: rawDow === "" || rawDow === null ? null : rawDow,
-    dayOfMonth: rawDom === "" || rawDom === null ? null : rawDom,
+    daysOfWeek: daysOfWeekRaw,
+    daysOfMonth: daysOfMonthRaw,
   });
 
   if (!parse.success) {
     return { error: parse.error.issues[0].message };
   }
 
-  const { title, frequency, points, dayOfWeek, dayOfMonth } = parse.data;
+  const { title, frequency, points, daysOfWeek, daysOfMonth } = parse.data;
 
   const activeMemberships = await db.membership.findMany({
     where: {
@@ -48,8 +55,8 @@ export async function createTask(
 
   const nextDueDate = computeInitialDueDate(
     frequency as TaskFrequency,
-    dayOfWeek ?? null,
-    dayOfMonth ?? null,
+    daysOfWeek,
+    daysOfMonth,
   );
 
   await db.task.create({
@@ -58,8 +65,8 @@ export async function createTask(
       title,
       frequency: frequency as TaskFrequency,
       points,
-      dayOfWeek: dayOfWeek ?? null,
-      dayOfMonth: dayOfMonth ?? null,
+      daysOfWeek,
+      daysOfMonth,
       active: true,
       nextAssigneeMembershipId: activeMemberships[0].id,
       nextDueDate,
@@ -102,6 +109,8 @@ export async function completarTarea(taskId: string) {
       points: true,
       frequency: true,
       nextDueDate: true,
+      daysOfWeek: true,
+      daysOfMonth: true,
     },
   });
 
@@ -146,7 +155,12 @@ export async function completarTarea(taskId: string) {
       where: { id: taskId },
       data: {
         nextAssigneeMembershipId: nextAssigneeId,
-        nextDueDate: addInterval(task.nextDueDate, task.frequency),
+        nextDueDate: computeNextDueDate(
+          task.nextDueDate,
+          task.frequency,
+          task.daysOfWeek,
+          task.daysOfMonth,
+        ),
         cycleNumber: { increment: 1 },
       },
     });

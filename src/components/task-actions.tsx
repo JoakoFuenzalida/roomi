@@ -24,6 +24,10 @@ const WEEKDAYS: { value: number; short: string; long: string }[] = [
   { value: 0, short: "D", long: "Domingo" },
 ];
 
+function toggle(arr: number[], v: number): number[] {
+  return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
+}
+
 export function CreateTaskForm({ householdId }: { householdId: string }) {
   const [state, formAction, isPending] = useActionState(
     createTask.bind(null, householdId),
@@ -34,8 +38,8 @@ export function CreateTaskForm({ householdId }: { householdId: string }) {
   );
   const [points, setPoints] = useState(1);
   const today = new Date();
-  const [dayOfWeek, setDayOfWeek] = useState<number>(today.getDay());
-  const [dayOfMonth, setDayOfMonth] = useState<number>(today.getDate());
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([today.getDay()]);
+  const [daysOfMonth, setDaysOfMonth] = useState<number[]>([today.getDate()]);
 
   const needsWeek = freq === "WEEKLY" || freq === "BIWEEKLY";
   const needsMonth = freq === "MONTHLY";
@@ -44,16 +48,14 @@ export function CreateTaskForm({ householdId }: { householdId: string }) {
     <form action={formAction} className="flex flex-col flex-1">
       <input type="hidden" name="frequency" value={freq} />
       <input type="hidden" name="points" value={points} />
-      <input
-        type="hidden"
-        name="dayOfWeek"
-        value={needsWeek ? dayOfWeek : ""}
-      />
-      <input
-        type="hidden"
-        name="dayOfMonth"
-        value={needsMonth ? dayOfMonth : ""}
-      />
+      {needsWeek &&
+        daysOfWeek.map((d) => (
+          <input key={d} type="hidden" name="daysOfWeek" value={d} />
+        ))}
+      {needsMonth &&
+        daysOfMonth.map((d) => (
+          <input key={d} type="hidden" name="daysOfMonth" value={d} />
+        ))}
 
       <div className="space-y-6">
         <div className="space-y-2">
@@ -98,25 +100,32 @@ export function CreateTaskForm({ householdId }: { householdId: string }) {
         {needsWeek && (
           <div className="space-y-2">
             <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-              ¿Qué día de la semana?
+              ¿Qué día{daysOfWeek.length > 1 ? "s" : ""} de la semana?
+            </p>
+            <p className="text-[11px] text-on-surface-variant">
+              Toca varios si es más de una vez por semana.
             </p>
             <div className="grid grid-cols-7 gap-1.5">
-              {WEEKDAYS.map((d) => (
-                <button
-                  key={d.value}
-                  type="button"
-                  onClick={() => setDayOfWeek(d.value)}
-                  aria-label={d.long}
-                  className={cn(
-                    "aspect-square rounded-full text-sm font-semibold border transition-colors",
-                    dayOfWeek === d.value
-                      ? "bg-primary text-on-primary border-primary"
-                      : "bg-surface-container border-outline-variant text-on-surface",
-                  )}
-                >
-                  {d.short}
-                </button>
-              ))}
+              {WEEKDAYS.map((d) => {
+                const selected = daysOfWeek.includes(d.value);
+                return (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => setDaysOfWeek((s) => toggle(s, d.value))}
+                    aria-label={d.long}
+                    aria-pressed={selected}
+                    className={cn(
+                      "aspect-square rounded-full text-sm font-semibold border transition-colors",
+                      selected
+                        ? "bg-primary text-on-primary border-primary"
+                        : "bg-surface-container border-outline-variant text-on-surface",
+                    )}
+                  >
+                    {d.short}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -124,11 +133,14 @@ export function CreateTaskForm({ householdId }: { householdId: string }) {
         {needsMonth && (
           <div className="space-y-2">
             <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-              ¿Qué día del mes?
+              ¿Qué día{daysOfMonth.length > 1 ? "s" : ""} del mes?
+            </p>
+            <p className="text-[11px] text-on-surface-variant">
+              Toca varios si es más de una vez por mes.
             </p>
             <MonthCalendarPicker
-              value={dayOfMonth}
-              onChange={setDayOfMonth}
+              value={daysOfMonth}
+              onToggle={(day) => setDaysOfMonth((s) => toggle(s, day))}
             />
           </div>
         )}
@@ -187,10 +199,10 @@ export function CreateTaskForm({ householdId }: { householdId: string }) {
 
 function MonthCalendarPicker({
   value,
-  onChange,
+  onToggle,
 }: {
-  value: number;
-  onChange: (day: number) => void;
+  value: number[];
+  onToggle: (day: number) => void;
 }) {
   const today = new Date();
   const year = today.getFullYear();
@@ -229,13 +241,14 @@ function MonthCalendarPicker({
       <div className="grid grid-cols-7 gap-1">
         {cells.map((day, i) => {
           if (day == null) return <div key={i} className="aspect-square" />;
-          const selected = day === value;
+          const selected = value.includes(day);
           const isToday = day === todayDate;
           return (
             <button
               key={i}
               type="button"
-              onClick={() => onChange(day)}
+              onClick={() => onToggle(day)}
+              aria-pressed={selected}
               className={cn(
                 "aspect-square rounded-full text-sm font-medium transition-colors flex items-center justify-center",
                 selected
