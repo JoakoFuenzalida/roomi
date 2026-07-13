@@ -3,30 +3,35 @@
 import { db } from "@/lib/db";
 import { requireUser, assertMemberOf } from "@/lib/session";
 import { taskSchema } from "@/lib/validators";
-import { addInterval } from "@/lib/rotation";
+import { addInterval, computeInitialDueDate } from "@/lib/rotation";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { TaskFrequency } from "@/generated/prisma/client";
 
-export async function createTask(householdId: string, prevState: any, formData: FormData) {
+export async function createTask(
+  householdId: string,
+  _prev: unknown,
+  formData: FormData,
+) {
   const user = await requireUser();
-  const membership = await assertMemberOf(user.id, householdId);
+  await assertMemberOf(user.id, householdId);
 
-  if (membership.role !== "ADMIN") {
-    return { error: "Solo los administradores pueden crear tareas" };
-  }
+  const rawDow = formData.get("dayOfWeek");
+  const rawDom = formData.get("dayOfMonth");
 
   const parse = taskSchema.safeParse({
     title: formData.get("title"),
     frequency: formData.get("frequency"),
     points: formData.get("points"),
+    dayOfWeek: rawDow === "" || rawDow === null ? null : rawDow,
+    dayOfMonth: rawDom === "" || rawDom === null ? null : rawDom,
   });
 
   if (!parse.success) {
     return { error: parse.error.issues[0].message };
   }
 
-  const { title, frequency, points } = parse.data;
+  const { title, frequency, points, dayOfWeek, dayOfMonth } = parse.data;
 
   const activeMemberships = await db.membership.findMany({
     where: {
@@ -41,15 +46,23 @@ export async function createTask(householdId: string, prevState: any, formData: 
     return { error: "No hay miembros activos en el hogar" };
   }
 
+  const nextDueDate = computeInitialDueDate(
+    frequency as TaskFrequency,
+    dayOfWeek ?? null,
+    dayOfMonth ?? null,
+  );
+
   await db.task.create({
     data: {
       householdId,
       title,
       frequency: frequency as TaskFrequency,
       points,
+      dayOfWeek: dayOfWeek ?? null,
+      dayOfMonth: dayOfMonth ?? null,
       active: true,
       nextAssigneeMembershipId: activeMemberships[0].id,
-      nextDueDate: new Date(),
+      nextDueDate,
       cycleNumber: 0,
     },
   });
@@ -96,11 +109,9 @@ export async function completarTarea(taskId: string) {
     throw new Error("Tarea no encontrada o inactiva");
   }
 
-  // Ensure user is member of the household
   const membership = await assertMemberOf(user.id, task.householdId);
 
   await db.$transaction(async (tx) => {
-    // 1. Insert Execution
     await tx.taskExecution.create({
       data: {
         taskId,
@@ -111,7 +122,6 @@ export async function completarTarea(taskId: string) {
       },
     });
 
-    // 2. Calculate next assignee
     const activeMembers = await tx.membership.findMany({
       where: {
         householdId: task.householdId,
@@ -122,14 +132,16 @@ export async function completarTarea(taskId: string) {
     });
 
     let nextAssigneeId = task.nextAssigneeMembershipId;
-    
+
     if (activeMembers.length > 0) {
-      const currentIndex = activeMembers.findIndex((m) => m.id === task.nextAssigneeMembershipId);
-      const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % activeMembers.length;
+      const currentIndex = activeMembers.findIndex(
+        (m) => m.id === task.nextAssigneeMembershipId,
+      );
+      const nextIndex =
+        currentIndex === -1 ? 0 : (currentIndex + 1) % activeMembers.length;
       nextAssigneeId = activeMembers[nextIndex].id;
     }
 
-    // 3. Update Task
     await tx.task.update({
       where: { id: taskId },
       data: {

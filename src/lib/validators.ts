@@ -19,10 +19,33 @@ export const inviteCodeSchema = z.object({
   code: z.string().trim().min(4, "Código inválido"),
 });
 
-export const taskSchema = z.object({
-  title: z.string().trim().min(2, "Título muy corto").max(50, "Máx 50 caracteres"),
-  frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"], {
-    message: "Selecciona una frecuencia válida"
-  }),
-  points: z.coerce.number().int().min(1, "Mínimo 1").max(100, "Máx 100").default(1),
-});
+export const taskSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(2, "Título muy corto")
+      .max(50, "Máx 50 caracteres"),
+    frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"], {
+      message: "Selecciona una frecuencia válida",
+    }),
+    points: z.coerce
+      .number()
+      .int()
+      .min(1, "Mínimo 1")
+      .max(100, "Máx 100")
+      .default(1),
+    dayOfWeek: z.coerce.number().int().min(0).max(6).nullable().optional(),
+    dayOfMonth: z.coerce.number().int().min(1).max(31).nullable().optional(),
+  })
+  .refine(
+    (v) =>
+      v.frequency === "DAILY" ||
+      v.frequency === "MONTHLY" ||
+      v.dayOfWeek != null,
+    { message: "Elige un día de la semana", path: ["dayOfWeek"] },
+  )
+  .refine(
+    (v) => v.frequency !== "MONTHLY" || v.dayOfMonth != null,
+    { message: "Elige un día del mes", path: ["dayOfMonth"] },
+  );

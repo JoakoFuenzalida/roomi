@@ -73,6 +73,9 @@ model Task {
   active      Boolean       @default(true)
   createdAt   DateTime      @default(now())
 
+  dayOfWeek  Int? // 0-6 (0=domingo), para WEEKLY / BIWEEKLY
+  dayOfMonth Int? // 1-31, para MONTHLY
+
   nextAssigneeMembershipId String?
   nextDueDate              DateTime
   cycleNumber              Int      @default(0)

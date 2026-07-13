@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { X } from "lucide-react";
 import { requireUser, assertMemberOf } from "@/lib/session";
 import { CreateTaskForm } from "@/components/task-actions";
-import { Button } from "@/components/ui/button";
 
 export default async function NuevaTareaPage({
   searchParams,
@@ -15,25 +14,8 @@ export default async function NuevaTareaPage({
 
   if (!hogarId) redirect("/tareas");
 
-  const membership = await assertMemberOf(user.id, hogarId);
-
-  if (membership.role !== "ADMIN") {
-    return (
-      <main className="max-w-md mx-auto px-5 pt-6 flex flex-col min-h-svh">
-        <p className="text-error text-sm font-semibold">
-          No tienes permiso para crear tareas en este hogar.
-        </p>
-        <Button
-          render={<Link href="/tareas" />}
-          nativeButton={false}
-          variant="outline"
-          className="mt-4 rounded-pill"
-        >
-          Volver
-        </Button>
-      </main>
-    );
-  }
+  // Cualquier miembro del hogar puede crear tareas
+  await assertMemberOf(user.id, hogarId);
 
   return (
     <main className="max-w-md mx-auto px-5 pt-5 pb-6 flex flex-col min-h-svh">

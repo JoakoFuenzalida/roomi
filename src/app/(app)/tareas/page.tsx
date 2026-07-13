@@ -115,8 +115,7 @@ export default async function TareasPage({
       {tasks.length === 0 ? (
         <div className="rounded-[14px] bg-surface-container-low border border-outline-variant p-6 text-center">
           <p className="text-sm text-on-surface-variant">
-            Aún no hay tareas.{" "}
-            {isAdmin ? "Crea la primera con el botón." : "Espera a que el admin agregue."}
+            Aún no hay tareas. Crea la primera con el botón.
           </p>
         </div>
       ) : (
@@ -176,15 +175,13 @@ export default async function TareasPage({
         </ul>
       )}
 
-      {isAdmin && (
-        <Link
-          href={`/tareas/nueva?hogarId=${active.householdId}`}
-          className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-5 z-30 w-14 h-14 rounded-[19px] bg-primary text-on-primary flex items-center justify-center shadow-[0_8px_20px_rgba(255,107,107,0.45)]"
-          aria-label="Nueva tarea"
-        >
-          <Plus size={26} strokeWidth={2.5} />
-        </Link>
-      )}
+      <Link
+        href={`/tareas/nueva?hogarId=${active.householdId}`}
+        className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-5 z-30 w-14 h-14 rounded-[19px] bg-primary text-on-primary flex items-center justify-center shadow-[0_8px_20px_rgba(255,107,107,0.45)]"
+        aria-label="Nueva tarea"
+      >
+        <Plus size={26} strokeWidth={2.5} />
+      </Link>
     </main>
   );
 }
