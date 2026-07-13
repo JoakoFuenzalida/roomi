@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { RoomiHeader, RoomiSymbol } from "@/components/roomi-logo";
 import { AvatarInitials } from "@/components/avatar-initials";
-import { DeleteTaskButton } from "@/components/task-actions";
+import { CompleteTaskButton, DeleteTaskButton } from "@/components/task-actions";
 import { cn } from "@/lib/utils";
 
 const FREQ_LABEL: Record<string, string> = {
@@ -163,12 +163,15 @@ export default async function TareasPage({
                     {formatDue(task.nextDueDate)}
                   </span>
                 </div>
-                {isAdmin && (
-                  <DeleteTaskButton
-                    taskId={task.id}
-                    householdId={task.householdId}
-                  />
-                )}
+                <div className="flex items-center gap-1">
+                  {isAdmin && (
+                    <DeleteTaskButton
+                      taskId={task.id}
+                      householdId={task.householdId}
+                    />
+                  )}
+                  <CompleteTaskButton taskId={task.id} />
+                </div>
               </div>
             </li>
           ))}

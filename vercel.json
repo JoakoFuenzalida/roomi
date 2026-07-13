@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/cron/advance-overdue", "schedule": "5 3 * * *" }
+  ]
+}
