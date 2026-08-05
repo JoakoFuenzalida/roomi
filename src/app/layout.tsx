@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fredoka, DM_Sans } from "next/font/google";
+import { ServiceWorkerRegister } from "@/components/sw-register";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -17,6 +18,17 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Roomi",
   description: "Convivencia que se organiza sola.",
+  manifest: "/manifest.json",
+  themeColor: "#FF6B6B",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Roomi",
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon-192.png",
+  },
 };
 
 export default function RootLayout({
@@ -31,6 +43,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-on-surface">
         {children}
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

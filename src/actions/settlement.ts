@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireUser, assertMemberOf } from "@/lib/session";
 import { settlementSchema } from "@/lib/validators";
 import { revalidatePath } from "next/cache";
+import { sendPushToUser } from "@/lib/push";
 
 export async function marcarPagado(
   householdId: string,
@@ -45,6 +46,13 @@ export async function marcarPagado(
   });
 
   revalidatePath("/compras");
+
+  sendPushToUser(toUserId, {
+    title: "Pago registrado 💸",
+    body: `${user.name} dice que te pagó $${amount.toLocaleString("es-CL")}. Confirma en Roomi.`,
+    url: "/compras",
+  }).catch(() => {});
+
   return { success: true, ts: Date.now() };
 }
 
@@ -74,6 +82,13 @@ export async function confirmarPago(settlementId: string, householdId: string) {
   });
 
   revalidatePath("/compras");
+
+  sendPushToUser(settlement.fromUserId, {
+    title: "Pago confirmado ✅",
+    body: `${user.name} confirmó tu pago de $${settlement.amount.toLocaleString("es-CL")}`,
+    url: "/compras",
+  }).catch(() => {});
+
   return { success: true };
 }
 

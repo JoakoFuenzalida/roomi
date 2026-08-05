@@ -6,6 +6,7 @@ import { shoppingItemSchema, marcarCompradoSchema } from "@/lib/validators";
 import { computeInitialDueDate, computeNextDueDate } from "@/lib/rotation";
 import { revalidatePath } from "next/cache";
 import { TaskFrequency } from "@/generated/prisma/client";
+import { sendPushToHousehold } from "@/lib/push";
 
 export async function agregarItem(
   householdId: string,
@@ -198,6 +199,17 @@ export async function marcarComprado(
   });
 
   revalidatePath("/compras");
+
+  sendPushToHousehold(
+    householdId,
+    {
+      title: "Nueva compra 🛒",
+      body: `${user.name} compró "${item.title}" por $${amount.toLocaleString("es-CL")}`,
+      url: "/compras",
+    },
+    user.id,
+  ).catch(() => {});
+
   return { success: true, ts: Date.now() };
 }
 

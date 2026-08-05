@@ -7,6 +7,7 @@ import { computeInitialDueDate, computeNextDueDate } from "@/lib/rotation";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { TaskFrequency } from "@/generated/prisma/client";
+import { sendPushToHousehold } from "@/lib/push";
 
 export async function createTask(
   householdId: string,
@@ -168,4 +169,20 @@ export async function completarTarea(taskId: string) {
 
   revalidatePath("/hoy");
   revalidatePath("/tareas");
+
+  const taskData = await db.task.findUnique({
+    where: { id: taskId },
+    select: { title: true, householdId: true },
+  });
+  if (taskData) {
+    sendPushToHousehold(
+      taskData.householdId,
+      {
+        title: "Tarea completada ✨",
+        body: `${user.name} completó "${taskData.title}"`,
+        url: "/hoy",
+      },
+      user.id,
+    ).catch(() => {});
+  }
 }
