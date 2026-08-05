@@ -17,9 +17,16 @@ model User {
   image          String?
   createdAt      DateTime @default(now())
 
-  memberships    Membership[]
-  taskExecutions TaskExecution[]
-  pushSubs       PushSubscription[]
+  memberships     Membership[]
+  taskExecutions  TaskExecution[]
+  pushSubs        PushSubscription[]
+  itemsCreated    ShoppingItem[]   @relation("itemCreator")
+  itemsChecked    ShoppingItem[]   @relation("itemChecker")
+  paidExpenses    Expense[]        @relation("payer")
+  expenseSplits   ExpenseSplit[]
+  settlementsSent Settlement[]     @relation("settleFrom")
+  settlementsRcvd Settlement[]     @relation("settleTo")
+  settlementsMade Settlement[]     @relation("settleRecorder")
 }
 
 model Household {
@@ -28,8 +35,11 @@ model Household {
   inviteCode String   @unique @default(cuid())
   createdAt  DateTime @default(now())
 
-  members Membership[]
-  tasks   Task[]
+  members       Membership[]
+  tasks         Task[]
+  shoppingItems ShoppingItem[]
+  expenses      Expense[]
+  settlements   Settlement[]
 }
 
 enum HouseholdRole {
@@ -47,9 +57,10 @@ model Membership {
   joinedAt        DateTime      @default(now())
   leftAt          DateTime?
 
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  household     Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  assignedTasks Task[]    @relation("nextAssignee")
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household        Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  assignedTasks    Task[]         @relation("nextAssignee")
+  nextShoppingFor  ShoppingItem[] @relation("nextBuyer")
 
   @@unique([userId, householdId])
   @@index([householdId, leftAt, rotationOrder])
@@ -102,6 +113,90 @@ model TaskExecution {
 
   @@unique([taskId, cycleNumber])
   @@index([completedById, completedAt])
+}
+
+// ============ COMPRAS Y GASTOS ============
+
+model ShoppingItem {
+  id          String   @id @default(cuid())
+  householdId String
+  title       String
+  quantity    String?
+  createdById String
+  createdAt   DateTime @default(now())
+  active      Boolean  @default(true) // soft delete
+
+  // Recurrencia opcional — mismo motor que Task (computeInitialDueDate / computeNextDueDate).
+  // frequency null = item de una sola vez.
+  frequency   TaskFrequency?
+  daysOfWeek  Int[]     @default([])
+  daysOfMonth Int[]     @default([])
+  nextDueDate DateTime?
+  cycleNumber Int       @default(0)
+
+  nextBuyerMembershipId String?
+
+  // Marca "comprado" para items de una sola vez. Los recurrentes nunca quedan
+  // marcados: al comprarse, avanzan de ciclo y siguen en "por comprar".
+  checkedById String?
+  checkedAt   DateTime?
+
+  household Household   @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdBy User        @relation("itemCreator", fields: [createdById], references: [id])
+  checkedBy User?       @relation("itemChecker", fields: [checkedById], references: [id])
+  nextBuyer Membership? @relation("nextBuyer", fields: [nextBuyerMembershipId], references: [id])
+  expenses  Expense[]
+
+  @@index([householdId, active, checkedAt])
+}
+
+model Expense {
+  id             String   @id @default(cuid())
+  householdId    String
+  payerId        String
+  amount         Int // CLP entero
+  title          String
+  shoppingItemId String?
+  paidAt         DateTime @default(now())
+
+  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  payer        User          @relation("payer", fields: [payerId], references: [id])
+  shoppingItem ShoppingItem? @relation(fields: [shoppingItemId], references: [id])
+  splits       ExpenseSplit[]
+
+  @@index([householdId, paidAt])
+}
+
+model ExpenseSplit {
+  id        String @id @default(cuid())
+  expenseId String
+  userId    String
+  amount    Int // CLP entero, permite splits desiguales
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([expenseId, userId])
+}
+
+model Settlement {
+  id           String    @id @default(cuid())
+  householdId  String
+  fromUserId   String // quien debe
+  toUserId     String // quien recibe
+  amount       Int
+  method       String? // Transferencia / Efectivo / Otro
+  note         String?
+  recordedById String // quien la registró (deudor o acreedor)
+  createdAt    DateTime  @default(now())
+  confirmedAt  DateTime? // null = pendiente de confirmación del otro lado
+
+  household  Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  fromUser   User      @relation("settleFrom", fields: [fromUserId], references: [id])
+  toUser     User      @relation("settleTo", fields: [toUserId], references: [id])
+  recordedBy User      @relation("settleRecorder", fields: [recordedById], references: [id])
+
+  @@index([householdId, createdAt])
 }
 
 // ============ PUSH ============
