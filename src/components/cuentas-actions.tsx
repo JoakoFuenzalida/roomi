@@ -5,12 +5,11 @@ import {
   crearRoom,
   editarRoom,
   eliminarRoom,
-  crearBoleta,
   agregarBillItem,
   eliminarBillItem,
-  publicarBoleta,
   marcarPagadoCuenta,
   confirmarPagoCuenta,
+  poblarRecurrentes,
 } from "@/actions/cuentas";
 import { Button } from "@/components/ui/button";
 import { AvatarInitials } from "@/components/avatar-initials";
@@ -26,9 +25,9 @@ import {
   Trash2,
   Check,
   Pencil,
-  Send,
   DollarSign,
   Home,
+  RefreshCw,
 } from "lucide-react";
 
 type Member = {
@@ -48,6 +47,9 @@ type BillItemData = {
   id: string;
   label: string;
   amount: number;
+  excludedUserIds: string[];
+  isRecurring: boolean;
+  dayOfMonth: number | null;
 };
 
 type ChargeData = {
@@ -105,7 +107,7 @@ export function RoomSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
+      <SheetContent side="bottom">
         <SheetHeader>
           <SheetTitle>{isEdit ? "Editar pieza" : "Nueva pieza"}</SheetTitle>
         </SheetHeader>
@@ -237,7 +239,7 @@ export function RoomCard({
                 </button>
                 <button
                   onClick={() =>
-                    startDelete(() => eliminarRoom(room.id, householdId))
+                    startDelete(async () => { await eliminarRoom(room.id, householdId); })
                   }
                   disabled={deleting}
                   className="p-2 rounded-full text-error hover:bg-error-container/30"
@@ -295,30 +297,46 @@ export function AddRoomButton({
 export function BillItemRow({
   item,
   householdId,
-  isDraft,
+  members,
 }: {
   item: BillItemData;
   householdId: string;
-  isDraft: boolean;
+  members: Member[];
 }) {
   const [deleting, startDelete] = useTransition();
 
+  const excludedNames = item.excludedUserIds
+    .map((uid) => members.find((m) => m.userId === uid)?.userName.split(" ")[0])
+    .filter(Boolean);
+
   return (
     <li className="flex items-center justify-between px-4 py-3">
-      <span className="text-[14px]">{item.label}</span>
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-[14px]">{item.label}</span>
+          {item.isRecurring && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary-container text-on-primary-container font-bold">
+              {item.dayOfMonth ? `día ${item.dayOfMonth}` : "fijo"}
+            </span>
+          )}
+        </div>
+        {excludedNames.length > 0 && (
+          <p className="text-[11px] text-on-surface-variant mt-0.5">
+            Sin: {excludedNames.join(", ")}
+          </p>
+        )}
+      </div>
       <div className="flex items-center gap-2">
         <span className="text-[14px] font-bold">{formatPrice(item.amount)}</span>
-        {isDraft && (
-          <button
-            onClick={() =>
-              startDelete(() => eliminarBillItem(item.id, householdId))
-            }
-            disabled={deleting}
-            className="p-1.5 rounded-full text-error hover:bg-error-container/30"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
+        <button
+          onClick={() =>
+            startDelete(async () => { await eliminarBillItem(item.id, householdId); })
+          }
+          disabled={deleting}
+          className="p-1.5 rounded-full text-error hover:bg-error-container/30"
+        >
+          <Trash2 size={14} />
+        </button>
       </div>
     </li>
   );
@@ -327,28 +345,44 @@ export function BillItemRow({
 /* ────────────── Add Bill Item Sheet ────────────── */
 
 export function AddBillItemSheet({
-  billId,
   householdId,
+  month,
+  year,
+  members,
   open,
   onOpenChange,
 }: {
-  billId: string;
   householdId: string;
+  month: number;
+  year: number;
+  members: Member[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [state, formAction, isPending] = useActionState(
-    agregarBillItem.bind(null, billId, householdId),
+    agregarBillItem.bind(null, householdId, month, year),
     null,
   );
+  const [excludedIds, setExcludedIds] = useState<string[]>([]);
+  const [isRecurring, setIsRecurring] = useState(false);
 
   useEffect(() => {
-    if (state && "success" in state) onOpenChange(false);
+    if (state && "success" in state) {
+      onOpenChange(false);
+      setExcludedIds([]);
+      setIsRecurring(false);
+    }
   }, [state, onOpenChange]);
+
+  function toggleExcluded(userId: string) {
+    setExcludedIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
+      <SheetContent side="bottom">
         <SheetHeader>
           <SheetTitle>Agregar gasto</SheetTitle>
         </SheetHeader>
@@ -359,7 +393,7 @@ export function AddBillItemSheet({
             </label>
             <input
               name="label"
-              placeholder="GGCC, Luz, Agua, Gas..."
+              placeholder="GGCC, Luz, Agua, Gas, Gimnasio..."
               required
               className="mt-1 w-full h-12 rounded-[12px] border border-outline-variant bg-surface-container-lowest px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary"
             />
@@ -379,6 +413,80 @@ export function AddBillItemSheet({
             />
           </div>
 
+          {/* Participant chips */}
+          <div>
+            <label className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wide mb-2 block">
+              Se cobra a
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {members.map((m) => {
+                const included = !excludedIds.includes(m.userId);
+                return (
+                  <button
+                    key={m.userId}
+                    type="button"
+                    onClick={() => toggleExcluded(m.userId)}
+                    className={cn(
+                      "px-3 py-2 rounded-pill text-[13px] font-semibold border transition-colors flex items-center gap-2",
+                      included
+                        ? "bg-primary text-on-primary border-primary"
+                        : "bg-surface-container border-outline-variant text-on-surface line-through opacity-60",
+                    )}
+                  >
+                    <AvatarInitials name={m.userName} size={20} />
+                    {m.userName.split(" ")[0]}
+                  </button>
+                );
+              })}
+            </div>
+            {excludedIds.map((id) => (
+              <input key={id} type="hidden" name="excludedUserIds" value={id} />
+            ))}
+          </div>
+
+          {/* Recurring toggle */}
+          <div className="flex items-center gap-3">
+            <input
+              type="hidden"
+              name="isRecurring"
+              value={isRecurring ? "true" : "false"}
+            />
+            <button
+              type="button"
+              onClick={() => setIsRecurring(!isRecurring)}
+              className={cn(
+                "w-11 h-6 rounded-full transition-colors relative",
+                isRecurring ? "bg-primary" : "bg-outline-variant",
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform",
+                  isRecurring ? "translate-x-[22px]" : "translate-x-0.5",
+                )}
+              />
+            </button>
+            <span className="text-[13px] text-on-surface">
+              Monto fijo mensual
+            </span>
+          </div>
+
+          {isRecurring && (
+            <div>
+              <label className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wide">
+                Día del mes para recordar
+              </label>
+              <input
+                name="dayOfMonth"
+                type="number"
+                placeholder="1"
+                min={1}
+                max={31}
+                className="mt-1 w-full h-12 rounded-[12px] border border-outline-variant bg-surface-container-lowest px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          )}
+
           {state && "error" in state && (
             <p className="text-error text-[13px]">{state.error}</p>
           )}
@@ -396,126 +504,30 @@ export function AddBillItemSheet({
   );
 }
 
-/* ────────────── Create Bill + Publish ────────────── */
+/* ────────────── Populate Recurring Button ────────────── */
 
-export function CreateBillButton({
+export function PopulateRecurringButton({
   householdId,
-  month,
-  year,
 }: {
   householdId: string;
-  month: number;
-  year: number;
 }) {
-  const [creating, startCreate] = useTransition();
+  const [acting, startAction] = useTransition();
 
   return (
     <button
-      onClick={() => startCreate(async () => { await crearBoleta(householdId, month, year); })}
-      disabled={creating}
-      className="w-full rounded-[14px] border-2 border-dashed border-primary/40 p-6 flex flex-col items-center justify-center gap-2 text-primary font-semibold hover:bg-primary-container/20 transition-colors"
+      onClick={() =>
+        startAction(async () => { await poblarRecurrentes(householdId); })
+      }
+      disabled={acting}
+      className="h-10 px-4 rounded-pill border border-primary text-primary font-semibold text-[13px] flex items-center gap-2 hover:bg-primary-container/20 transition-colors disabled:opacity-50"
     >
-      <Plus size={24} />
-      <span className="text-[14px]">
-        {creating ? "Creando..." : "Crear boleta del mes"}
-      </span>
+      <RefreshCw size={14} className={acting ? "animate-spin" : ""} />
+      {acting ? "..." : "Traer fijos"}
     </button>
   );
 }
 
-export function PublishBillButton({
-  billId,
-  householdId,
-}: {
-  billId: string;
-  householdId: string;
-}) {
-  const [publishing, startPublish] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  return (
-    <div>
-      <button
-        onClick={() =>
-          startPublish(async () => {
-            const result = await publicarBoleta(billId, householdId);
-            if (result && "error" in result) setError(result.error ?? null);
-            else setError(null);
-          })
-        }
-        disabled={publishing}
-        className="w-full h-12 rounded-pill bg-primary text-on-primary font-bold text-[14px] flex items-center justify-center gap-2 disabled:opacity-50"
-      >
-        <Send size={16} />
-        {publishing ? "Publicando..." : "Publicar y notificar"}
-      </button>
-      {error && <p className="text-error text-[13px] mt-2 text-center">{error}</p>}
-    </div>
-  );
-}
-
-/* ────────────── Draft Bill Actions ────────────── */
-
-export function DraftBillActions({
-  billId,
-  householdId,
-  items,
-}: {
-  billId: string;
-  householdId: string;
-  items: BillItemData[];
-}) {
-  const [addOpen, setAddOpen] = useState(false);
-
-  return (
-    <div className="space-y-3">
-      <div className="rounded-[14px] bg-surface-container-lowest border border-outline-variant shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
-        {items.length > 0 ? (
-          <ul className="divide-y divide-outline-variant">
-            {items.map((item) => (
-              <BillItemRow
-                key={item.id}
-                item={item}
-                householdId={householdId}
-                isDraft
-              />
-            ))}
-            <li className="flex items-center justify-between px-4 py-3 bg-surface-container-low rounded-b-[14px]">
-              <span className="text-[14px] font-bold">Total servicios</span>
-              <span className="text-[15px] font-bold text-primary">
-                {formatPrice(items.reduce((s, i) => s + i.amount, 0))}
-              </span>
-            </li>
-          </ul>
-        ) : (
-          <div className="p-6 text-center text-[13px] text-on-surface-variant">
-            Agrega los gastos del mes (GGCC, luz, agua, gas...)
-          </div>
-        )}
-      </div>
-
-      <button
-        onClick={() => setAddOpen(true)}
-        className="w-full h-11 rounded-pill border border-primary text-primary font-semibold text-[13px] flex items-center justify-center gap-2 hover:bg-primary-container/20 transition-colors"
-      >
-        <Plus size={16} /> Agregar gasto
-      </button>
-
-      {items.length > 0 && (
-        <PublishBillButton billId={billId} householdId={householdId} />
-      )}
-
-      <AddBillItemSheet
-        billId={billId}
-        householdId={householdId}
-        open={addOpen}
-        onOpenChange={setAddOpen}
-      />
-    </div>
-  );
-}
-
-/* ────────────── Charge Card (published bill) ────────────── */
+/* ────────────── Charge Card ────────────── */
 
 export function ChargeCard({
   charge,

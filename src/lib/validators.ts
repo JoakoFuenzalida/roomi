@@ -96,6 +96,9 @@ export const billItemSchema = z.object({
     .number()
     .int("Sin decimales")
     .min(0, "Monto no puede ser negativo"),
+  excludedUserIds: z.array(z.string()).default([]),
+  isRecurring: z.coerce.boolean().default(false),
+  dayOfMonth: z.coerce.number().int().min(1).max(31).optional(),
 });
 
 export const settlementSchema = z.object({

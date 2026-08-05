@@ -220,20 +220,13 @@ model Room {
   @@index([householdId])
 }
 
-enum BillStatus {
-  DRAFT
-  PUBLISHED
-}
-
 model MonthlyBill {
-  id          String     @id @default(cuid())
+  id          String   @id @default(cuid())
   householdId String
   month       Int
   year        Int
-  status      BillStatus @default(DRAFT)
-  publishedAt DateTime?
   createdById String
-  createdAt   DateTime   @default(now())
+  createdAt   DateTime @default(now())
 
   household Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
   createdBy User            @relation("billCreator", fields: [createdById], references: [id])
@@ -244,10 +237,14 @@ model MonthlyBill {
 }
 
 model BillItem {
-  id            String @id @default(cuid())
-  monthlyBillId String
-  label         String
-  amount        Int
+  id              String   @id @default(cuid())
+  monthlyBillId   String
+  label           String
+  amount          Int
+  excludedUserIds String[]
+  isRecurring     Boolean  @default(false)
+  dayOfMonth      Int?
+  createdAt       DateTime @default(now())
 
   monthlyBill MonthlyBill @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
 }

@@ -8,12 +8,11 @@ import { AvatarInitials } from "@/components/avatar-initials";
 import {
   RoomCard,
   AddRoomButton,
-  CreateBillButton,
-  DraftBillActions,
   BillItemRow,
   ChargeCard,
   MonthNavigator,
 } from "@/components/cuentas-actions";
+import { AddBillItemButton } from "@/components/cuentas-add-bill-button";
 import { cn } from "@/lib/utils";
 
 function formatPrice(n: number) {
@@ -62,9 +61,8 @@ export default async function CuentasPage({
 
   const active =
     memberships.find((m) => m.householdId === hogarId) ?? memberships[0];
-  const activeMembership = active;
 
-  const isAdmin = activeMembership.role === "ADMIN";
+  const isAdmin = active.role === "ADMIN";
 
   const activeMembers = await db.membership.findMany({
     where: { householdId: active.householdId, leftAt: null },
@@ -89,6 +87,9 @@ export default async function CuentasPage({
   const basePath = `/cuentas?hogarId=${active.householdId}`;
 
   const rentTotal = rooms.reduce((s, r) => s + r.monthlyCost, 0);
+  const items = bill?.items ?? [];
+  const charges = bill?.charges ?? [];
+  const servicesTotal = items.reduce((s, i) => s + i.amount, 0);
 
   return (
     <main className="max-w-md mx-auto px-5 pt-6 relative min-h-svh">
@@ -172,82 +173,71 @@ export default async function CuentasPage({
         )}
       </section>
 
-      {/* ── Boleta del mes ── */}
+      {/* ── Gastos del mes ── */}
       <section className="mb-6">
         <h2 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-3">
-          Boleta mensual
+          Gastos del mes
         </h2>
 
         <MonthNavigator month={month} year={year} basePath={basePath} />
 
-        {!bill ? (
-          isAdmin ? (
-            <CreateBillButton
-              householdId={active.householdId}
-              month={month}
-              year={year}
-            />
-          ) : (
-            <div className="rounded-[14px] bg-surface-container-low border border-outline-variant p-6 text-center">
-              <p className="text-sm text-on-surface-variant">
-                No hay boleta para este mes.
-              </p>
-            </div>
-          )
-        ) : bill.status === "DRAFT" ? (
-          isAdmin ? (
-            <DraftBillActions
-              billId={bill.id}
-              householdId={active.householdId}
-              items={bill.items}
-            />
-          ) : (
-            <div className="rounded-[14px] bg-surface-container-low border border-outline-variant p-6 text-center">
-              <p className="text-sm text-on-surface-variant">
-                El admin está preparando la boleta de este mes.
-              </p>
-            </div>
-          )
-        ) : (
-          /* PUBLISHED */
-          <div className="space-y-3">
-            {/* Items summary */}
-            <div className="rounded-[14px] bg-surface-container-lowest border border-outline-variant shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
+        <div className="space-y-3">
+          {/* Items list */}
+          <div className="rounded-[14px] bg-surface-container-lowest border border-outline-variant shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
+            {items.length > 0 ? (
               <ul className="divide-y divide-outline-variant">
-                {bill.items.map((item) => (
+                {items.map((item) => (
                   <BillItemRow
                     key={item.id}
                     item={item}
                     householdId={active.householdId}
-                    isDraft={false}
+                    members={membersList}
                   />
                 ))}
                 <li className="flex items-center justify-between px-4 py-3 bg-surface-container-low rounded-b-[14px]">
                   <span className="text-[14px] font-bold">Total servicios</span>
                   <span className="text-[15px] font-bold text-primary">
-                    {formatPrice(bill.items.reduce((s, i) => s + i.amount, 0))}
+                    {formatPrice(servicesTotal)}
                   </span>
                 </li>
               </ul>
-            </div>
-
-            {/* Charges per person */}
-            <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">
-              Cobros por persona
-            </h3>
-            <ul className="space-y-2">
-              {bill.charges.map((charge) => (
-                <ChargeCard
-                  key={charge.id}
-                  charge={charge}
-                  householdId={active.householdId}
-                  isAdmin={isAdmin}
-                  isCurrentUser={charge.userId === user.id}
-                />
-              ))}
-            </ul>
+            ) : (
+              <div className="p-6 text-center text-[13px] text-on-surface-variant">
+                No hay gastos registrados este mes.
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Admin: add item + populate recurring */}
+          {isAdmin && (
+            <AddBillItemButton
+              householdId={active.householdId}
+              month={month}
+              year={year}
+              members={membersList}
+            />
+          )}
+
+          {/* Charges per person */}
+          {charges.length > 0 && (
+            <>
+              <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide pt-2">
+                Cobros por persona
+              </h3>
+              <ul className="space-y-2">
+                {charges.map((charge) => (
+                  <ChargeCard
+                    key={charge.id}
+                    charge={charge}
+                    householdId={active.householdId}
+                    isAdmin={isAdmin}
+                    isCurrentUser={charge.userId === user.id}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
       </section>
 
       <div className="pb-24" />
