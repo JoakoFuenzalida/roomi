@@ -7,10 +7,13 @@ import { AvatarInitials } from "@/components/avatar-initials";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { VacationToggle } from "@/components/vacation-toggle";
+import { EditProfileButton } from "@/components/profile-actions";
 
 export default async function PerfilPage() {
   const session = await auth();
-  const name = session!.user.name ?? "";
+  const dbUser = await db.user.findUnique({ where: { id: session!.user.id } });
+  const name = dbUser?.name ?? session!.user.name ?? "";
+  const image = dbUser?.image ?? null;
 
   const memberships = await db.membership.findMany({
     where: { userId: session!.user.id, leftAt: null },
@@ -24,7 +27,7 @@ export default async function PerfilPage() {
     <main className="max-w-md mx-auto px-5 pt-6">
       <header className="flex items-center justify-between mb-6">
         <RoomiHeader />
-        <AvatarInitials name={name} size={40} />
+        <AvatarInitials name={name} imageUrl={image} size={40} />
       </header>
 
       <div className="mb-6">
@@ -33,10 +36,13 @@ export default async function PerfilPage() {
         </h1>
       </div>
 
-      <section className="rounded-[14px] bg-surface-container-lowest border border-outline-variant p-5 shadow-[0_2px_10px_rgba(15,23,42,0.05)] mb-4">
+      <section className="relative rounded-[14px] bg-surface-container-lowest border border-outline-variant p-5 shadow-[0_2px_10px_rgba(15,23,42,0.05)] mb-4">
+        <div className="absolute top-4 right-4">
+          <EditProfileButton name={name} imageUrl={image} />
+        </div>
         <div className="flex items-center gap-4">
-          <AvatarInitials name={name} size={56} />
-          <div className="flex-1 min-w-0">
+          <AvatarInitials name={name} imageUrl={image} size={56} />
+          <div className="flex-1 min-w-0 mr-8">
             <p className="font-display font-semibold text-[19px] truncate">
               {name}
             </p>

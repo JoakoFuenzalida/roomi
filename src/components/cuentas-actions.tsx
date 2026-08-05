@@ -298,10 +298,12 @@ export function BillItemRow({
   item,
   householdId,
   members,
+  isAdmin,
 }: {
   item: BillItemData;
   householdId: string;
   members: Member[];
+  isAdmin: boolean;
 }) {
   const [deleting, startDelete] = useTransition();
 
@@ -328,15 +330,17 @@ export function BillItemRow({
       </div>
       <div className="flex items-center gap-2">
         <span className="text-[14px] font-bold">{formatPrice(item.amount)}</span>
-        <button
-          onClick={() =>
-            startDelete(async () => { await eliminarBillItem(item.id, householdId); })
-          }
-          disabled={deleting}
-          className="p-1.5 rounded-full text-error hover:bg-error-container/30"
-        >
-          <Trash2 size={14} />
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() =>
+              startDelete(async () => { await eliminarBillItem(item.id, householdId); })
+            }
+            disabled={deleting}
+            className="p-1.5 rounded-full text-error hover:bg-error-container/30 transition-colors"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
     </li>
   );

@@ -194,6 +194,7 @@ export default async function CuentasPage({
                     item={item}
                     householdId={active.householdId}
                     members={membersList}
+                    isAdmin={isAdmin}
                   />
                 ))}
                 <li className="flex items-center justify-between px-4 py-3 bg-surface-container-low rounded-b-[14px]">

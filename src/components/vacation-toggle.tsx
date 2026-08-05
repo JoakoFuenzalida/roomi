@@ -105,21 +105,29 @@ function VacationRow({ membership }: { membership: MembershipVacation }) {
       </div>
 
       {showPicker && !isActive && (
-        <div className="mt-3 flex items-center gap-2">
-          <input
-            type="date"
-            min={minDate}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="flex-1 h-10 rounded-[10px] border border-outline-variant bg-surface-container-low px-3 text-[14px] text-on-surface"
-          />
-          <button
-            onClick={handleActivate}
-            disabled={!date || pending}
-            className="h-10 px-4 rounded-pill bg-primary text-on-primary text-[13px] font-bold disabled:opacity-50 transition-opacity"
-          >
-            {pending ? "..." : "Listo"}
-          </button>
+        <div className="mt-4 p-3 rounded-[12px] bg-surface-container-low border border-outline-variant">
+          <label className="block text-[12px] font-semibold text-on-surface-variant mb-2">
+            ¿Hasta qué día estarás fuera?
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              min={minDate}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="flex-1 h-10 rounded-[10px] border border-outline-variant bg-surface-container-lowest px-3 text-[14px] text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <button
+              onClick={handleActivate}
+              disabled={!date || pending}
+              className="h-10 px-4 rounded-[10px] bg-primary text-on-primary text-[13px] font-bold disabled:opacity-50 transition-opacity"
+            >
+              {pending ? "..." : "Confirmar"}
+            </button>
+          </div>
+          <p className="text-[11px] text-on-surface-variant mt-2 leading-tight">
+            Durante este tiempo, no se te asignarán nuevas tareas ni gastos compartidos.
+          </p>
         </div>
       )}
     </div>
