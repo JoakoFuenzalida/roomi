@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { Minus, Plus, Trash2 } from "lucide-react";
-import { createTask, completarTarea, deleteTask } from "@/actions/task";
+import { ArrowLeftRight, Minus, Plus, Trash2 } from "lucide-react";
+import { createTask, completarTarea, deleteTask, swapTurno } from "@/actions/task";
+import { AvatarInitials } from "./avatar-initials";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -282,6 +283,60 @@ export function CompleteTaskButton({ taskId }: { taskId: string }) {
     >
       {isPending ? "..." : "Listo"}
     </Button>
+  );
+}
+
+type SwapMember = { id: string; userName: string };
+
+export function SwapButton({
+  taskId,
+  members,
+}: {
+  taskId: string;
+  members: SwapMember[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  if (members.length === 0) return null;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-8 h-8 rounded-full text-on-surface-variant hover:text-primary hover:bg-primary-container/40 flex items-center justify-center transition-colors"
+        aria-label="Intercambiar turno"
+      >
+        <ArrowLeftRight size={16} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 bottom-10 z-20 bg-surface-container-lowest border border-outline-variant rounded-[12px] shadow-lg p-2 min-w-[160px]">
+          <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide px-2 pb-1">
+            Pasar turno a
+          </p>
+          {members.map((m) => (
+            <button
+              key={m.id}
+              disabled={pending}
+              onClick={() => {
+                startTransition(async () => {
+                  await swapTurno(taskId, m.id);
+                  setOpen(false);
+                });
+              }}
+              className="w-full flex items-center gap-2 px-2 py-2 rounded-[8px] hover:bg-surface-container transition-colors text-left disabled:opacity-50"
+            >
+              <AvatarInitials name={m.userName} size={24} />
+              <span className="text-[13px] font-semibold truncate">
+                {m.userName}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

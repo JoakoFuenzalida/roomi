@@ -101,6 +101,14 @@ export const billItemSchema = z.object({
   dayOfMonth: z.coerce.number().int().min(1).max(31).optional(),
 });
 
+export const noticeSchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(1, "Escribe algo")
+    .max(500, "Máx 500 caracteres"),
+});
+
 export const settlementSchema = z.object({
   toUserId: z.string().min(1, "Selecciona a quién le pagaste"),
   amount: z.coerce

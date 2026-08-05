@@ -38,7 +38,9 @@ export default async function CuentasPage({
       <main className="max-w-md mx-auto px-5 pt-6">
         <header className="flex items-center justify-between mb-6">
           <RoomiHeader />
-          <AvatarInitials name={user.name} size={40} />
+          <Link href="/perfil">
+            <AvatarInitials name={user.name} size={40} />
+          </Link>
         </header>
         <div className="rounded-[14px] bg-surface-container-low border border-outline-variant p-6 flex flex-col items-center text-center gap-4">
           <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center">

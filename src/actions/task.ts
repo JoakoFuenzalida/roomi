@@ -7,7 +7,7 @@ import { computeInitialDueDate, computeNextDueDate } from "@/lib/rotation";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { TaskFrequency } from "@/generated/prisma/client";
-import { sendPushToHousehold } from "@/lib/push";
+import { sendPushToHousehold, sendPushToUser } from "@/lib/push";
 
 export async function createTask(
   householdId: string,
@@ -185,4 +185,47 @@ export async function completarTarea(taskId: string) {
       user.id,
     ).catch(() => {});
   }
+}
+
+export async function swapTurno(taskId: string, toMembershipId: string) {
+  const user = await requireUser();
+
+  const task = await db.task.findUnique({
+    where: { id: taskId, active: true },
+    select: {
+      id: true,
+      title: true,
+      householdId: true,
+      nextAssigneeMembershipId: true,
+    },
+  });
+
+  if (!task) throw new Error("Tarea no encontrada");
+
+  const myMembership = await assertMemberOf(user.id, task.householdId);
+
+  if (task.nextAssigneeMembershipId !== myMembership.id) {
+    throw new Error("Solo el asignado actual puede intercambiar");
+  }
+
+  const target = await db.membership.findUnique({
+    where: { id: toMembershipId, householdId: task.householdId, leftAt: null },
+    select: { id: true, userId: true, user: { select: { name: true } } },
+  });
+
+  if (!target) throw new Error("Miembro no encontrado");
+
+  await db.task.update({
+    where: { id: taskId },
+    data: { nextAssigneeMembershipId: toMembershipId },
+  });
+
+  revalidatePath("/tareas");
+  revalidatePath("/hoy");
+
+  sendPushToUser(target.userId, {
+    title: "Te pasaron una tarea 🔄",
+    body: `${user.name} te pasó "${task.title}"`,
+    url: "/tareas",
+  }).catch(() => {});
 }

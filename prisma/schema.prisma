@@ -30,6 +30,8 @@ model User {
   billsCreated    MonthlyBill[]    @relation("billCreator")
   monthlyCharges  MonthlyCharge[]  @relation("chargeOwner")
   chargesConfirmed MonthlyCharge[] @relation("chargeConfirmer")
+  noticesAuthored Notice[]         @relation("noticeAuthor")
+  reactions       Reaction[]
 }
 
 model Household {
@@ -45,6 +47,7 @@ model Household {
   settlements   Settlement[]
   rooms         Room[]
   monthlyBills  MonthlyBill[]
+  notices       Notice[]
 }
 
 enum HouseholdRole {
@@ -265,6 +268,35 @@ model MonthlyCharge {
   confirmedBy User?       @relation("chargeConfirmer", fields: [confirmedById], references: [id])
 
   @@unique([monthlyBillId, userId])
+}
+
+// ============ MURO DE AVISOS ============
+
+model Notice {
+  id          String   @id @default(cuid())
+  householdId String
+  authorId    String
+  content     String
+  pinned      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  household Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  author    User       @relation("noticeAuthor", fields: [authorId], references: [id])
+  reactions Reaction[]
+
+  @@index([householdId, createdAt])
+}
+
+model Reaction {
+  id       String @id @default(cuid())
+  noticeId String
+  userId   String
+  emoji    String
+
+  notice Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([noticeId, userId, emoji])
 }
 
 // ============ PUSH ============
