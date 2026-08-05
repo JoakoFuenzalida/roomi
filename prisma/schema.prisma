@@ -27,6 +27,9 @@ model User {
   settlementsSent Settlement[]     @relation("settleFrom")
   settlementsRcvd Settlement[]     @relation("settleTo")
   settlementsMade Settlement[]     @relation("settleRecorder")
+  billsCreated    MonthlyBill[]    @relation("billCreator")
+  monthlyCharges  MonthlyCharge[]  @relation("chargeOwner")
+  chargesConfirmed MonthlyCharge[] @relation("chargeConfirmer")
 }
 
 model Household {
@@ -40,6 +43,8 @@ model Household {
   shoppingItems ShoppingItem[]
   expenses      Expense[]
   settlements   Settlement[]
+  rooms         Room[]
+  monthlyBills  MonthlyBill[]
 }
 
 enum HouseholdRole {
@@ -61,6 +66,7 @@ model Membership {
   household        Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
   assignedTasks    Task[]         @relation("nextAssignee")
   nextShoppingFor  ShoppingItem[] @relation("nextBuyer")
+  room             Room?
 
   @@unique([userId, householdId])
   @@index([householdId, leftAt, rotationOrder])
@@ -197,6 +203,71 @@ model Settlement {
   recordedBy User      @relation("settleRecorder", fields: [recordedById], references: [id])
 
   @@index([householdId, createdAt])
+}
+
+// ============ CUENTAS (GASTOS FIJOS) ============
+
+model Room {
+  id           String  @id @default(cuid())
+  householdId  String
+  name         String
+  monthlyCost  Int
+  membershipId String? @unique
+
+  household  Household   @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  membership Membership? @relation(fields: [membershipId], references: [id])
+
+  @@index([householdId])
+}
+
+enum BillStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model MonthlyBill {
+  id          String     @id @default(cuid())
+  householdId String
+  month       Int
+  year        Int
+  status      BillStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdById String
+  createdAt   DateTime   @default(now())
+
+  household Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdBy User            @relation("billCreator", fields: [createdById], references: [id])
+  items     BillItem[]
+  charges   MonthlyCharge[]
+
+  @@unique([householdId, month, year])
+}
+
+model BillItem {
+  id            String @id @default(cuid())
+  monthlyBillId String
+  label         String
+  amount        Int
+
+  monthlyBill MonthlyBill @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
+}
+
+model MonthlyCharge {
+  id            String    @id @default(cuid())
+  monthlyBillId String
+  userId        String
+  roomAmount    Int
+  sharedAmount  Int
+  totalAmount   Int
+  paidAt        DateTime?
+  confirmedAt   DateTime?
+  confirmedById String?
+
+  monthlyBill MonthlyBill @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
+  user        User        @relation("chargeOwner", fields: [userId], references: [id])
+  confirmedBy User?       @relation("chargeConfirmer", fields: [confirmedById], references: [id])
+
+  @@unique([monthlyBillId, userId])
 }
 
 // ============ PUSH ============

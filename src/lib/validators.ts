@@ -73,6 +73,31 @@ export const marcarCompradoSchema = z.object({
   excludedUserIds: z.array(z.string()).default([]),
 });
 
+export const roomSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Nombre requerido")
+    .max(40, "Máx 40 caracteres"),
+  monthlyCost: z.coerce
+    .number()
+    .int("Sin decimales")
+    .min(0, "Monto no puede ser negativo"),
+  membershipId: z.string().optional(),
+});
+
+export const billItemSchema = z.object({
+  label: z
+    .string()
+    .trim()
+    .min(1, "Nombre requerido")
+    .max(40, "Máx 40 caracteres"),
+  amount: z.coerce
+    .number()
+    .int("Sin decimales")
+    .min(0, "Monto no puede ser negativo"),
+});
+
 export const settlementSchema = z.object({
   toUserId: z.string().min(1, "Selecciona a quién le pagaste"),
   amount: z.coerce

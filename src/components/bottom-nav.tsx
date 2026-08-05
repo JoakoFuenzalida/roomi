@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListChecks, ShoppingBag, Users, User } from "lucide-react";
+import { Home, ListChecks, ShoppingBag, Receipt, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/hoy", label: "Hoy", Icon: Home },
   { href: "/tareas", label: "Tareas", Icon: ListChecks },
   { href: "/compras", label: "Compras", Icon: ShoppingBag },
+  { href: "/cuentas", label: "Cuentas", Icon: Receipt },
   { href: "/hogar", label: "Hogar", Icon: Users },
-  { href: "/perfil", label: "Perfil", Icon: User },
 ] as const;
 
 export function BottomNav() {
