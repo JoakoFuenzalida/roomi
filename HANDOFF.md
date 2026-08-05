@@ -1,212 +1,267 @@
-# Roomi — Handoff a nueva sesión
+# Roomi — Handoff completo (actualizado 2026-08-05)
 
-Este archivo captura el estado real después de las primeras 2 fases del MVP. Léelo **después** de `BOOTSTRAP.md`. Lo que dice acá **sobreescribe** cualquier detalle en `BOOTSTRAP.md` que se haya vuelto obsoleto por realidades de las libs.
+Este archivo captura el estado real del proyecto. Léelo para entender qué hay, cómo funciona, y qué decisiones se tomaron.
 
 ---
 
-## Convenciones fijadas con el usuario
+## Contexto del usuario (Joako)
 
+- 5to año Ing. Civil Informática, Chile.
+- Stack dominado: Next.js App Router + TS + Prisma + Supabase + Auth.js + Tailwind + PWA.
+- Formato preferido: directo, sin relleno. Tradeoffs en 1 línea + recomendación. Pushback con argumento.
 - **Joako hace todos los `git commit` y `git push`**. No los corras tú. Cuando termines un chunk, avísale "listo para commit" con qué cambió.
-- Formato de respuestas: directo, sin relleno. Tradeoffs en 1 línea + recomendación. Pushback con argumento.
-- Es 5to año Ing. Civil Informática, viene de un proyecto anterior (Magic Rouss) con stack muy parecido.
+- Mostrar diffs de `prisma/schema.prisma` antes de correr `prisma migrate`.
+
+## Qué es Roomi
+
+PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan un depa. Un usuario puede pertenecer a varios hogares.
 
 ---
 
-## Stack real (con parches vs BOOTSTRAP.md)
+## Stack
 
-- **Next.js 16.2.10** + Turbopack + App Router + `src/` + TS
-- **Tailwind v4** + **shadcn/ui sobre `@base-ui/react`** (NO Radix). Cambios de API vs shadcn viejo:
-  - Sin `asChild`. Para polimórfico: `render={<Link href="..." />}` + `nativeButton={false}` si el render no es un `<button>` nativo.
-- **Prisma v7.8.0** con generator `prisma-client` (nuevo) y output custom a `src/generated/prisma/`. Diferencias vs BOOTSTRAP.md:
-  - Import del client: `import { PrismaClient } from "@/generated/prisma/client"` (NO `@prisma/client`).
-  - Prisma v7 **exige `adapter` o `accelerateUrl`** en el constructor. Ya instalado `@prisma/adapter-pg` + `pg` + `@types/pg`. Uso `PrismaPg` con `DATABASE_URL`.
-  - `datasource db` en schema es minimal (solo `provider`). El URL para migraciones viene de `prisma.config.ts` (que prioriza `DIRECT_URL ?? DATABASE_URL`).
-- **Auth.js v5 beta** (Credentials + bcryptjs). `session: { strategy: "jwt" }`, callback `session` expone `user.id`.
-- **Supabase Postgres** — proyecto `roomi` en region `sa-east-1` (São Paulo). Pooler transaction (6543) para runtime, session pooler (5432) para migrate. Ambos configurados en `.env`.
-- **Web Push VAPID** — keys generadas, en `.env`. Sin usar aún.
-- **Zod v4**, **useActionState** (React 19), **Server Actions** en todos los mutations.
-
----
-
-## Qué está construido y verificado end-to-end
-
-### Fase 1 — Setup
-- Scaffold Next + Tailwind + TS + turbopack.
-- Deps: `prisma @prisma/client next-auth@beta bcryptjs zod web-push @prisma/adapter-pg pg` + devs.
-- shadcn init (base neutral, CSS vars) + componentes: `button dialog sheet input label`.
-- Prisma init + `prisma.config.ts` con `DIRECT_URL ?? DATABASE_URL`.
-- VAPID generadas y guardadas.
-- `.env` completo (`DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `NEXTAUTH_URL`, VAPID, `CRON_SECRET`). `.env.example` committable.
-
-### Fase 2 — Schema MVP migrado
-Modelos migrados (solo estos, el resto de BOOTSTRAP.md queda para v1/v2):
-- `User`, `Household`, `Membership`, `Task`, `TaskExecution`, `PushSubscription`.
-- Migración: `prisma/migrations/20260706042111_init/migration.sql`.
-- **Relaciones v1/v2 removidas del schema** (Expense, Notice, Reaction, etc.) porque Prisma exige ambos lados. Se re-agregan cuando lleguen esos modelos.
-
-### Fase 3 — Auth (registro + login)
-Testeado en browser con Chrome preview MCP:
-- Registro → auto-signIn → redirect a `/hoy` ✅
-- Logout → `/login` ✅
-- Login OK → `/hoy` ✅
-- Login wrong pass → mensaje "Email o contraseña incorrectos" ✅
-- `/hoy` sin sesión → redirect `/login` ✅ (gate en `src/app/(app)/layout.tsx`)
-
-Archivos:
-- `src/lib/db.ts` — Prisma singleton con `PrismaPg` adapter
-- `src/lib/auth.ts` — Auth.js config (Credentials + Zod + bcrypt)
-- `src/lib/session.ts` — `requireUser()`, `assertMemberOf()`
-- `src/lib/validators.ts` — Zod schemas
-- `src/types/next-auth.d.ts` — module augmentation para `session.user.id`
-- `src/actions/auth.ts` — `register`, `login` con soporte `callbackUrl`
-- `src/app/(auth)/{login,registro}/page.tsx` — server component que lee `searchParams`
-- `src/app/(auth)/{login,registro}/form.tsx` — client component con `useActionState`
-- `src/app/(auth)/layout.tsx` — layout centrado
-- `src/app/api/auth/[...nextauth]/route.ts` — export handlers
-- `src/app/(app)/layout.tsx` — auth gate para todo `/hoy`, `/tareas`, `/hogar`
-- `src/app/(app)/hoy/page.tsx` — placeholder con lista de hogares + signOut
-- `src/app/page.tsx` — landing con links a login/registro
-
-### Fase 4 — Hogares (crear, unirse, salir)
-Testeado en browser end-to-end:
-- Crear hogar "Depa Vitacura" → user es ADMIN con rotationOrder 1 ✅
-- `/hogar` lista hogares con miembros, invite link, copy button, salir ✅
-- Compartir link `/unirse/[code]` → preview público con botones a login/registro con `callbackUrl` ✅
-- Registrar desde link compartido → auto-login → vuelve a `/unirse/[code]` ✅
-- Confirmar unirse → membership con `rotationOrder = max + 1` ✅
-- Salir → `leftAt = now()` (soft delete) ✅
-- Re-unirse → membership reactivada con nuevo `rotationOrder` ✅
-
-Archivos:
-- `src/actions/household.ts` — `createHousehold`, `joinHousehold` (useActionState), `joinByCode` (para /unirse), `leaveHousehold`, `joinCore` privado
-- `src/components/household-forms.tsx` — client forms
-- `src/components/copy-button.tsx` — client, `navigator.clipboard`
-- `src/app/(app)/hogar/page.tsx` — dashboard
-- `src/app/unirse/[code]/page.tsx` — join público con preview
+- **Next.js 16.2.10** + Turbopack + App Router + `src/` + TypeScript
+- **Tailwind v4** + **shadcn/ui sobre `@base-ui/react`** (NO Radix)
+  - Sin `asChild`. Para polimórfico: `render={<Link href="..." />}` + `nativeButton={false}`
+  - Sheets usan `open` controlado (no SheetTrigger), siempre `side="bottom"`
+- **Prisma v7.8.0** con generator `prisma-client`, output `src/generated/prisma/`
+  - Import: `import { ... } from "@/generated/prisma/client"` (NO `@prisma/client`)
+  - Requiere `adapter` en constructor. Usa `@prisma/adapter-pg` + `pg`
+  - `prisma.config.ts` prioriza `DIRECT_URL ?? DATABASE_URL`
+  - **Importante**: después de `prisma migrate dev` + `prisma generate`, borrar `.next` y reiniciar dev server para que el singleton Prisma cacheado tome los nuevos modelos
+- **Auth.js v5 beta** (Credentials + bcryptjs + Zod). `session: { strategy: "jwt" }`, callback expone `user.id`
+- **Supabase Postgres** — proyecto `roomi`, region `sa-east-1`. Pooler transaction (6543) runtime, session (5432) migrate
+- **Web Push VAPID** con `web-push`. Service Worker propio en `public/sw.js`
+- **Zod v4** + `useActionState` (React 19) + Server Actions para todas las mutaciones
+- **Vercel** deploy con cron jobs
 
 ---
 
-## Decisiones no obvias tomadas en el camino
+## Módulos implementados (todos funcionales y verificados)
 
-1. **`callbackUrl` con validación anti-open-redirect**: `safeCallback()` en `src/actions/auth.ts` — solo acepta paths que empiezan con `/` y no con `//`. Bloquea `//attacker.com` como redirect.
-2. **`joinByCode(code)` separado de `joinHousehold(prev, formData)`**: hay 2 wrappers sobre `joinCore` privado — evita `FormData` sintético en el flujo `/unirse/[code]` (viene por URL).
-3. **Rotación al reactivar membership**: cuando alguien vuelve al hogar del que salió, `rotationOrder = max(rotationOrder) + 1` sobre TODAS las memberships (incluidas las soft-deleted). Coherente con "nuevo miembro entra al final".
-4. **Route groups `(auth)` y `(app)`**: `(app)` tiene layout con `auth()` + `redirect("/login")` — gate único para todas las páginas protegidas. `(auth)` es solo estilo (centrado). `/unirse/[code]` es público a propósito.
-5. **Página login/registro split server/client**: server component lee `searchParams` (async en Next 16), pasa `callbackUrl` como prop al client component con `useActionState`. Evita el Suspense boundary que exige `useSearchParams()`.
-6. **`preview_click` de Chrome MCP no submitea formularios con botones base-ui**. Workaround en testing: `form.requestSubmit()` via `preview_eval`. Solo relevante para verificación automatizada, en un navegador real el submit funciona.
+### 1. Auth (registro + login)
+- Registro con auto-login, login con callbackUrl, logout
+- `safeCallback()` anti-open-redirect (solo paths `/`, no `//`)
+- Archivos: `src/actions/auth.ts`, `src/app/(auth)/{login,registro}/`, `src/lib/auth.ts`, `src/lib/session.ts`
+
+### 2. Hogares (crear, unirse, salir)
+- Crear hogar (user = ADMIN), unirse con invite link `/unirse/[code]`, salir (soft delete), re-unirse
+- Archivos: `src/actions/household.ts`, `src/components/household-forms.tsx`, `src/app/(app)/hogar/page.tsx`, `src/app/unirse/[code]/page.tsx`
+
+### 3. Tareas con rotación automática
+- CRUD tareas (admin), completar (cualquiera), rotación por `rotationOrder` saltando vacaciones
+- Frecuencias: DAILY, WEEKLY, BIWEEKLY, MONTHLY con días específicos (`daysOfWeek`, `daysOfMonth`)
+- `completarTarea` en `$transaction`: crea `TaskExecution` (@@unique mata races), rota asignado, avanza `nextDueDate`
+- Swap de turnos: el asignado puede pasar su tarea a otro miembro + push notification
+- Archivos: `src/actions/task.ts`, `src/components/task-actions.tsx`, `src/lib/rotation.ts`, `src/app/(app)/tareas/`
+
+### 4. Compras compartidas
+- Lista de compras con items one-shot y recurrentes
+- Al marcar comprado: crea `Expense` + `ExpenseSplit` equitativo (con exclusiones)
+- Deudas derivadas: `sum(ExpenseSplit) - sum(Settlement confirmados)`
+- Settlements con confirmación bidireccional (marcar pagado + confirmar pago)
+- Push en compra, pago, y confirmación
+- Archivos: `src/actions/shopping.ts`, `src/actions/settlement.ts`, `src/components/shopping-actions.tsx`, `src/app/(app)/compras/page.tsx`
+
+### 5. Cuentas (gastos fijos mensuales)
+- Reemplaza Google Sheets del hogar para arriendo + servicios
+- **Piezas (Room)**: CRUD admin, cada pieza tiene costo y ocupante (via membership)
+- **Boleta mensual incremental**: items se agregan a medida que llegan (arriendo el 1, GGCC el 20, etc.)
+- **`recalcularCobros`**: upsert `MonthlyCharge` por usuario (roomAmount + sharedAmount), preserva estado pagado
+- **Items recurrentes**: flag `isRecurring` + `dayOfMonth`, botón "Traer fijos" copia del mes anterior
+- **Exclusiones por item**: `excludedUserIds` para gastos que no aplican a todos (ej: gimnasio)
+- **Pagos**: miembro marca pagado + push al admin, admin confirma + push al miembro
+- Archivos: `src/actions/cuentas.ts`, `src/components/cuentas-actions.tsx`, `src/components/cuentas-add-bill-button.tsx`, `src/app/(app)/cuentas/page.tsx`
+
+### 6. Muro de avisos con reacciones
+- Avisos por hogar, ordenados pinned-first + fecha desc
+- Reacciones emoji toggle (@@unique por notice+user+emoji)
+- Quick-add emojis (muestra los 3 no usados aún)
+- Admin puede fijar/desfijar avisos, autor o admin puede borrar
+- Push al publicar aviso
+- Archivos: `src/actions/notices.ts`, `src/components/muro-actions.tsx`, `src/app/(app)/muro/page.tsx`
+
+### 7. Push notifications
+- Suscripción VAPID, `PushSubscription` por User (no por Membership)
+- `sendPushToUser(userId, payload)` y `sendPushToHousehold(householdId, payload, excludeUserId)`
+- Push en: completar tarea, marcar comprado, pagar deuda, confirmar pago, nuevo gasto cuentas, pago cuentas, nuevo aviso
+- Archivos: `src/lib/push.ts`, `src/app/api/push/subscribe/route.ts`, `src/components/push-prompt.tsx`
+
+### 8. PWA
+- `manifest.json` con iconos, `sw.js` para push + offline
+- Install prompt con dismiss 7 días en localStorage
+- Archivos: `public/manifest.json`, `public/sw.js`, `src/components/sw-register.tsx`, `src/components/install-prompt.tsx`
+
+### 9. Dark mode
+- Tokens MD3 completos en CSS (`:root` + `.dark`)
+- Script anti-FOUC en `<head>` (lee localStorage antes del paint)
+- `ThemeProvider` contexto React + `useTheme()` hook
+- Toggle en página de perfil con persistencia localStorage
+- Respeta `prefers-color-scheme` como default si no hay preferencia guardada
+- Archivos: `src/components/theme-provider.tsx`, `src/components/theme-toggle.tsx`, `src/app/globals.css`
+
+### 10. Perfil
+- Datos del usuario (nombre, email)
+- Lista de hogares con badge Admin
+- Vacation mode toggle por hogar
+- Dark mode toggle
+- Cerrar sesión
+- Accesible desde avatar en header de todas las páginas
+- Archivos: `src/app/(app)/perfil/page.tsx`, `src/components/vacation-toggle.tsx`
+
+### 11. Vacation mode
+- Campo `onVacationUntil` en Membership (ya existía en schema original)
+- UI en perfil: activar con date picker, desactivar con un click
+- Mientras activo: usuario es saltado en rotación de tareas y compras
+- Archivos: `src/actions/vacation.ts`, `src/components/vacation-toggle.tsx`
+
+### 12. Cron jobs
+- **`/api/cron/advance-overdue`** (03:05 UTC): avanza tareas vencidas, asigna 0 pts, rota al siguiente
+- **`/api/cron/daily-reminder`** (13:00 UTC = 10 AM Chile): push "Hoy te toca X" a cada asignado
+- Protegidos con `Authorization: Bearer ${CRON_SECRET}`
+- Archivos: `src/app/api/cron/advance-overdue/route.ts`, `src/app/api/cron/daily-reminder/route.ts`, `vercel.json`
+
+### 13. Swap de turnos
+- El asignado actual puede pasar su tarea a otro miembro activo
+- Dropdown con avatares de los otros miembros
+- Push notification al receptor
+- Archivos: `swapTurno` en `src/actions/task.ts`, `SwapButton` en `src/components/task-actions.tsx`
 
 ---
 
-## Estado de la DB en Supabase (después de la sesión)
+## Navegación
 
-Usuarios que quedaron creados durante testing:
-- `test@roomi.cl` / `testpassword123` — dueño del hogar "Depa Vitacura", rotationOrder 1, role ADMIN.
-- `dos@roomi.cl` / `testpassword123` — miembro "Depa Vitacura", rotationOrder 3 (fue 2, salió, volvió).
+**Bottom nav (5 tabs):** Muro | Tareas | Compras | Cuentas | Hogar
 
-Bórralos con `DELETE FROM "User"` o desde Supabase si quieres arrancar limpio. La UI para admin no existe aún.
+- `/muro` — avisos del hogar (reemplazó a `/hoy` en el nav)
+- `/tareas` — lista de tareas + crear nueva + swap
+- `/compras` — lista de compras + gastos + deudas + settlements
+- `/cuentas` — piezas + boleta mensual + cobros
+- `/hogar` — miembros + invite link + salir
+- `/perfil` — accesible desde avatar header (no tiene tab)
+- `/hoy` — dashboard resumen (existe pero fuera del nav)
 
----
-
-## Setup específico de la sesión que puede que necesites replicar
-
-- `.claude/launch.json` con config `dev` (comando `npm run dev`, puerto 3000). Sirve para arrancar el server con `preview_start` de Chrome MCP.
-- Nota TZ: Windows genera warnings de LF→CRLF en git. Ignorables.
-- El comando `create-next-app@latest .` **rechaza directorios no vacíos**. Truco: mover `BOOTSTRAP.md`/`HANDOFF.md` a la carpeta padre, correr scaffold, mover de vuelta.
+Multi-hogar: todas las páginas tienen chip selector cuando el usuario pertenece a >1 hogar.
 
 ---
 
-## Estructura actual del repo (relevante)
+## Estructura del repo
 
 ```
 roomi/
-├── BOOTSTRAP.md               ← contexto original completo (léelo primero)
-├── HANDOFF.md                 ← este archivo
-├── .env                       ← con secretos reales (gitignored)
-├── .env.example
+├── BOOTSTRAP.md              ← contexto original (referencia histórica)
+├── HANDOFF.md                ← ESTE ARCHIVO (estado actual)
+├── AGENTS.md                 ← reglas Next.js para agentes
+├── .env                      ← secretos (gitignored)
 ├── prisma/
-│   ├── schema.prisma          ← 6 modelos MVP + generator prisma-client
-│   └── migrations/20260706042111_init/
-├── prisma.config.ts
+│   ├── schema.prisma         ← 18 modelos
+│   ├── prisma.config.ts
+│   └── migrations/           ← 5 migraciones aplicadas
+├── vercel.json               ← 2 cron jobs
+├── public/
+│   ├── manifest.json
+│   ├── sw.js
+│   ├── icon.svg, icon-192.png, icon-512.png
+│   └── screenshots/
 ├── src/
-│   ├── generated/prisma/      ← client generado, ignorado en runtime edits
+│   ├── generated/prisma/     ← client generado (no editar)
 │   ├── actions/
-│   │   ├── auth.ts            ← register + login
-│   │   └── household.ts       ← create/join/joinByCode/leave
+│   │   ├── auth.ts           ← register, login
+│   │   ├── household.ts      ← create/join/leave
+│   │   ├── task.ts           ← createTask, completarTarea, deleteTask, swapTurno
+│   │   ├── shopping.ts       ← CRUD items, marcarComprado
+│   │   ├── settlement.ts     ← marcarPagado, confirmarPago, getBalances
+│   │   ├── cuentas.ts        ← rooms CRUD, billItems, charges, recurrentes
+│   │   ├── notices.ts        ← crearAviso, eliminar, togglePin, toggleReaction
+│   │   └── vacation.ts       ← setVacation
 │   ├── app/
-│   │   ├── page.tsx           ← landing
-│   │   ├── (auth)/{login,registro}/  ← server + client split
+│   │   ├── layout.tsx        ← root layout, fonts, ThemeProvider, anti-FOUC script
+│   │   ├── globals.css       ← MD3 tokens light + dark
+│   │   ├── page.tsx          ← landing
+│   │   ├── (auth)/           ← login, registro (server+client split)
 │   │   ├── (app)/
-│   │   │   ├── layout.tsx     ← auth gate
-│   │   │   ├── hoy/           ← placeholder
-│   │   │   └── hogar/
-│   │   ├── unirse/[code]/     ← public join
-│   │   └── api/auth/[...nextauth]/route.ts
+│   │   │   ├── layout.tsx    ← auth gate + BottomNav + PushPrompt + InstallPrompt
+│   │   │   ├── muro/         ← notice board
+│   │   │   ├── hoy/          ← today dashboard
+│   │   │   ├── tareas/       ← task list + /nueva
+│   │   │   ├── compras/      ← shopping + expenses + settlements
+│   │   │   ├── cuentas/      ← fixed costs (rooms + bills + charges)
+│   │   │   ├── hogar/        ← household management
+│   │   │   └── perfil/       ← profile + settings
+│   │   ├── unirse/[code]/    ← public join page
+│   │   └── api/
+│   │       ├── auth/[...nextauth]/route.ts
+│   │       ├── push/subscribe/route.ts
+│   │       └── cron/
+│   │           ├── advance-overdue/route.ts
+│   │           └── daily-reminder/route.ts
 │   ├── components/
-│   │   ├── ui/                ← shadcn
+│   │   ├── ui/               ← shadcn (button, dialog, sheet, input, label)
+│   │   ├── avatar-initials.tsx
+│   │   ├── bottom-nav.tsx
 │   │   ├── copy-button.tsx
-│   │   └── household-forms.tsx
+│   │   ├── cuentas-actions.tsx
+│   │   ├── cuentas-add-bill-button.tsx
+│   │   ├── household-forms.tsx
+│   │   ├── install-prompt.tsx
+│   │   ├── muro-actions.tsx
+│   │   ├── push-prompt.tsx
+│   │   ├── roomi-logo.tsx
+│   │   ├── shopping-actions.tsx
+│   │   ├── sw-register.tsx
+│   │   ├── task-actions.tsx
+│   │   ├── theme-provider.tsx
+│   │   ├── theme-toggle.tsx
+│   │   └── vacation-toggle.tsx
 │   ├── lib/
-│   │   ├── db.ts              ← Prisma + PrismaPg singleton
-│   │   ├── auth.ts            ← Auth.js config
-│   │   ├── session.ts         ← requireUser + assertMemberOf
-│   │   ├── validators.ts      ← Zod schemas
-│   │   └── utils.ts           ← shadcn cn()
+│   │   ├── db.ts             ← Prisma singleton con PrismaPg adapter
+│   │   ├── auth.ts           ← Auth.js config
+│   │   ├── session.ts        ← requireUser(), assertMemberOf()
+│   │   ├── push.ts           ← sendPushToUser, sendPushToHousehold
+│   │   ├── rotation.ts       ← computeInitialDueDate, computeNextDueDate
+│   │   ├── validators.ts     ← Zod schemas
+│   │   └── utils.ts          ← cn()
 │   └── types/next-auth.d.ts
 ```
 
 ---
 
-## Próximo paso — Fase 5: CRUD de tareas
+## Decisiones de diseño clave
 
-Lo que sigue del MVP (BOOTSTRAP.md fases 4-6):
-
-1. **`src/actions/task.ts`**:
-   - `createTask({ householdId, title, frequency, points })` — solo si `role === ADMIN` (usar `assertMemberOf` + check role). Setea `nextAssigneeMembershipId` = primer miembro activo por rotationOrder, `nextDueDate = new Date()`, `cycleNumber: 0`.
-   - `updateTask(taskId, ...)` — solo admin.
-   - `deleteTask(taskId)` — soft delete (`active = false`), no borra ejecuciones.
-2. **`src/app/(app)/tareas/page.tsx`** — lista tareas del hogar (query por membership activa). Si eres admin: link a `/tareas/nueva` + botón "editar" por tarea.
-3. **`src/app/(app)/tareas/nueva/page.tsx`** — form (title, frequency select, points).
-4. **UI en `/hoy`** — mostrar tareas donde `nextAssigneeMembershipId` es tu membership + vencen hoy o antes. Botón "Listo".
-5. **Server Action `completarTarea(taskId)`** — la transacción del BOOTSTRAP.md líneas 298-334. Es el corazón del algoritmo. Tiene que:
-   - Crear `TaskExecution` con `@@unique([taskId, cycleNumber])` para matar races.
-   - Recalcular `nextAssigneeMembershipId` = siguiente activo por rotationOrder (usando `onVacationUntil`).
-   - Avanzar `nextDueDate` sumando el interval de la frecuencia.
-   - Incrementar `cycleNumber`.
-   - Usar `db.$transaction()`.
-6. **Helper `addInterval(date, freq)` en `src/lib/rotation.ts`** — dias por frecuencia: DAILY=1, WEEKLY=7, BIWEEKLY=14, MONTHLY=30 (o real months, decidir).
-
-**Multi-hogar decisión pendiente**: el usuario puede pertenecer a N hogares. Para `/hoy` y `/tareas`, la vista está scopada a UN hogar. Necesitamos:
-- Selector de hogar activo (top de la pantalla), o
-- Vista combinada (todas mis tareas de todos mis hogares) con badge del hogar.
-
-Recomendación: **vista combinada en `/hoy`** (mostrar todas), y **selector en `/tareas`** (para crear necesitas contexto de un hogar). Preguntarle al usuario antes de implementar.
+1. **Deudas derivadas, no persistidas**: balance = `sum(ExpenseSplit) - sum(Settlement confirmados)`. Sin tabla `Debt`.
+2. **Cuentas incrementales**: items se agregan a lo largo del mes. `recalcularCobros` hace upsert (preserva estado pagado).
+3. **`excludedUserIds` por BillItem**: permite gastos que no aplican a todos (ej: gimnasio solo para algunos).
+4. **Rotación por `rotationOrder`**: posición densa en el ciclo. Nuevo miembro entra al final. `onVacationUntil` en el futuro = saltado.
+5. **`TaskExecution @@unique([taskId, cycleNumber])`**: idempotencia natural, mata races sin locks.
+6. **`PushSubscription` por User** (no por Membership): la notificación es al humano, no al rol.
+7. **Server Actions con `useActionState`**: returns void, state updates via hook. No retornar valores desde transitions.
+8. **Controlled Sheet open state**: base-ui Dialog portal tiene issues con revalidation, se maneja con `useEffect` watching state.
+9. **Anti-FOUC dark mode**: inline script en `<head>` lee localStorage antes de React hydration. `suppressHydrationWarning` en `<html>`.
 
 ---
 
-## Cosas que dejé sin hacer (a propósito, no eran MVP fase actual)
+## Datos de prueba en Supabase
 
-- Bottom nav (`src/components/bottom-nav.tsx` en BOOTSTRAP.md) — se puede agregar cuando haya más de 2 rutas navegables.
-- Middleware `src/middleware.ts` — hoy el gate está en `(app)/layout.tsx`, es suficiente para MVP. Middleware sería más eficiente pero no crítico.
-- PWA (manifest + sw.js + iconos) — fase 11 del MVP, después de tareas.
-- Vercel Cron endpoints — fase 9-10, después de push.
-- Web Push wiring — fase 7-8.
+- `test@roomi.cl` / `testpassword123` — ADMIN de "Depa Vitacura"
+- `dos@roomi.cl` / `testpassword123` — MEMBER de "Depa Vitacura"
 
 ---
 
-## Cómo verificar que todo sigue funcionando al abrir la sesión nueva
+## Setup para nueva sesión
 
-1. `npm install` (si es un clon fresco).
-2. `npx prisma generate`.
-3. `npm run dev`.
-4. Ir a `http://localhost:3000` → landing.
-5. Registrarse con user nuevo o login con `test@roomi.cl` / `testpassword123`.
-6. `/hogar` debería mostrar "Depa Vitacura" si logueaste como test@.
-7. Crear una tarea aún no se puede — es lo próximo.
+```bash
+npm install
+npx prisma generate
+npm run dev
+```
 
-Si `prisma generate` falla porque cambió el schema pero el generated/ está viejo, borrar `src/generated/prisma/` y regenerar.
+Si `prisma generate` falla, borrar `src/generated/prisma/` y regenerar. Si los modelos nuevos no aparecen en runtime, borrar `.next` y reiniciar.
 
 ---
 
-## Frase mágica para arrancar la nueva sesión
+## Qué queda por hacer (nice-to-have, todo lo core está hecho)
 
-> "Lee `BOOTSTRAP.md` (contexto original) y luego `HANDOFF.md` (estado real después de fases 1-4). Sigamos con la fase 5 del MVP: CRUD de tareas + Server Action `completarTarea` con la transacción de rotación. Antes de codear, dime cómo vas a manejar el multi-hogar en `/hoy` y `/tareas`, y espera OK."
+- **Puntos + ranking + gamificación** — leaderboard mensual desde `TaskExecution.pointsEarned`
+- **Evidencia fotográfica** — Supabase Storage + foto opcional al completar tarea
+- **Supabase Realtime** — muro y compras en vivo sin refresh
+- **Historial mensual** — vista de gastos/tareas por persona por mes
