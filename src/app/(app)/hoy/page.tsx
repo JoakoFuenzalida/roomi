@@ -7,23 +7,13 @@ import { CompleteTaskButton } from "@/components/task-actions";
 import { RoomiHeader, RoomiSymbol } from "@/components/roomi-logo";
 import { AvatarInitials } from "@/components/avatar-initials";
 import { getBalances } from "@/actions/settlement";
-import { cn } from "@/lib/utils";
-import { ChatClient } from "@/components/chat";
+import { HoyTabs } from "./client";
 
 function formatPrice(n: number) {
   return "$" + n.toLocaleString("es-CL");
 }
 
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
-
-export default async function HoyPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const params = await searchParams;
-  const tab = typeof params.tab === "string" ? params.tab : "muro";
-
+export default async function HoyPage() {
   const user = await requireUser();
   const userId = user.id;
   const userName = user.name ?? "";
@@ -34,7 +24,7 @@ export default async function HoyPage({
   });
 
   const householdIds = activeMemberships.map((m) => m.household.id);
-  const mainHouseholdId = householdIds[0]; // For chat, we use the first active household for now, or maybe we can select it
+  const mainHouseholdId = householdIds[0];
 
   // 1. Tareas pendientes de hoy
   const endOfToday = new Date();
@@ -97,7 +87,7 @@ export default async function HoyPage({
 
   // CHAT DATA
   let chatMessages: any[] = [];
-  if (tab === "chat" && mainHouseholdId) {
+  if (mainHouseholdId) {
     chatMessages = await db.notice.findMany({
       where: { householdId: mainHouseholdId },
       include: {
@@ -110,79 +100,55 @@ export default async function HoyPage({
   }
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-6 relative min-h-svh pb-[80px] flex flex-col">
-      <header className="flex items-center justify-between mb-4">
+    <main className="max-w-md mx-auto px-5 pt-6 flex flex-col h-[100dvh] pb-[80px]">
+      <header className="flex items-center justify-between mb-4 shrink-0">
         <RoomiHeader />
         <Link href="/perfil">
           <AvatarInitials name={user.name} imageUrl={user.image} size={40} />
         </Link>
       </header>
 
-      {/* Tabs */}
-      {activeMemberships.length > 0 && (
-        <div className="flex bg-surface-container-high rounded-[14px] p-1 mb-6 shrink-0">
-          <Link
-            href="/hoy?tab=muro"
-            className={cn(
-              "flex-1 text-center py-2.5 rounded-[10px] font-semibold text-[14px] transition-colors",
-              tab === "muro" ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"
-            )}
-          >
-            Muro
-          </Link>
-          <Link
-            href="/hoy?tab=chat"
-            className={cn(
-              "flex-1 text-center py-2.5 rounded-[10px] font-semibold text-[14px] transition-colors",
-              tab === "chat" ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"
-            )}
-          >
-            Chat en vivo
-          </Link>
-        </div>
-      )}
-
       {activeMemberships.length === 0 ? (
         <EmptyHogar />
-      ) : tab === "chat" && mainHouseholdId ? (
-        <ChatClient
-          householdId={mainHouseholdId}
-          currentUserId={userId}
-          initialMessages={chatMessages}
-        />
       ) : (
-        <div className="flex-1 overflow-y-auto pb-4">
-          <div className="mb-6">
-            <h1 className="font-display font-semibold text-[26px] leading-tight">
-              Buenas, {firstName} 👋
-            </h1>
-            <p className="text-on-surface-variant text-sm mt-1">
-              {totalPendingItems === 0
-                ? "No tienes pendientes hoy. ¡Aprovecha el día!"
-                : `Tienes pendientes por resolver.`}
-            </p>
+        <HoyTabs
+          mainHouseholdId={mainHouseholdId}
+          currentUserId={userId}
+          chatMessages={chatMessages}
+        >
+          <div className="flex-1 overflow-y-auto pb-4">
+            <div className="mb-6">
+              <h1 className="font-display font-semibold text-[26px] leading-tight">
+                Buenas, {firstName} 👋
+              </h1>
+              <p className="text-on-surface-variant text-sm mt-1">
+                {totalPendingItems === 0
+                  ? "No tienes pendientes hoy. ¡Aprovecha el día!"
+                  : `Tienes pendientes por resolver.`}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {/* TAREAS */}
+              <TasksCard tasks={pendingTasks} />
+
+              {/* DEUDAS COMPRAS */}
+              {myDebts.length > 0 && (
+                <DebtsCard debts={myDebts} />
+              )}
+
+              {/* CUENTAS PENDIENTES */}
+              {pendingBills.length > 0 && (
+                <BillsCard bills={pendingBills} />
+              )}
+
+              {/* COMPRAS GENERALES */}
+              {shoppingToBuy.length > 0 && (
+                <ShoppingCard items={shoppingToBuy} />
+              )}
+            </div>
           </div>
-
-          <div className="space-y-4">
-            {/* TAREAS */}
-            <TasksCard tasks={pendingTasks} />
-
-            {/* DEUDAS COMPRAS */}
-            {myDebts.length > 0 && (
-              <DebtsCard debts={myDebts} />
-            )}
-
-            {/* CUENTAS PENDIENTES */}
-            {pendingBills.length > 0 && (
-              <BillsCard bills={pendingBills} />
-            )}
-
-            {/* COMPRAS GENERALES */}
-            {shoppingToBuy.length > 0 && (
-              <ShoppingCard items={shoppingToBuy} />
-            )}
-          </div>
-        </div>
+        </HoyTabs>
       )}
     </main>
   );

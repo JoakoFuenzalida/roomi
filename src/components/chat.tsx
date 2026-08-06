@@ -34,8 +34,17 @@ export function ChatClient({
 
   // Scroll to bottom
   useEffect(() => {
+    // Jump instantly on mount
+    const timer = setTimeout(() => {
+      endRef.current?.scrollIntoView({ behavior: "auto" });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Smooth scroll when new messages arrive
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages.length]);
 
   useEffect(() => {
     const channel = supabase.channel(`room_${householdId}`);
@@ -172,7 +181,7 @@ export function ChatClient({
   }
 
   return (
-    <div className="flex flex-col flex-1 h-[calc(100vh-140px)]">
+    <div className="flex flex-col flex-1 h-full min-h-0">
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-on-surface-variant gap-2">
