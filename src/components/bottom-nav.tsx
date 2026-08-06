@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Megaphone, ListChecks, ShoppingBag, Receipt, Users } from "lucide-react";
+import { LayoutDashboard, ListChecks, ShoppingBag, Receipt, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/muro", label: "Muro", Icon: Megaphone },
+  { href: "/hoy", label: "Hoy", Icon: LayoutDashboard },
   { href: "/tareas", label: "Tareas", Icon: ListChecks },
   { href: "/compras", label: "Compras", Icon: ShoppingBag },
   { href: "/cuentas", label: "Cuentas", Icon: Receipt },
