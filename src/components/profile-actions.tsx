@@ -65,7 +65,7 @@ function EditProfileSheet({
           <SheetTitle>Editar Perfil</SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-6 p-4">
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-4">
             <ProfilePictureUpload name={name} imageUrl={imageUrl} />
           </div>
 

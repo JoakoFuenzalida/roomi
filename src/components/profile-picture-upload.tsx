@@ -15,7 +15,8 @@ export function ProfilePictureUpload({
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -40,38 +41,57 @@ export function ProfilePictureUpload({
   }
 
   return (
-    <>
-      <div className="relative group shrink-0">
-        <AvatarInitials name={name} imageUrl={imageUrl} size={56} className="group-hover:opacity-75 transition-opacity" />
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative shrink-0">
+        <AvatarInitials name={name} imageUrl={imageUrl} size={80} />
         
-        {isPending ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
-            <Loader2 className="animate-spin text-white" size={20} />
+        {isPending && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+            <Loader2 className="animate-spin text-white" size={24} />
           </div>
-        ) : (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-            type="button"
-            aria-label="Cambiar foto de perfil"
-          >
-            <Camera className="text-white" size={20} />
-          </button>
         )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => cameraInputRef.current?.click()}
+          disabled={isPending}
+          className="flex items-center gap-2 px-4 py-2 rounded-pill bg-surface-container-high text-on-surface text-[13px] font-semibold hover:bg-surface-container-highest transition-colors disabled:opacity-50"
+        >
+          <Camera size={16} /> Cámara
+        </button>
+        <button
+          type="button"
+          onClick={() => galleryInputRef.current?.click()}
+          disabled={isPending}
+          className="flex items-center gap-2 px-4 py-2 rounded-pill bg-surface-container-high text-on-surface text-[13px] font-semibold hover:bg-surface-container-highest transition-colors disabled:opacity-50"
+        >
+          Galería
+        </button>
       </div>
 
       <input
         type="file"
-        ref={fileInputRef}
+        ref={galleryInputRef}
         accept="image/*"
         className="hidden"
         onChange={handleFileChange}
       />
+      <input
+        type="file"
+        ref={cameraInputRef}
+        accept="image/*"
+        capture="user"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
       {error && (
-        <div className="absolute top-full left-0 mt-2 w-full bg-error-container text-error text-[12px] p-2 rounded z-10">
+        <div className="text-error text-[12px] font-semibold text-center mt-1">
           {error}
         </div>
       )}
-    </>
+    </div>
   );
 }
