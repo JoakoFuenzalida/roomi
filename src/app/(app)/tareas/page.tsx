@@ -44,7 +44,7 @@ export default async function TareasPage({
         <header className="flex items-center justify-between mb-6">
           <RoomiHeader />
           <Link href="/perfil">
-            <AvatarInitials name={user.name} size={40} />
+            <AvatarInitials name={user.name} imageUrl={user.image} size={40} />
           </Link>
         </header>
         <div className="rounded-[14px] bg-surface-container-low border border-outline-variant p-6 flex flex-col items-center text-center gap-4">
@@ -196,7 +196,7 @@ export default async function TareasPage({
 
       <Link
         href={`/tareas/nueva?hogarId=${active.householdId}`}
-        className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-5 z-30 w-14 h-14 rounded-[19px] bg-primary text-on-primary flex items-center justify-center shadow-[0_8px_20px_rgba(255,107,107,0.45)]"
+        className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-5 z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-[0_8px_20px_rgba(255,107,107,0.45)] flex items-center justify-center active:scale-95 transition-transform"
         aria-label="Nueva tarea"
       >
         <Plus size={26} strokeWidth={2.5} />

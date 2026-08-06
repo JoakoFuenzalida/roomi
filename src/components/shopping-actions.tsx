@@ -670,10 +670,10 @@ export function ComprasFAB({ householdId }: { householdId: string }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-5 z-30 flex items-center gap-2 h-14 px-5 rounded-pill bg-primary text-on-primary font-bold text-[15px] shadow-[0_8px_20px_rgba(255,107,107,0.45)] active:scale-95 transition-transform"
+        className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-5 z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-[0_8px_20px_rgba(255,107,107,0.45)] flex items-center justify-center active:scale-95 transition-transform"
+        aria-label="Agregar ítem"
       >
-        <Plus size={20} strokeWidth={2.5} />
-        Agregar item
+        <Plus size={26} strokeWidth={2.5} />
       </button>
       <AddItemSheet
         householdId={householdId}

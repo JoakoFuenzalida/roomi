@@ -179,9 +179,10 @@ export function NewNoticeSheet({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed right-5 bottom-[calc(62px+env(safe-area-inset-bottom)+16px)] z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-[0_4px_14px_rgba(255,107,107,0.4)] flex items-center justify-center active:scale-95 transition-transform"
+        className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-5 z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-[0_8px_20px_rgba(255,107,107,0.45)] flex items-center justify-center active:scale-95 transition-transform"
+        aria-label="Nuevo aviso"
       >
-        <Plus size={26} />
+        <Plus size={26} strokeWidth={2.5} />
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>

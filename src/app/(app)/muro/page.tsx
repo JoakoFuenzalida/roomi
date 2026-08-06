@@ -28,7 +28,7 @@ export default async function MuroPage({
         <header className="flex items-center justify-between mb-6">
           <RoomiHeader />
           <Link href="/perfil">
-            <AvatarInitials name={user.name} size={40} />
+            <AvatarInitials name={user.name} imageUrl={user.image} size={40} />
           </Link>
         </header>
         <div className="rounded-[14px] bg-surface-container-low border border-outline-variant p-6 flex flex-col items-center text-center gap-4">
@@ -61,7 +61,7 @@ export default async function MuroPage({
       <header className="flex items-center justify-between mb-6">
         <RoomiHeader />
         <Link href="/perfil">
-          <AvatarInitials name={user.name} size={40} />
+          <AvatarInitials name={user.name} imageUrl={user.image} size={40} />
         </Link>
       </header>
 

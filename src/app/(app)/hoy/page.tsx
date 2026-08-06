@@ -38,7 +38,7 @@ export default async function HoyPage() {
       <header className="flex items-center justify-between mb-6">
         <RoomiHeader />
         <Link href="/perfil">
-          <AvatarInitials name={userName} size={40} />
+          <AvatarInitials name={user.name} imageUrl={user.image} size={40} />
         </Link>
       </header>
 

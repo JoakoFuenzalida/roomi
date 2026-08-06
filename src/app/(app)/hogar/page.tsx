@@ -51,7 +51,7 @@ export default async function HogarPage() {
       <header className="flex items-center justify-between mb-6">
         <RoomiHeader />
         <Link href="/perfil">
-          <AvatarInitials name={user.name} size={40} />
+          <AvatarInitials name={user.name} imageUrl={user.image} size={40} />
         </Link>
       </header>
 
