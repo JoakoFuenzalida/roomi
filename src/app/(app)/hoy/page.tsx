@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { CompleteTaskButton } from "@/components/task-actions";
 import { RoomiHeader, RoomiSymbol } from "@/components/roomi-logo";
 import { AvatarInitials } from "@/components/avatar-initials";
 
 export default async function HoyPage() {
-  const session = await auth();
-  const userId = session!.user.id;
-  const userName = session!.user.name ?? "";
+  const user = await requireUser();
+  const userId = user.id;
+  const userName = user.name ?? "";
 
   const activeMemberships = await db.membership.findMany({
     where: { userId, leftAt: null },
