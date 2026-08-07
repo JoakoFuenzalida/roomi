@@ -184,10 +184,10 @@ function ActiveHouseholdCard({
         <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-2">
           Link de invitación
         </p>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-2 rounded-pill bg-surface-container border border-outline-variant p-1 pl-4">
+        <div className="flex items-center gap-2 w-full">
+          <div className="flex-1 min-w-0 flex items-center gap-2 rounded-pill bg-surface-container border border-outline-variant p-1 pl-4">
             <span
-              className="flex-1 text-[13px] font-semibold text-on-surface-variant truncate"
+              className="flex-1 min-w-0 text-[13px] font-semibold text-on-surface-variant truncate block"
               style={{ fontFamily: "ui-monospace, monospace" }}
             >
               {displayInvite}
