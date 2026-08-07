@@ -137,7 +137,7 @@ export default async function HoyPage({
   }
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-6 flex flex-col h-[100dvh] pb-[80px]">
+    <main className="max-w-md mx-auto w-full px-5 pt-6 flex flex-col flex-1 min-h-0">
       <header className="flex items-center justify-between mb-4 shrink-0">
         <RoomiHeader />
         <UserHeaderNav />

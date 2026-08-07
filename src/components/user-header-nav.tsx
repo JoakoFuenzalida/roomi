@@ -24,11 +24,11 @@ export async function UserHeaderNav() {
 
   return (
     <div className="flex items-center gap-3 shrink-0">
-      <Link href="/hoy?tab=ranking" className="flex items-center gap-1.5 bg-surface-container-high pl-1 pr-2.5 py-1 rounded-pill border border-outline-variant hover:border-primary transition-colors shadow-sm">
-         <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-white shrink-0">
-           <Image src="/coins.jpeg" alt="RoomiCoins" width={20} height={20} className="object-cover w-full h-full" />
-         </div>
+      <Link href="/hoy?tab=ranking" className="flex items-center gap-1.5 bg-surface-container-high px-2.5 py-1 rounded-pill border border-outline-variant hover:border-primary transition-colors shadow-sm">
          <span className="text-[13px] font-bold text-on-surface">{points}</span>
+         <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-white shrink-0">
+           <Image src="/coins.png" alt="RoomiCoins" width={20} height={20} className="object-cover w-full h-full" />
+         </div>
       </Link>
       <Link href="/perfil">
         <AvatarInitials name={user.name ?? ""} imageUrl={user.image} size={40} />

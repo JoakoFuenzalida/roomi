@@ -48,8 +48,8 @@ export default async function HogarPage() {
   const [active, ...others] = memberships;
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-6">
-      <header className="flex items-center justify-between mb-6">
+    <main className="max-w-md mx-auto w-full px-5 pt-6 flex flex-col flex-1">
+      <header className="flex items-center justify-between mb-6 shrink-0">
         <RoomiHeader />
         <UserHeaderNav />
       </header>

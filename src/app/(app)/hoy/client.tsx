@@ -105,8 +105,8 @@ export function HoyTabs({
                     isMe && "bg-primary/5"
                   )}
                 >
-                  <div className="w-6 text-center font-display font-bold text-lg text-on-surface-variant shrink-0">
-                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                  <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center font-display font-bold text-lg text-on-surface-variant shrink-0 shadow-sm border border-outline-variant/50">
+                    {i + 1}º
                   </div>
                   
                   <AvatarInitials name={r.user.name ?? ""} imageUrl={r.user.image} size={44} />
@@ -123,8 +123,8 @@ export function HoyTabs({
                   <div className="flex flex-col items-end shrink-0">
                     <div className="flex items-center gap-1">
                       <span className="font-display font-bold text-[18px] text-primary">{r.points}</span>
-                      <div className="w-[14px] h-[14px] rounded-full overflow-hidden flex items-center justify-center bg-white">
-                        <Image src="/coins.jpeg" alt="RC" width={14} height={14} className="object-cover w-full h-full" />
+                      <div className="w-[16px] h-[16px] rounded-full overflow-hidden flex items-center justify-center bg-white shadow-sm">
+                        <Image src="/coins.png" alt="RC" width={16} height={16} className="object-cover w-full h-full" />
                       </div>
                     </div>
                   </div>
