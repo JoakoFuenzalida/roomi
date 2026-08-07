@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { CompleteTaskButton } from "@/components/task-actions";
 import { RoomiHeader, RoomiSymbol } from "@/components/roomi-logo";
-import { AvatarInitials } from "@/components/avatar-initials";
+import { UserHeaderNav } from "@/components/user-header-nav";
 import { getBalances } from "@/actions/settlement";
 import { HoyTabs } from "./client";
 
@@ -13,7 +13,16 @@ function formatPrice(n: number) {
   return "$" + n.toLocaleString("es-CL");
 }
 
-export default async function HoyPage() {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function HoyPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = await searchParams;
+  const initialTab = typeof params.tab === "string" ? params.tab : "muro";
+
   const user = await requireUser();
   const userId = user.id;
   const userName = user.name ?? "";
@@ -99,13 +108,39 @@ export default async function HoyPage() {
     });
   }
 
+  // RANKING DATA
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0,0,0,0);
+
+  let ranking: any[] = [];
+  if (mainHouseholdId) {
+    const members = await db.membership.findMany({
+      where: { householdId: mainHouseholdId, leftAt: null },
+      include: { user: true }
+    });
+
+    const memberIds = members.map(m => m.userId);
+    const executions = await db.taskExecution.groupBy({
+      by: ['completedById'],
+      where: {
+        completedById: { in: memberIds },
+        completedAt: { gte: startOfMonth }
+      },
+      _sum: { pointsEarned: true }
+    });
+
+    ranking = members.map(m => {
+      const sum = executions.find(e => e.completedById === m.userId)?._sum.pointsEarned ?? 0;
+      return { user: m.user, points: sum };
+    }).sort((a, b) => b.points - a.points);
+  }
+
   return (
     <main className="max-w-md mx-auto px-5 pt-6 flex flex-col h-[100dvh] pb-[80px]">
       <header className="flex items-center justify-between mb-4 shrink-0">
         <RoomiHeader />
-        <Link href="/perfil">
-          <AvatarInitials name={user.name} imageUrl={user.image} size={40} />
-        </Link>
+        <UserHeaderNav />
       </header>
 
       {activeMemberships.length === 0 ? (
@@ -115,6 +150,8 @@ export default async function HoyPage() {
           mainHouseholdId={mainHouseholdId}
           currentUserId={userId}
           chatMessages={chatMessages}
+          rankingData={ranking}
+          initialTab={initialTab as any}
         >
           <div className="flex-1 overflow-y-auto pb-4">
             <div className="mb-6">

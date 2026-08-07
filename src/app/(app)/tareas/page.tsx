@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { RoomiHeader, RoomiSymbol } from "@/components/roomi-logo";
 import { AvatarInitials } from "@/components/avatar-initials";
+import { UserHeaderNav } from "@/components/user-header-nav";
 import { CompleteTaskButton, DeleteTaskButton, SwapButton } from "@/components/task-actions";
 import { cn } from "@/lib/utils";
 
@@ -43,9 +44,7 @@ export default async function TareasPage({
       <main className="max-w-md mx-auto px-5 pt-6">
         <header className="flex items-center justify-between mb-6">
           <RoomiHeader />
-          <Link href="/perfil">
-            <AvatarInitials name={user.name} imageUrl={user.image} size={40} />
-          </Link>
+          <UserHeaderNav />
         </header>
         <div className="rounded-[14px] bg-surface-container-low border border-outline-variant p-6 flex flex-col items-center text-center gap-4">
           <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center">
@@ -87,7 +86,7 @@ export default async function TareasPage({
     <main className="max-w-md mx-auto px-5 pt-6 relative min-h-svh">
       <header className="flex items-center justify-between mb-6">
         <RoomiHeader />
-        <AvatarInitials name={user.name} size={40} />
+        <UserHeaderNav />
       </header>
 
       <div className="mb-4">

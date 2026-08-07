@@ -5,6 +5,7 @@ import { leaveHousehold } from "@/actions/household";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/copy-button";
 import Link from "next/link";
+import { UserHeaderNav } from "@/components/user-header-nav";
 import { AvatarInitials } from "@/components/avatar-initials";
 import { RoomiHeader } from "@/components/roomi-logo";
 import {
@@ -50,9 +51,7 @@ export default async function HogarPage() {
     <main className="max-w-md mx-auto px-5 pt-6">
       <header className="flex items-center justify-between mb-6">
         <RoomiHeader />
-        <Link href="/perfil">
-          <AvatarInitials name={user.name} imageUrl={user.image} size={40} />
-        </Link>
+        <UserHeaderNav />
       </header>
 
       <div className="mb-6">
