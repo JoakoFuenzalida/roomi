@@ -37,7 +37,7 @@ export function HoyTabs({
 
   return (
     <>
-      <div className="flex bg-surface-container-high rounded-[14px] p-1 mb-6 shrink-0">
+      <div className="sticky top-[80px] z-20 flex bg-surface-container-high rounded-[14px] p-1 mb-6 shrink-0 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)]">
         <button
           onClick={() => setTab("muro")}
           className={cn(
