@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { AddBillItemSheet, PopulateRecurringButton } from "./cuentas-actions";
+import { BillItemSheet, PopulateRecurringButton } from "./cuentas-actions";
 
 type Member = {
   id: string;
@@ -34,7 +34,7 @@ export function AddBillItemButton({
         </button>
         <PopulateRecurringButton householdId={householdId} />
       </div>
-      <AddBillItemSheet
+      <BillItemSheet
         householdId={householdId}
         month={month}
         year={year}

@@ -6,6 +6,7 @@ import {
   editarRoom,
   eliminarRoom,
   agregarBillItem,
+  editarBillItem,
   eliminarBillItem,
   marcarPagadoCuenta,
   confirmarPagoCuenta,
@@ -47,7 +48,9 @@ type BillItemData = {
   id: string;
   label: string;
   amount: number;
+  splitMode: "EQUAL" | "CUSTOM";
   excludedUserIds: string[];
+  splits?: { userId: string; amount: number }[];
   isRecurring: boolean;
   dayOfMonth: number | null;
 };
@@ -238,9 +241,11 @@ export function RoomCard({
                   <Pencil size={16} />
                 </button>
                 <button
-                  onClick={() =>
-                    startDelete(async () => { await eliminarRoom(room.id, householdId); })
-                  }
+                  onClick={() => {
+                    if (confirm(`¿Estás seguro que deseas eliminar la pieza "${room.name}"?`)) {
+                      startDelete(async () => { await eliminarRoom(room.id, householdId); })
+                    }
+                  }}
                   disabled={deleting}
                   className="p-2 rounded-full text-error hover:bg-error-container/30"
                 >
@@ -305,6 +310,7 @@ export function BillItemRow({
   members: Member[];
   isAdmin: boolean;
 }) {
+  const [editOpen, setEditOpen] = useState(false);
   const [deleting, startDelete] = useTransition();
 
   const excludedNames = item.excludedUserIds
@@ -322,37 +328,66 @@ export function BillItemRow({
             </span>
           )}
         </div>
-        {excludedNames.length > 0 && (
+        {item.splitMode === "CUSTOM" ? (
+          <p className="text-[11px] text-on-surface-variant mt-0.5">
+            Manual: {item.splits?.map(s => members.find(m => m.userId === s.userId)?.userName.split(" ")[0]).filter(Boolean).join(", ")}
+          </p>
+        ) : excludedNames.length > 0 ? (
           <p className="text-[11px] text-on-surface-variant mt-0.5">
             Sin: {excludedNames.join(", ")}
           </p>
-        )}
+        ) : null}
       </div>
       <div className="flex items-center gap-2">
         <span className="text-[14px] font-bold">{formatPrice(item.amount)}</span>
         {isAdmin && (
-          <button
-            onClick={() =>
-              startDelete(async () => { await eliminarBillItem(item.id, householdId); })
-            }
-            disabled={deleting}
-            className="p-1.5 rounded-full text-error hover:bg-error-container/30 transition-colors"
-          >
-            <Trash2 size={14} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setEditOpen(true)}
+              className="p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
+            >
+              <Pencil size={14} />
+            </button>
+            <button
+              onClick={() => {
+                if (confirm(`¿Estás seguro que deseas eliminar "${item.label}"?`)) {
+                  startDelete(async () => { await eliminarBillItem(item.id, householdId); })
+                }
+              }}
+              disabled={deleting}
+              className="p-1.5 rounded-full text-error hover:bg-error-container/30 transition-colors"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
         )}
       </div>
+      
+      {isAdmin && (
+        <BillItemSheet
+          householdId={householdId}
+          month={0} // Not used for editing
+          year={0}  // Not used for editing
+          members={members}
+          item={item}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
     </li>
   );
 }
 
-/* ────────────── Add Bill Item Sheet ────────────── */
+/* ────────────── Add/Edit Bill Item Sheet ────────────── */
 
-export function AddBillItemSheet({
+const SUGERENCIAS_CUENTAS = ["Luz", "Agua", "Gas", "Internet", "GGCC", "Netflix"];
+
+export function BillItemSheet({
   householdId,
   month,
   year,
   members,
+  item,
   open,
   onOpenChange,
 }: {
@@ -360,21 +395,59 @@ export function AddBillItemSheet({
   month: number;
   year: number;
   members: Member[];
+  item?: BillItemData;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [state, formAction, isPending] = useActionState(
-    agregarBillItem.bind(null, householdId, month, year),
-    null,
-  );
+  const isEdit = !!item;
+  const action = isEdit
+    ? editarBillItem.bind(null, item.id, householdId)
+    : agregarBillItem.bind(null, householdId, month, year);
+
+  const [state, formAction, isPending] = useActionState(action, null);
+  
+  const [label, setLabel] = useState("");
   const [excludedIds, setExcludedIds] = useState<string[]>([]);
   const [isRecurring, setIsRecurring] = useState(false);
+  const [dayOfMonth, setDayOfMonth] = useState<string>("");
+  const [splitMode, setSplitMode] = useState<"EQUAL" | "CUSTOM">("EQUAL");
+  const [amountStr, setAmountStr] = useState("");
+  const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (open) {
+      if (item) {
+        setLabel(item.label);
+        setAmountStr(item.amount.toString());
+        setSplitMode(item.splitMode);
+        setExcludedIds(item.excludedUserIds);
+        setIsRecurring(item.isRecurring);
+        setDayOfMonth(item.dayOfMonth ? item.dayOfMonth.toString() : "");
+        
+        if (item.splits) {
+          const splitsObj: Record<string, string> = {};
+          item.splits.forEach(s => {
+            splitsObj[s.userId] = s.amount.toString();
+          });
+          setCustomSplits(splitsObj);
+        } else {
+          setCustomSplits({});
+        }
+      } else {
+        setLabel("");
+        setAmountStr("");
+        setSplitMode("EQUAL");
+        setExcludedIds([]);
+        setIsRecurring(false);
+        setDayOfMonth("");
+        setCustomSplits({});
+      }
+    }
+  }, [open, item]);
 
   useEffect(() => {
     if (state && "success" in state) {
       onOpenChange(false);
-      setExcludedIds([]);
-      setIsRecurring(false);
     }
   }, [state, onOpenChange]);
 
@@ -384,11 +457,18 @@ export function AddBillItemSheet({
     );
   }
 
+  const totalAmount = parseInt(amountStr) || 0;
+  const assignedAmount = members.reduce(
+    (acc, m) => acc + (parseInt(customSplits[m.userId]) || 0),
+    0
+  );
+  const remaining = totalAmount - assignedAmount;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom">
+      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Agregar gasto</SheetTitle>
+          <SheetTitle>{isEdit ? "Editar gasto" : "Agregar gasto"}</SheetTitle>
         </SheetHeader>
         <form action={formAction} className="flex flex-col gap-4 p-4">
           <div>
@@ -397,10 +477,26 @@ export function AddBillItemSheet({
             </label>
             <input
               name="label"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
               placeholder="GGCC, Luz, Agua, Gas, Gimnasio..."
               required
               className="mt-1 w-full h-12 rounded-[12px] border border-outline-variant bg-surface-container-lowest px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary"
             />
+            {!isEdit && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {SUGERENCIAS_CUENTAS.map((sug) => (
+                  <button
+                    key={sug}
+                    type="button"
+                    onClick={() => setLabel(sug)}
+                    className="px-2.5 py-1 rounded-[8px] bg-surface-container border border-outline-variant text-[12px] text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors"
+                  >
+                    {sug}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -410,6 +506,8 @@ export function AddBillItemSheet({
             <input
               name="amount"
               type="number"
+              value={amountStr}
+              onChange={(e) => setAmountStr(e.target.value)}
               placeholder="140000"
               required
               min={0}
@@ -417,36 +515,93 @@ export function AddBillItemSheet({
             />
           </div>
 
-          {/* Participant chips */}
-          <div>
-            <label className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wide mb-2 block">
-              Se cobra a
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {members.map((m) => {
-                const included = !excludedIds.includes(m.userId);
-                return (
-                  <button
-                    key={m.userId}
-                    type="button"
-                    onClick={() => toggleExcluded(m.userId)}
-                    className={cn(
-                      "px-3 py-2 rounded-pill text-[13px] font-semibold border transition-colors flex items-center gap-2",
-                      included
-                        ? "bg-primary text-on-primary border-primary"
-                        : "bg-surface-container border-outline-variant text-on-surface line-through opacity-60",
-                    )}
-                  >
-                    <AvatarInitials name={m.userName} size={20} />
-                    {m.userName.split(" ")[0]}
-                  </button>
-                );
-              })}
-            </div>
-            {excludedIds.map((id) => (
-              <input key={id} type="hidden" name="excludedUserIds" value={id} />
-            ))}
+          <div className="flex items-center gap-3">
+            <input type="hidden" name="splitMode" value={splitMode} />
+            <button
+              type="button"
+              onClick={() => setSplitMode("EQUAL")}
+              className={cn(
+                "flex-1 h-10 rounded-[8px] text-[13px] font-bold border transition-colors",
+                splitMode === "EQUAL" ? "bg-primary-container text-primary border-primary" : "bg-surface-container-lowest text-on-surface-variant border-outline-variant"
+              )}
+            >
+              Partes iguales
+            </button>
+            <button
+              type="button"
+              onClick={() => setSplitMode("CUSTOM")}
+              className={cn(
+                "flex-1 h-10 rounded-[8px] text-[13px] font-bold border transition-colors",
+                splitMode === "CUSTOM" ? "bg-primary-container text-primary border-primary" : "bg-surface-container-lowest text-on-surface-variant border-outline-variant"
+              )}
+            >
+              Asignación manual
+            </button>
           </div>
+
+          {splitMode === "EQUAL" && (
+            <div>
+              <label className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wide mb-2 block">
+                Se cobra a
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {members.map((m) => {
+                  const included = !excludedIds.includes(m.userId);
+                  return (
+                    <button
+                      key={m.userId}
+                      type="button"
+                      onClick={() => toggleExcluded(m.userId)}
+                      className={cn(
+                        "px-3 py-2 rounded-pill text-[13px] font-semibold border transition-colors flex items-center gap-2",
+                        included
+                          ? "bg-primary text-on-primary border-primary"
+                          : "bg-surface-container border-outline-variant text-on-surface line-through opacity-60",
+                      )}
+                    >
+                      <AvatarInitials name={m.userName} size={20} />
+                      {m.userName.split(" ")[0]}
+                    </button>
+                  );
+                })}
+              </div>
+              {excludedIds.map((id) => (
+                <input key={id} type="hidden" name="excludedUserIds" value={id} />
+              ))}
+            </div>
+          )}
+
+          {splitMode === "CUSTOM" && (
+            <div className="space-y-3 p-3 bg-surface-container-lowest rounded-[12px] border border-outline-variant">
+              <div className="flex items-center justify-between text-[13px] font-semibold">
+                <span className="text-on-surface-variant">Total: {formatPrice(totalAmount)}</span>
+                <span className={cn(remaining === 0 ? "text-primary" : remaining < 0 ? "text-error" : "text-on-surface-variant")}>
+                  {remaining === 0 ? "¡Cuadra perfecto!" : remaining < 0 ? `Sobran ${formatPrice(Math.abs(remaining))}` : `Faltan ${formatPrice(remaining)}`}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {members.map((m) => (
+                  <div key={m.userId} className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <AvatarInitials name={m.userName} size={24} />
+                      <span className="text-[13px] font-semibold">{m.userName.split(" ")[0]}</span>
+                    </div>
+                    <div className="relative w-[120px]">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-on-surface-variant">$</span>
+                      <input
+                        type="number"
+                        name={`customSplit_${m.userId}`}
+                        value={customSplits[m.userId] ?? ""}
+                        onChange={(e) => setCustomSplits(s => ({ ...s, [m.userId]: e.target.value }))}
+                        className="w-full h-9 rounded-[8px] border border-outline-variant bg-surface-container pl-6 pr-3 text-[13px] font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Recurring toggle */}
           <div className="flex items-center gap-3">
@@ -483,6 +638,8 @@ export function AddBillItemSheet({
               <input
                 name="dayOfMonth"
                 type="number"
+                value={dayOfMonth}
+                onChange={(e) => setDayOfMonth(e.target.value)}
                 placeholder="1"
                 min={1}
                 max={31}
@@ -500,7 +657,7 @@ export function AddBillItemSheet({
             disabled={isPending}
             className="h-12 rounded-pill font-bold"
           >
-            {isPending ? "..." : "Agregar"}
+            {isPending ? "..." : isEdit ? "Guardar cambios" : "Agregar"}
           </Button>
         </form>
       </SheetContent>

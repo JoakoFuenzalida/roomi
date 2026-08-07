@@ -382,11 +382,13 @@ export function DeleteItemButton({
   return (
     <button
       disabled={pending}
-      onClick={() =>
-        startTransition(async () => {
-          await eliminarItem(itemId, householdId);
-        })
-      }
+      onClick={() => {
+        if (confirm("¿Estás seguro que deseas eliminar esta compra?")) {
+          startTransition(async () => {
+            await eliminarItem(itemId, householdId);
+          });
+        }
+      }}
       className="p-2 rounded-[10px] text-on-surface-variant hover:text-error hover:bg-error-container transition-colors"
     >
       <Trash2 size={16} />

@@ -111,7 +111,7 @@ export async function eliminarRoom(roomId: string, householdId: string) {
 async function recalcularCobros(billId: string, householdId: string) {
   const bill = await db.monthlyBill.findUnique({
     where: { id: billId },
-    include: { items: true },
+    include: { items: { include: { splits: true } } },
   });
 
   if (!bill) return;
@@ -141,18 +141,27 @@ async function recalcularCobros(billId: string, householdId: string) {
   }
 
   for (const item of bill.items) {
-    const participants = allUserIds.filter(
-      (uid) => !item.excludedUserIds.includes(uid),
-    );
-    if (participants.length === 0) continue;
+    if (item.splitMode === "CUSTOM") {
+      for (const split of item.splits) {
+        if (chargesByUser.has(split.userId)) {
+          const current = chargesByUser.get(split.userId)!;
+          current.sharedAmount += split.amount;
+        }
+      }
+    } else {
+      const participants = allUserIds.filter(
+        (uid) => !item.excludedUserIds.includes(uid),
+      );
+      if (participants.length === 0) continue;
 
-    const perPerson = Math.floor(item.amount / participants.length);
-    const remainder = item.amount - perPerson * participants.length;
+      const perPerson = Math.floor(item.amount / participants.length);
+      const remainder = item.amount - perPerson * participants.length;
 
-    participants.forEach((uid, i) => {
-      const current = chargesByUser.get(uid)!;
-      current.sharedAmount += perPerson + (i < remainder ? 1 : 0);
-    });
+      participants.forEach((uid, i) => {
+        const current = chargesByUser.get(uid)!;
+        current.sharedAmount += perPerson + (i < remainder ? 1 : 0);
+      });
+    }
   }
 
   for (const [userId, amounts] of chargesByUser) {
@@ -208,7 +217,8 @@ export async function agregarBillItem(
     return { error: "Solo el admin puede agregar gastos" };
   }
 
-  const excludedRaw = formData.getAll("excludedUserIds").map(String);
+  const splitMode = formData.get("splitMode") === "CUSTOM" ? "CUSTOM" : "EQUAL";
+  const excludedRaw = splitMode === "EQUAL" ? formData.getAll("excludedUserIds").map(String) : [];
 
   const parse = billItemSchema.safeParse({
     label: formData.get("label"),
@@ -226,14 +236,42 @@ export async function agregarBillItem(
 
   const bill = await getOrCreateBill(householdId, month, year, user.id);
 
+  const customSplits: { userId: string; amount: number }[] = [];
+  if (splitMode === "CUSTOM") {
+    // Collect custom splits from form data
+    const activeMembers = await db.membership.findMany({
+      where: { householdId, leftAt: null },
+      select: { userId: true },
+    });
+    
+    for (const mem of activeMembers) {
+      const val = formData.get(`customSplit_${mem.userId}`);
+      if (val) {
+        const amt = parseInt(val.toString(), 10);
+        if (!isNaN(amt) && amt > 0) {
+          customSplits.push({ userId: mem.userId, amount: amt });
+        }
+      }
+    }
+  }
+
   await db.billItem.create({
     data: {
       monthlyBillId: bill.id,
       label,
       amount,
+      splitMode,
       excludedUserIds,
       isRecurring,
       dayOfMonth: isRecurring ? dayOfMonth : null,
+      splits: splitMode === "CUSTOM" && customSplits.length > 0
+        ? {
+            create: customSplits.map((s) => ({
+              userId: s.userId,
+              amount: s.amount,
+            })),
+          }
+        : undefined,
     },
   });
 
@@ -270,6 +308,94 @@ export async function agregarBillItem(
       url: "/cuentas",
     }).catch(() => {});
   }
+
+  return { success: true, ts: Date.now() };
+}
+
+export async function editarBillItem(
+  itemId: string,
+  householdId: string,
+  _prev: unknown,
+  formData: FormData,
+) {
+  const user = await requireUser();
+  const membership = await assertMemberOf(user.id, householdId);
+
+  if (membership.role !== "ADMIN") {
+    return { error: "Solo el admin puede editar gastos" };
+  }
+
+  const item = await db.billItem.findUnique({
+    where: { id: itemId },
+    include: { monthlyBill: { select: { id: true, householdId: true } } },
+  });
+
+  if (!item || item.monthlyBill.householdId !== householdId) {
+    return { error: "Item no encontrado" };
+  }
+
+  const splitMode = formData.get("splitMode") === "CUSTOM" ? "CUSTOM" : "EQUAL";
+  const excludedRaw = splitMode === "EQUAL" ? formData.getAll("excludedUserIds").map(String) : [];
+
+  const parse = billItemSchema.safeParse({
+    label: formData.get("label"),
+    amount: formData.get("amount"),
+    excludedUserIds: excludedRaw,
+    isRecurring: formData.get("isRecurring"),
+    dayOfMonth: formData.get("dayOfMonth") || undefined,
+  });
+
+  if (!parse.success) {
+    return { error: parse.error.issues[0].message };
+  }
+
+  const { label, amount, excludedUserIds, isRecurring, dayOfMonth } = parse.data;
+
+  const customSplits: { userId: string; amount: number }[] = [];
+  if (splitMode === "CUSTOM") {
+    const activeMembers = await db.membership.findMany({
+      where: { householdId, leftAt: null },
+      select: { userId: true },
+    });
+    
+    for (const mem of activeMembers) {
+      const val = formData.get(`customSplit_${mem.userId}`);
+      if (val) {
+        const amt = parseInt(val.toString(), 10);
+        if (!isNaN(amt) && amt > 0) {
+          customSplits.push({ userId: mem.userId, amount: amt });
+        }
+      }
+    }
+  }
+
+  // Delete existing splits
+  await db.billItemSplit.deleteMany({
+    where: { billItemId: itemId }
+  });
+
+  await db.billItem.update({
+    where: { id: itemId },
+    data: {
+      label,
+      amount,
+      splitMode,
+      excludedUserIds,
+      isRecurring,
+      dayOfMonth: isRecurring ? dayOfMonth : null,
+      splits: splitMode === "CUSTOM" && customSplits.length > 0
+        ? {
+            create: customSplits.map((s) => ({
+              userId: s.userId,
+              amount: s.amount,
+            })),
+          }
+        : undefined,
+    },
+  });
+
+  await recalcularCobros(item.monthlyBill.id, householdId);
+  revalidatePath("/cuentas");
 
   return { success: true, ts: Date.now() };
 }
@@ -401,7 +527,10 @@ export async function poblarRecurrentes(householdId: string) {
       householdId_month_year: { householdId, month: prevMonth, year: prevYear },
     },
     include: {
-      items: { where: { isRecurring: true } },
+      items: { 
+        where: { isRecurring: true },
+        include: { splits: true }
+      },
     },
   });
 
@@ -426,9 +555,18 @@ export async function poblarRecurrentes(householdId: string) {
         monthlyBillId: bill.id,
         label: item.label,
         amount: item.amount,
+        splitMode: item.splitMode,
         excludedUserIds: item.excludedUserIds,
         isRecurring: true,
         dayOfMonth: item.dayOfMonth,
+        splits: item.splits.length > 0
+          ? {
+              create: item.splits.map(s => ({
+                userId: s.userId,
+                amount: s.amount
+              }))
+            }
+          : undefined,
       },
     });
     added++;
@@ -466,7 +604,10 @@ export async function getMonthlyBill(householdId: string, month: number, year: n
   return db.monthlyBill.findUnique({
     where: { householdId_month_year: { householdId, month, year } },
     include: {
-      items: { orderBy: { createdAt: "asc" } },
+      items: { 
+        orderBy: { createdAt: "asc" },
+        include: { splits: true }
+      },
       charges: {
         include: {
           user: { select: { id: true, name: true } },

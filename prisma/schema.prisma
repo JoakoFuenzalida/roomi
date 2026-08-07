@@ -32,6 +32,7 @@ model User {
   chargesConfirmed MonthlyCharge[] @relation("chargeConfirmer")
   noticesAuthored Notice[]         @relation("noticeAuthor")
   reactions       Reaction[]
+  billItemSplits  BillItemSplit[]
 }
 
 model Household {
@@ -240,6 +241,11 @@ model Room {
   @@index([householdId])
 }
 
+enum SplitMode {
+  EQUAL
+  CUSTOM
+}
+
 model MonthlyBill {
   id          String   @id @default(cuid())
   householdId String
@@ -261,12 +267,26 @@ model BillItem {
   monthlyBillId   String
   label           String
   amount          Int
+  splitMode       SplitMode @default(EQUAL)
   excludedUserIds String[]
   isRecurring     Boolean  @default(false)
   dayOfMonth      Int?
   createdAt       DateTime @default(now())
 
   monthlyBill MonthlyBill @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
+  splits      BillItemSplit[]
+}
+
+model BillItemSplit {
+  id         String @id @default(cuid())
+  billItemId String
+  userId     String
+  amount     Int
+
+  billItem BillItem @relation(fields: [billItemId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([billItemId, userId])
 }
 
 model MonthlyCharge {

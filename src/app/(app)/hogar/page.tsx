@@ -12,6 +12,7 @@ import {
   CreateHouseholdForm,
   JoinHouseholdForm,
 } from "@/components/household-forms";
+import { LeaveHouseholdButton } from "@/components/leave-household-button";
 
 export default async function HogarPage() {
   const user = await requireUser();
@@ -227,21 +228,14 @@ function ActiveHouseholdCard({
         </ul>
       </div>
 
-      <form
-        action={async () => {
-          "use server";
-          await leaveHousehold(household.id);
-        }}
-        className="mt-5"
-      >
-        <Button
-          type="submit"
-          variant="ghost"
-          className="w-full h-10 rounded-pill text-error hover:bg-error-container hover:text-on-error-container text-sm font-semibold"
-        >
-          Salir del hogar
-        </Button>
-      </form>
+      <div className="mt-5">
+        <LeaveHouseholdButton
+          onLeave={async () => {
+            "use server";
+            await leaveHousehold(household.id);
+          }}
+        />
+      </div>
     </section>
   );
 }
