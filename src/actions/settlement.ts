@@ -126,8 +126,10 @@ export async function reportarErrorPago(
 export type DebtSummary = {
   fromUserId: string;
   fromUserName: string;
+  fromUserImage?: string | null;
   toUserId: string;
   toUserName: string;
+  toUserImage?: string | null;
   amount: number;
 };
 
@@ -137,11 +139,11 @@ export async function getBalances(householdId: string): Promise<DebtSummary[]> {
 
   const activeMembers = await db.membership.findMany({
     where: { householdId, leftAt: null },
-    include: { user: { select: { id: true, name: true } } },
+    include: { user: { select: { id: true, name: true, image: true } } },
   });
 
   const userIds = activeMembers.map((m) => m.user.id);
-  const userMap = new Map(activeMembers.map((m) => [m.user.id, m.user.name]));
+  const userMap = new Map(activeMembers.map((m) => [m.user.id, m.user]));
 
   const splits = await db.expenseSplit.findMany({
     where: {
@@ -202,17 +204,21 @@ export async function getBalances(householdId: string): Promise<DebtSummary[]> {
       if (netAmount > 0) {
         debts.push({
           fromUserId: a,
-          fromUserName: userMap.get(a) || "?",
+          fromUserName: userMap.get(a)?.name || "?",
+          fromUserImage: userMap.get(a)?.image,
           toUserId: b,
-          toUserName: userMap.get(b) || "?",
+          toUserName: userMap.get(b)?.name || "?",
+          toUserImage: userMap.get(b)?.image,
           amount: netAmount,
         });
       } else if (netAmount < 0) {
         debts.push({
           fromUserId: b,
-          fromUserName: userMap.get(b) || "?",
+          fromUserName: userMap.get(b)?.name || "?",
+          fromUserImage: userMap.get(b)?.image,
           toUserId: a,
-          toUserName: userMap.get(a) || "?",
+          toUserName: userMap.get(a)?.name || "?",
+          toUserImage: userMap.get(a)?.image,
           amount: -netAmount,
         });
       }

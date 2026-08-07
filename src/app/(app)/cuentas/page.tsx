@@ -66,7 +66,7 @@ export default async function CuentasPage({
 
   const activeMembers = await db.membership.findMany({
     where: { householdId: active.householdId, leftAt: null },
-    include: { user: { select: { id: true, name: true } } },
+    include: { user: { select: { id: true, name: true, image: true } } },
     orderBy: { rotationOrder: "asc" },
   });
 
@@ -74,6 +74,7 @@ export default async function CuentasPage({
     id: m.id,
     userId: m.user.id,
     userName: m.user.name,
+    image: m.user.image,
   }));
 
   const rooms = await getRooms(active.householdId);

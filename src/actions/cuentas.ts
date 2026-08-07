@@ -590,7 +590,7 @@ export async function getRooms(householdId: string) {
     where: { householdId },
     include: {
       membership: {
-        select: { id: true, user: { select: { id: true, name: true } } },
+        select: { id: true, user: { select: { id: true, name: true, image: true } } },
       },
     },
     orderBy: { name: "asc" },
@@ -610,8 +610,8 @@ export async function getMonthlyBill(householdId: string, month: number, year: n
       },
       charges: {
         include: {
-          user: { select: { id: true, name: true } },
-          confirmedBy: { select: { name: true } },
+          user: { select: { id: true, name: true, image: true } },
+          confirmedBy: { select: { name: true, image: true } },
         },
         orderBy: { totalAmount: "desc" },
       },

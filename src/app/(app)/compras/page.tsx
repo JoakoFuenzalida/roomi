@@ -75,7 +75,7 @@ export default async function ComprasPage({
 
   const activeMembers = await db.membership.findMany({
     where: { householdId: active.householdId, leftAt: null },
-    include: { user: { select: { id: true, name: true } } },
+    include: { user: { select: { id: true, name: true, image: true } } },
     orderBy: { rotationOrder: "asc" },
   });
 
@@ -83,6 +83,7 @@ export default async function ComprasPage({
     id: m.id,
     userId: m.user.id,
     userName: m.user.name,
+    image: m.user.image,
   }));
 
   const toBuy = await db.shoppingItem.findMany({
@@ -95,8 +96,8 @@ export default async function ComprasPage({
       ],
     },
     include: {
-      createdBy: { select: { name: true } },
-      nextBuyer: { include: { user: { select: { name: true } } } },
+      createdBy: { select: { name: true, image: true } },
+      nextBuyer: { include: { user: { select: { name: true, image: true } } } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -104,7 +105,7 @@ export default async function ComprasPage({
   const recentExpenses = await db.expense.findMany({
     where: { householdId: active.householdId },
     include: {
-      payer: { select: { name: true } },
+      payer: { select: { name: true, image: true } },
     },
     orderBy: { paidAt: "desc" },
     take: 10,
@@ -173,6 +174,7 @@ export default async function ComprasPage({
                   quantity: item.quantity,
                   frequency: item.frequency,
                   nextBuyerName: item.nextBuyer?.user.name ?? null,
+                  nextBuyerImage: item.nextBuyer?.user.image ?? null,
                 }}
                 householdId={active.householdId}
                 members={membersList}
@@ -196,7 +198,7 @@ export default async function ComprasPage({
                   className="flex items-center justify-between px-4 py-3"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <AvatarInitials name={exp.payer.name} size={32} />
+                    <AvatarInitials name={exp.payer.name} imageUrl={exp.payer.image} size={32} />
                     <div className="min-w-0">
                       <p className="text-[14px] font-semibold truncate">
                         {exp.title}
@@ -295,12 +297,12 @@ export default async function ComprasPage({
                   className="rounded-[14px] bg-surface-container-lowest border border-outline-variant p-4 shadow-[0_2px_10px_rgba(15,23,42,0.05)]"
                 >
                   <div className="flex items-center gap-3">
-                    <AvatarInitials name={d.fromUserName} size={32} />
+                    <AvatarInitials name={d.fromUserName} imageUrl={d.fromUserImage} size={32} />
                     <ArrowRight
                       size={14}
                       className="text-on-surface-variant shrink-0"
                     />
-                    <AvatarInitials name={d.toUserName} size={32} />
+                    <AvatarInitials name={d.toUserName} imageUrl={d.toUserImage} size={32} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px]">
                         <span className="font-semibold">

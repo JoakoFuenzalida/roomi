@@ -124,8 +124,8 @@ export function HoyTabs({
                   <div className="flex flex-col items-end shrink-0">
                     <div className="flex items-center gap-1">
                       <span className="font-display font-bold text-[18px] text-primary">{r.points}</span>
-                      <div className="w-[16px] h-[16px] rounded-full overflow-hidden flex items-center justify-center bg-white shadow-sm">
-                        <Image src="/coins.png" alt="RC" width={16} height={16} className="object-cover w-full h-full" />
+                      <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.15)]">
+                        <Image src="/coins.png" alt="RC" width={16} height={16} className="object-contain w-full h-full" />
                       </div>
                     </div>
                   </div>

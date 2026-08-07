@@ -35,6 +35,7 @@ type Member = {
   id: string;
   userId: string;
   userName: string;
+  image?: string | null;
 };
 
 type RoomData = {
@@ -58,7 +59,7 @@ type BillItemData = {
 type ChargeData = {
   id: string;
   userId: string;
-  user: { id: string; name: string };
+  user: { id: string; name: string; image?: string | null };
   roomAmount: number;
   sharedAmount: number;
   totalAmount: number;
@@ -173,7 +174,7 @@ export function RoomSheet({
                       : "bg-surface-container border-outline-variant text-on-surface",
                   )}
                 >
-                  <AvatarInitials name={m.userName} size={20} />
+                  <AvatarInitials name={m.userName} imageUrl={m.image} size={20} />
                   {m.userName.split(" ")[0]}
                 </button>
               ))}
@@ -559,7 +560,7 @@ export function BillItemSheet({
                           : "bg-surface-container border-outline-variant text-on-surface line-through opacity-60",
                       )}
                     >
-                      <AvatarInitials name={m.userName} size={20} />
+                      <AvatarInitials name={m.userName} imageUrl={m.image} size={20} />
                       {m.userName.split(" ")[0]}
                     </button>
                   );
@@ -583,7 +584,7 @@ export function BillItemSheet({
                 {members.map((m) => (
                   <div key={m.userId} className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <AvatarInitials name={m.userName} size={24} />
+                      <AvatarInitials name={m.userName} imageUrl={m.image} size={24} />
                       <span className="text-[13px] font-semibold">{m.userName.split(" ")[0]}</span>
                     </div>
                     <div className="relative w-[120px]">
@@ -722,7 +723,7 @@ export function ChargeCard({
   return (
     <li className="rounded-[14px] bg-surface-container-lowest border border-outline-variant p-4 shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
       <div className="flex items-center gap-3">
-        <AvatarInitials name={charge.user.name} size={36} />
+        <AvatarInitials name={charge.user.name} imageUrl={charge.user.image} size={36} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-[14px] font-semibold truncate">

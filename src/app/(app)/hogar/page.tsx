@@ -13,6 +13,7 @@ import {
   JoinHouseholdForm,
 } from "@/components/household-forms";
 import { LeaveHouseholdButton } from "@/components/leave-household-button";
+import { QRInviteButton } from "@/components/qr-invite";
 
 export default async function HogarPage() {
   const user = await requireUser();
@@ -33,7 +34,7 @@ export default async function HogarPage() {
               id: true,
               role: true,
               rotationOrder: true,
-              user: { select: { name: true } },
+              user: { select: { name: true, image: true } },
             },
           },
         },
@@ -134,7 +135,7 @@ type ActiveHousehold = {
     id: string;
     role: "ADMIN" | "MEMBER";
     rotationOrder: number;
-    user: { name: string };
+    user: { name: string; image?: string | null };
   }[];
 };
 
@@ -168,7 +169,7 @@ function ActiveHouseholdCard({
               key={m.id}
               className="ring-2 ring-surface-container-lowest rounded-full"
             >
-              <AvatarInitials name={m.user.name} size={32} />
+              <AvatarInitials name={m.user.name} imageUrl={m.user.image} size={32} />
             </div>
           ))}
         </div>
@@ -183,14 +184,17 @@ function ActiveHouseholdCard({
         <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-2">
           Link de invitación
         </p>
-        <div className="flex items-center gap-2 rounded-pill bg-surface-container border border-outline-variant p-1 pl-4">
-          <span
-            className="flex-1 text-[13px] font-semibold text-on-surface-variant truncate"
-            style={{ fontFamily: "ui-monospace, monospace" }}
-          >
-            {displayInvite}
-          </span>
-          <CopyButton value={inviteUrl} />
+        <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 rounded-pill bg-surface-container border border-outline-variant p-1 pl-4">
+            <span
+              className="flex-1 text-[13px] font-semibold text-on-surface-variant truncate"
+              style={{ fontFamily: "ui-monospace, monospace" }}
+            >
+              {displayInvite}
+            </span>
+            <CopyButton value={inviteUrl} />
+          </div>
+          <QRInviteButton inviteUrl={inviteUrl} />
         </div>
       </div>
 
@@ -204,7 +208,7 @@ function ActiveHouseholdCard({
               <span className="w-5 text-on-surface-variant text-sm font-semibold text-center">
                 {m.rotationOrder}
               </span>
-              <AvatarInitials name={m.user.name} size={30} />
+              <AvatarInitials name={m.user.name} imageUrl={m.user.image} size={30} />
               <span className="flex-1 text-sm font-medium">
                 {m.user.name}
                 {m.role === "ADMIN" && (

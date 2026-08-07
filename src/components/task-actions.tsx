@@ -362,7 +362,7 @@ export function SwapButton({
   members,
 }: {
   taskId: string;
-  members: SwapMember[];
+  members: { id: string; userName: string; userImage?: string | null }[];
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -397,7 +397,7 @@ export function SwapButton({
               }}
               className="w-full flex items-center gap-2 px-2 py-2 rounded-[8px] hover:bg-surface-container transition-colors text-left disabled:opacity-50"
             >
-              <AvatarInitials name={m.userName} size={24} />
+              <AvatarInitials name={m.userName} imageUrl={m.userImage} size={24} />
               <span className="text-[13px] font-semibold truncate">
                 {m.userName}
               </span>

@@ -78,7 +78,7 @@ export default async function TareasPage({
 
   const activeMembers = await db.membership.findMany({
     where: { householdId: active.householdId, leftAt: null },
-    include: { user: { select: { id: true, name: true } } },
+    include: { user: { select: { id: true, name: true, image: true } } },
     orderBy: { rotationOrder: "asc" },
   });
 
@@ -150,6 +150,7 @@ export default async function TareasPage({
                 <div className="mt-3 flex items-center gap-2">
                   <AvatarInitials
                     name={task.nextAssignee.user.name}
+                    imageUrl={task.nextAssignee.user.image}
                     size={26}
                   />
                   <p className="text-sm">
@@ -176,7 +177,7 @@ export default async function TareasPage({
                       taskId={task.id}
                       members={activeMembers
                         .filter((m) => m.id !== active.id)
-                        .map((m) => ({ id: m.id, userName: m.user.name }))}
+                        .map((m) => ({ id: m.id, userName: m.user.name, userImage: m.user.image }))}
                     />
                   )}
                   {isAdmin && (

@@ -27,6 +27,7 @@ type Member = {
   id: string;
   userId: string;
   userName: string;
+  image?: string | null;
 };
 
 /* ────────────── Add Item Sheet ────────────── */
@@ -335,7 +336,7 @@ export function MarkBoughtSheet({
                         : "bg-surface-container border-outline-variant text-on-surface-variant line-through opacity-60",
                     )}
                   >
-                    <AvatarInitials name={m.userName} size={24} />
+                    <AvatarInitials name={m.userName} imageUrl={m.image} size={24} />
                     <span className="text-[13px] font-semibold">
                       {m.userName.split(" ")[0]}
                     </span>
@@ -603,6 +604,7 @@ export function ShoppingItemCard({
     quantity: string | null;
     frequency: string | null;
     nextBuyerName: string | null;
+    nextBuyerImage?: string | null;
   };
   householdId: string;
   members: Member[];
@@ -632,11 +634,14 @@ export function ShoppingItemCard({
               </span>
             )}
             {item.nextBuyerName && (
-              <span className="text-[12px] text-on-surface-variant">
-                Le toca a{" "}
-                <span className="font-semibold">
-                  {item.nextBuyerName.split(" ")[0]}
-                </span>
+              <span className="flex items-center gap-1.5 text-[12px] text-on-surface-variant">
+                Le toca a
+                <div className="flex items-center gap-1">
+                  <AvatarInitials name={item.nextBuyerName} imageUrl={item.nextBuyerImage} size={16} />
+                  <span className="font-semibold text-on-surface">
+                    {item.nextBuyerName.split(" ")[0]}
+                  </span>
+                </div>
               </span>
             )}
           </div>
