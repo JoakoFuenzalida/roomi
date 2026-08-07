@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { X } from "lucide-react";
 import { requireUser, assertMemberOf } from "@/lib/session";
+import { db } from "@/lib/db";
 import { CreateTaskForm } from "@/components/task-actions";
 
 export default async function NuevaTareaPage({
@@ -16,6 +17,16 @@ export default async function NuevaTareaPage({
 
   // Cualquier miembro del hogar puede crear tareas
   await assertMemberOf(user.id, hogarId);
+
+  const members = await db.membership.findMany({
+    where: {
+      householdId: hogarId,
+      leftAt: null,
+      OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],
+    },
+    include: { user: { select: { name: true, image: true } } },
+    orderBy: { rotationOrder: "asc" },
+  });
 
   return (
     <main className="max-w-md mx-auto px-5 pt-5 pb-6 flex flex-col min-h-svh">
@@ -33,7 +44,10 @@ export default async function NuevaTareaPage({
         <div className="w-[38px]" />
       </header>
 
-      <CreateTaskForm householdId={hogarId} />
+      <CreateTaskForm 
+        householdId={hogarId} 
+        members={members.map(m => ({ id: m.id, name: m.user.name, image: m.user.image }))} 
+      />
     </main>
   );
 }

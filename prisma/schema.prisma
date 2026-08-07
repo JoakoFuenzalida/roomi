@@ -69,6 +69,7 @@ model Membership {
   user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   household        Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
   assignedTasks    Task[]         @relation("nextAssignee")
+  taskParticipations TaskParticipant[]
   nextShoppingFor  ShoppingItem[] @relation("nextBuyer")
   room             Room?
 
@@ -104,8 +105,22 @@ model Task {
   household    Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
   nextAssignee Membership?     @relation("nextAssignee", fields: [nextAssigneeMembershipId], references: [id])
   executions   TaskExecution[]
+  participants TaskParticipant[]
 
   @@index([householdId, active, nextDueDate])
+}
+
+model TaskParticipant {
+  id           String @id @default(cuid())
+  taskId       String
+  membershipId String
+  order        Int
+
+  task       Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, membershipId])
+  @@index([taskId, order])
 }
 
 model TaskExecution {

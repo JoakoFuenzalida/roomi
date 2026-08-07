@@ -54,6 +54,9 @@ export async function createTask(
     return { error: "No hay miembros activos en el hogar" };
   }
 
+  const participantIdsRaw = formData.getAll("participantIds").map(String);
+  const participantIds = participantIdsRaw.length > 0 ? participantIdsRaw : activeMemberships.map(m => m.id);
+
   const nextDueDate = computeInitialDueDate(
     frequency as TaskFrequency,
     daysOfWeek,
@@ -69,9 +72,15 @@ export async function createTask(
       daysOfWeek,
       daysOfMonth,
       active: true,
-      nextAssigneeMembershipId: activeMemberships[0].id,
+      nextAssigneeMembershipId: participantIds[0],
       nextDueDate,
       cycleNumber: 0,
+      participants: {
+        create: participantIds.map((id, index) => ({
+          membershipId: id,
+          order: index,
+        })),
+      },
     },
   });
 
@@ -112,6 +121,9 @@ export async function completarTarea(taskId: string) {
       nextDueDate: true,
       daysOfWeek: true,
       daysOfMonth: true,
+      participants: {
+        orderBy: { order: "asc" }
+      }
     },
   });
 
@@ -128,28 +140,59 @@ export async function completarTarea(taskId: string) {
         cycleNumber: task.cycleNumber,
         completedById: user.id,
         wasAssigned: task.nextAssigneeMembershipId === membership.id,
-        pointsEarned: task.points,
+        pointsEarned: task.nextAssigneeMembershipId === membership.id ? task.points : Math.ceil(task.points * 1.5),
       },
-    });
-
-    const activeMembers = await tx.membership.findMany({
-      where: {
-        householdId: task.householdId,
-        leftAt: null,
-        OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],
-      },
-      orderBy: { rotationOrder: "asc" },
     });
 
     let nextAssigneeId = task.nextAssigneeMembershipId;
 
-    if (activeMembers.length > 0) {
-      const currentIndex = activeMembers.findIndex(
-        (m) => m.id === task.nextAssigneeMembershipId,
-      );
-      const nextIndex =
-        currentIndex === -1 ? 0 : (currentIndex + 1) % activeMembers.length;
-      nextAssigneeId = activeMembers[nextIndex].id;
+    if (task.participants && task.participants.length > 0) {
+      // Use explicit participants rotation
+      const activeParticipants = task.participants.filter(p => {
+        // Here we'd need to fetch memberships to check if they left or are on vacation.
+        // Actually, let's fetch active members and filter the participants list.
+        return true; // We'll compute this in the next block
+      });
+      
+      const activeMembers = await tx.membership.findMany({
+        where: {
+          id: { in: task.participants.map(p => p.membershipId) },
+          leftAt: null,
+          OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],
+        }
+      });
+      
+      // Filter out participants who are not active
+      const validParticipants = task.participants.filter(p => activeMembers.some(m => m.id === p.membershipId));
+
+      if (validParticipants.length > 0) {
+        const currentIndex = validParticipants.findIndex(
+          (p) => p.membershipId === task.nextAssigneeMembershipId,
+        );
+        const nextIndex =
+          currentIndex === -1 ? 0 : (currentIndex + 1) % validParticipants.length;
+        nextAssigneeId = validParticipants[nextIndex].membershipId;
+      }
+
+    } else {
+      // Fallback to global rotation
+      const activeMembers = await tx.membership.findMany({
+        where: {
+          householdId: task.householdId,
+          leftAt: null,
+          OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],
+        },
+        orderBy: { rotationOrder: "asc" },
+      });
+
+      if (activeMembers.length > 0) {
+        const currentIndex = activeMembers.findIndex(
+          (m) => m.id === task.nextAssigneeMembershipId,
+        );
+        const nextIndex =
+          currentIndex === -1 ? 0 : (currentIndex + 1) % activeMembers.length;
+        nextAssigneeId = activeMembers[nextIndex].id;
+      }
     }
 
     await tx.task.update({

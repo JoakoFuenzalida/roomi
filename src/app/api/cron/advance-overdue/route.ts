@@ -29,6 +29,9 @@ export async function POST(req: NextRequest) {
       frequency: true,
       daysOfWeek: true,
       daysOfMonth: true,
+      participants: {
+        orderBy: { order: "asc" }
+      },
     },
   });
 
@@ -57,26 +60,47 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        const activeMembers = await tx.membership.findMany({
-          where: {
-            householdId: task.householdId,
-            leftAt: null,
-            OR: [
-              { onVacationUntil: null },
-              { onVacationUntil: { lt: new Date() } },
-            ],
-          },
-          orderBy: { rotationOrder: "asc" },
-        });
-
         let nextAssigneeId = task.nextAssigneeMembershipId;
-        if (activeMembers.length > 0) {
-          const currentIndex = activeMembers.findIndex(
-            (m) => m.id === task.nextAssigneeMembershipId,
+
+        if (task.participants && task.participants.length > 0) {
+          const activeMembers = await tx.membership.findMany({
+            where: {
+              id: { in: task.participants.map((p) => p.membershipId) },
+              leftAt: null,
+              OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],
+            },
+          });
+
+          const validParticipants = task.participants.filter((p) =>
+            activeMembers.some((m) => m.id === p.membershipId),
           );
-          const nextIndex =
-            currentIndex === -1 ? 0 : (currentIndex + 1) % activeMembers.length;
-          nextAssigneeId = activeMembers[nextIndex].id;
+
+          if (validParticipants.length > 0) {
+            const currentIndex = validParticipants.findIndex(
+              (p) => p.membershipId === task.nextAssigneeMembershipId,
+            );
+            const nextIndex =
+              currentIndex === -1 ? 0 : (currentIndex + 1) % validParticipants.length;
+            nextAssigneeId = validParticipants[nextIndex].membershipId;
+          }
+        } else {
+          const activeMembers = await tx.membership.findMany({
+            where: {
+              householdId: task.householdId,
+              leftAt: null,
+              OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],
+            },
+            orderBy: { rotationOrder: "asc" },
+          });
+
+          if (activeMembers.length > 0) {
+            const currentIndex = activeMembers.findIndex(
+              (m) => m.id === task.nextAssigneeMembershipId,
+            );
+            const nextIndex =
+              currentIndex === -1 ? 0 : (currentIndex + 1) % activeMembers.length;
+            nextAssigneeId = activeMembers[nextIndex].id;
+          }
         }
 
         await tx.task.update({

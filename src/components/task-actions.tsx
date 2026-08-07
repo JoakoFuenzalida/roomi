@@ -4,6 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { ArrowLeftRight, Minus, Plus, Trash2 } from "lucide-react";
 import { createTask, completarTarea, deleteTask, swapTurno } from "@/actions/task";
 import { AvatarInitials } from "./avatar-initials";
+import { TaskParticipantsOrder } from "./task-participants-order";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -25,11 +26,17 @@ const WEEKDAYS: { value: number; short: string; long: string }[] = [
   { value: 0, short: "D", long: "Domingo" },
 ];
 
-function toggle(arr: number[], v: number): number[] {
+function toggle<T>(arr: T[], v: T): T[] {
   return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 }
 
-export function CreateTaskForm({ householdId }: { householdId: string }) {
+export function CreateTaskForm({ 
+  householdId,
+  members 
+}: { 
+  householdId: string;
+  members: { id: string; name: string; image: string | null }[];
+}) {
   const [state, formAction, isPending] = useActionState(
     createTask.bind(null, householdId),
     null,
@@ -41,6 +48,7 @@ export function CreateTaskForm({ householdId }: { householdId: string }) {
   const today = new Date();
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([today.getDay()]);
   const [daysOfMonth, setDaysOfMonth] = useState<number[]>([today.getDate()]);
+  const [participants, setParticipants] = useState<string[]>(members.map(m => m.id));
 
   const needsWeek = freq === "WEEKLY" || freq === "BIWEEKLY";
   const needsMonth = freq === "MONTHLY";
@@ -55,8 +63,11 @@ export function CreateTaskForm({ householdId }: { householdId: string }) {
         ))}
       {needsMonth &&
         daysOfMonth.map((d) => (
-          <input key={d} type="hidden" name="daysOfMonth" value={d} />
+          <input key={`month-${d}`} type="hidden" name="daysOfMonth" value={d} />
         ))}
+      {participants.map((id, index) => (
+        <input key={`p-${id}`} type="hidden" name="participantIds" value={id} />
+      ))}
 
       <div className="space-y-6">
         <div className="space-y-2">
@@ -146,6 +157,44 @@ export function CreateTaskForm({ householdId }: { householdId: string }) {
           </div>
         )}
 
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+            ¿Quiénes participan?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {members.map((m) => {
+              const selected = participants.includes(m.id);
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setParticipants(s => toggle(s, m.id))}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-pill border transition-colors",
+                    selected
+                      ? "bg-primary-container border-primary text-primary"
+                      : "bg-surface-container border-outline-variant text-on-surface-variant opacity-60 hover:opacity-100"
+                  )}
+                >
+                  <AvatarInitials name={m.name} imageUrl={m.image} size={20} />
+                  <span className="text-[13px] font-semibold">{m.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          {participants.length === 0 && (
+            <p className="text-error text-xs">Debes seleccionar al menos un participante.</p>
+          )}
+
+          {participants.length > 0 && (
+            <TaskParticipantsOrder 
+              members={members}
+              selectedIds={participants}
+              onChange={setParticipants}
+            />
+          )}
+        </div>
+
         <div className="space-y-2">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
             Puntos
@@ -188,7 +237,7 @@ export function CreateTaskForm({ householdId }: { householdId: string }) {
       <div className="mt-auto pt-8">
         <Button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || participants.length === 0}
           className="w-full h-14 rounded-pill text-base font-bold shadow-[0_6px_16px_rgba(255,107,107,0.35)]"
         >
           {isPending ? "Creando..." : "Crear tarea"}
