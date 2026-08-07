@@ -250,7 +250,7 @@ function TasksCard({ tasks }: { tasks: PendingTask[] }) {
                   <span className="bg-secondary-container text-on-secondary-container text-[10px] font-semibold px-2 py-0.5 rounded-pill">
                     {task.household.name}
                   </span>
-                  <span>{task.points} pts</span>
+                  <span>{task.points} RC</span>
                   {overdue && <span className="text-error font-bold">· Atrasada</span>}
                 </p>
               </div>

@@ -142,7 +142,7 @@ export default async function TareasPage({
                   </h3>
                 </div>
                 <span className="bg-primary-container text-on-primary-container text-[11px] font-bold px-2.5 py-1 rounded-pill">
-                  {task.points} pts
+                  {task.points} RC
                 </span>
               </div>
 

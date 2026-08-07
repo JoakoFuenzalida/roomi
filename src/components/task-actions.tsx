@@ -217,7 +217,7 @@ export function CreateTaskForm({
 
         <div className="space-y-2">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-            Puntos
+            RoomiCoins
           </p>
           <div className="flex items-center gap-4 justify-center py-2">
             <button
@@ -245,9 +245,7 @@ export function CreateTaskForm({
           </div>
         </div>
 
-        <div className="rounded-[12px] bg-secondary-container text-on-secondary-container p-3 text-sm">
-          🔄 Se asigna sola por rotación. Cada roommate toma su turno.
-        </div>
+
 
         {state?.error && (
           <p className="text-error text-sm font-semibold">{state.error}</p>

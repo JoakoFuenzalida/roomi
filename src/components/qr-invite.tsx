@@ -28,7 +28,7 @@ export function QRInviteButton({ inviteUrl }: { inviteUrl: string }) {
             </button>
             <h3 className="font-display font-semibold text-[20px] mt-2">Invitar al hogar</h3>
             <p className="text-sm text-center text-on-surface-variant px-2">
-              Pídele a tu roomie que escanee este código con su cámara.
+              Pídele a tu roomi que escanee este código con su cámara.
             </p>
             <div className="bg-white p-4 rounded-[16px] w-full aspect-square flex items-center justify-center mt-2 border border-outline-variant">
               <QRCode

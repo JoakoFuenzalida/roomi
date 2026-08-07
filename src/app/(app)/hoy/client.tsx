@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ChatClient } from "@/components/chat";
 import { AvatarInitials } from "@/components/avatar-initials";
@@ -13,7 +13,7 @@ type RankingUser = {
 
 function getTitle(points: number) {
   if (points <= 10) return { title: "El Fantasma", icon: "👻" };
-  if (points <= 30) return { title: "Roomie Promedio", icon: "🧍" };
+  if (points <= 30) return { title: "Roomi Promedio", icon: "🧍" };
   if (points <= 50) return { title: "Máquina de Limpieza", icon: "🧹" };
   return { title: "Dios del Hogar", icon: "👑" };
 }
@@ -34,6 +34,10 @@ export function HoyTabs({
   children: React.ReactNode;
 }) {
   const [tab, setTab] = useState<"muro" | "chat" | "ranking">(initialTab);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   return (
     <>

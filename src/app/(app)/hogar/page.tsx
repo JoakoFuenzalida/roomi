@@ -200,15 +200,12 @@ function ActiveHouseholdCard({
 
       <div className="mt-5">
         <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-2">
-          Orden de rotación
+          Miembros del hogar
         </p>
-        <ul className="space-y-2">
-          {household.members.map((m, i) => (
+        <ul className="space-y-3">
+          {household.members.map((m) => (
             <li key={m.id} className="flex items-center gap-3">
-              <span className="w-5 text-on-surface-variant text-sm font-semibold text-center">
-                {m.rotationOrder}
-              </span>
-              <AvatarInitials name={m.user.name} imageUrl={m.user.image} size={30} />
+              <AvatarInitials name={m.user.name} imageUrl={m.user.image} size={32} />
               <span className="flex-1 text-sm font-medium">
                 {m.user.name}
                 {m.role === "ADMIN" && (
@@ -217,16 +214,6 @@ function ActiveHouseholdCard({
                   </span>
                 )}
               </span>
-              {i === 0 && (
-                <span className="text-[10px] font-bold uppercase tracking-wide bg-primary-container text-on-primary-container px-2 py-0.5 rounded-pill">
-                  Le toca
-                </span>
-              )}
-              {i === 1 && (
-                <span className="text-[10px] font-bold uppercase tracking-wide bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-pill">
-                  Sigue
-                </span>
-              )}
             </li>
           ))}
         </ul>

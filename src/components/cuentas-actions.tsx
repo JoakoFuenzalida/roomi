@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useActionState, useTransition, useState, useEffect } from "react";
 import {
   crearRoom,
@@ -805,21 +807,21 @@ export function MonthNavigator({
 
   return (
     <div className="flex items-center justify-between mb-4">
-      <a
+      <Link
         href={`${basePath}&mes=${prev.m}&ano=${prev.y}`}
         className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant"
       >
         &larr;
-      </a>
+      </Link>
       <h2 className="text-[16px] font-bold">
         {monthNames[month - 1]} {year}
       </h2>
-      <a
+      <Link
         href={`${basePath}&mes=${next.m}&ano=${next.y}`}
         className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant"
       >
         &rarr;
-      </a>
+      </Link>
     </div>
   );
 }

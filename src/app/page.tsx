@@ -30,8 +30,8 @@ export default async function Home() {
           Convivencia que se organiza sola.
         </p>
         <p className="text-on-surface-variant text-sm mt-3 max-w-[250px] leading-relaxed">
-          El aseo rota solo entre los roommates. Se acabó pelear por quién lava
-          la loza.
+          El aseo rota solo entre los roomis. Se acabó pelear por quién lava
+          los platos.
         </p>
       </div>
 
