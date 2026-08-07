@@ -1,4 +1,4 @@
-# Roomi — Handoff completo (actualizado 2026-08-05)
+# Roomi — Handoff completo (actualizado 2026-08-07)
 
 Este archivo captura el estado real del proyecto. Léelo para entender qué hay, cómo funciona, y qué decisiones se tomaron.
 
@@ -34,6 +34,32 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
 - **Web Push VAPID** con `web-push`. Service Worker propio en `public/sw.js`
 - **Zod v4** + `useActionState` (React 19) + Server Actions para todas las mutaciones
 - **Vercel** deploy con cron jobs
+
+---
+
+## Novedades recientes (Agosto 2026 - UX & Gamificación)
+
+- **Identidad Roomi**: Se reemplazó el término "roommates" por **roomis**, y los puntos por **RoomiCoins (RC)**.
+- **Perfil global (Avatars)**: Todas las secciones muestran la foto de perfil del usuario (desde auth social, etc) en lugar de iniciales, dando más personalidad a la app.
+- **Gamificación (RoomiCoins)**: 
+  - La moneda ahora tiene su propio icono en formato PNG (sin bordes) y destaca más en el header (`32x32`).
+  - Redirección rápida al tocar el contador hacia la tabla de ranking.
+  - Multiplicador de RC al realizar tareas de otro roomi.
+- **Asignación de Tareas y Turnos**:
+  - Tareas repetitivas: Implementada la **Ruleta** de la suerte y re-ordenamiento arrastrando (drag & drop) para turnos justos.
+  - Tareas únicas (no recurrentes): Selector de fecha por calendario y asignación grupal.
+- **Chat en vivo**:
+  - Función de menciones (`@roomi`) con alertas dirigidas.
+  - Opción de silenciar notificaciones del chat general, recibiendo push solo cuando eres mencionado.
+- **Cuentas y Finanzas**:
+  - Historial mensual de cuentas: **MonthNavigator** para viajar instantáneamente a meses pasados (usando transiciones en cliente y validación en servidor).
+  - Confirmación al borrar servicios, e items sugeridos por default (Luz, Agua, GGCC, Internet).
+- **Hogar e Invitaciones**:
+  - Nuevo botón para generar **Código QR** grande e invitar a roomis presencialmente escaneando la pantalla.
+  - El Admin puede eliminar miembros con confirmación destructiva. Al hacerlo, el `inviteCode` del hogar **se regenera automáticamente** por seguridad.
+- **UX Fluido y Nativo**:
+  - Implementación de `loading.tsx` en `app/(app)` y flujos de `useTransition` (MonthNavigator) para dar percepción instantánea cross-route a nivel aplicación (spinners skeleton).
+  - Corrección de bugs de overflow horizontal en mobile generados por links largos en flexboxes.
 
 ---
 
@@ -261,7 +287,5 @@ Si `prisma generate` falla, borrar `src/generated/prisma/` y regenerar. Si los m
 
 ## Qué queda por hacer (nice-to-have, todo lo core está hecho)
 
-- **Puntos + ranking + gamificación** — leaderboard mensual desde `TaskExecution.pointsEarned`
 - **Evidencia fotográfica** — Supabase Storage + foto opcional al completar tarea
 - **Supabase Realtime** — muro y compras en vivo sin refresh
-- **Historial mensual** — vista de gastos/tareas por persona por mes
