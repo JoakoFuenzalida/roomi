@@ -33,13 +33,14 @@ export async function createTask(
     points: formData.get("points"),
     daysOfWeek: daysOfWeekRaw,
     daysOfMonth: daysOfMonthRaw,
+    onceDate: formData.get("onceDate"),
   });
 
   if (!parse.success) {
     return { error: parse.error.issues[0].message };
   }
 
-  const { title, frequency, points, daysOfWeek, daysOfMonth } = parse.data;
+  const { title, frequency, points, daysOfWeek, daysOfMonth, onceDate } = parse.data;
 
   const activeMemberships = await db.membership.findMany({
     where: {
@@ -57,11 +58,16 @@ export async function createTask(
   const participantIdsRaw = formData.getAll("participantIds").map(String);
   const participantIds = participantIdsRaw.length > 0 ? participantIdsRaw : activeMemberships.map(m => m.id);
 
-  const nextDueDate = computeInitialDueDate(
-    frequency as TaskFrequency,
-    daysOfWeek,
-    daysOfMonth,
-  );
+  let nextDueDate: Date;
+  if (frequency === "ONCE" && onceDate) {
+    nextDueDate = new Date(onceDate);
+  } else {
+    nextDueDate = computeInitialDueDate(
+      frequency as TaskFrequency,
+      daysOfWeek,
+      daysOfMonth,
+    );
+  }
 
   await db.task.create({
     data: {
@@ -195,19 +201,28 @@ export async function completarTarea(taskId: string) {
       }
     }
 
-    await tx.task.update({
-      where: { id: taskId },
-      data: {
-        nextAssigneeMembershipId: nextAssigneeId,
-        nextDueDate: computeNextDueDate(
-          task.nextDueDate,
-          task.frequency,
-          task.daysOfWeek,
-          task.daysOfMonth,
-        ),
-        cycleNumber: { increment: 1 },
-      },
-    });
+    if (task.frequency === "ONCE") {
+      await tx.task.update({
+        where: { id: taskId },
+        data: {
+          active: false,
+        },
+      });
+    } else {
+      await tx.task.update({
+        where: { id: taskId },
+        data: {
+          nextAssigneeMembershipId: nextAssigneeId,
+          nextDueDate: computeNextDueDate(
+            task.nextDueDate,
+            task.frequency,
+            task.daysOfWeek,
+            task.daysOfMonth,
+          ),
+          cycleNumber: { increment: 1 },
+        },
+      });
+    }
   });
 
   revalidatePath("/hoy");

@@ -80,6 +80,7 @@ model Membership {
 // ============ TAREAS + ROTACIÓN ============
 
 enum TaskFrequency {
+  ONCE
   DAILY
   WEEKLY
   BIWEEKLY

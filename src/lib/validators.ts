@@ -26,7 +26,7 @@ export const taskSchema = z
       .trim()
       .min(2, "Título muy corto")
       .max(50, "Máx 50 caracteres"),
-    frequency: z.enum(["DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"], {
+    frequency: z.enum(["ONCE", "DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"], {
       message: "Selecciona una frecuencia válida",
     }),
     points: z.coerce
@@ -37,9 +37,11 @@ export const taskSchema = z
       .default(1),
     daysOfWeek: z.array(z.coerce.number().int().min(0).max(6)).default([]),
     daysOfMonth: z.array(z.coerce.number().int().min(1).max(31)).default([]),
+    onceDate: z.string().optional(),
   })
   .refine(
     (v) =>
+      v.frequency === "ONCE" ||
       v.frequency === "DAILY" ||
       v.frequency === "MONTHLY" ||
       v.daysOfWeek.length > 0,
@@ -48,6 +50,10 @@ export const taskSchema = z
   .refine(
     (v) => v.frequency !== "MONTHLY" || v.daysOfMonth.length > 0,
     { message: "Elige al menos un día del mes", path: ["daysOfMonth"] },
+  )
+  .refine(
+    (v) => v.frequency !== "ONCE" || (!!v.onceDate && !isNaN(Date.parse(v.onceDate))),
+    { message: "Elige una fecha válida para la tarea", path: ["onceDate"] }
   );
 
 export const shoppingItemSchema = z.object({

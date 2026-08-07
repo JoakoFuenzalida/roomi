@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const FREQUENCIES = [
+  { value: "ONCE", label: "Una vez" },
   { value: "DAILY", label: "Diaria" },
   { value: "WEEKLY", label: "Semanal" },
   { value: "BIWEEKLY", label: "Quincenal" },
@@ -42,16 +43,18 @@ export function CreateTaskForm({
     null,
   );
   const [freq, setFreq] = useState<(typeof FREQUENCIES)[number]["value"]>(
-    "WEEKLY",
+    "ONCE",
   );
   const [points, setPoints] = useState(1);
   const today = new Date();
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([today.getDay()]);
   const [daysOfMonth, setDaysOfMonth] = useState<number[]>([today.getDate()]);
+  const [onceDate, setOnceDate] = useState<string>(today.toISOString().split("T")[0]);
   const [participants, setParticipants] = useState<string[]>(members.map(m => m.id));
 
   const needsWeek = freq === "WEEKLY" || freq === "BIWEEKLY";
   const needsMonth = freq === "MONTHLY";
+  const needsOnceDate = freq === "ONCE";
 
   return (
     <form action={formAction} className="flex flex-col flex-1">
@@ -65,6 +68,9 @@ export function CreateTaskForm({
         daysOfMonth.map((d) => (
           <input key={`month-${d}`} type="hidden" name="daysOfMonth" value={d} />
         ))}
+      {needsOnceDate && (
+        <input type="hidden" name="onceDate" value={onceDate} />
+      )}
       {participants.map((id, index) => (
         <input key={`p-${id}`} type="hidden" name="participantIds" value={id} />
       ))}
@@ -108,6 +114,20 @@ export function CreateTaskForm({
             ))}
           </div>
         </div>
+
+        {needsOnceDate && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+              ¿Cuándo se hará?
+            </p>
+            <input
+              type="date"
+              value={onceDate}
+              onChange={(e) => setOnceDate(e.target.value)}
+              className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
+            />
+          </div>
+        )}
 
         {needsWeek && (
           <div className="space-y-2">
@@ -186,7 +206,7 @@ export function CreateTaskForm({
             <p className="text-error text-xs">Debes seleccionar al menos un participante.</p>
           )}
 
-          {participants.length > 0 && (
+          {freq !== "ONCE" && participants.length > 0 && (
             <TaskParticipantsOrder 
               members={members}
               selectedIds={participants}

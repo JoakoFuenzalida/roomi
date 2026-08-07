@@ -37,7 +37,7 @@ function SortableMemberRow({ member, orderIndex }: { member: Member; orderIndex:
       <div 
         {...attributes} 
         {...listeners}
-        className="text-on-surface-variant hover:text-primary cursor-grab active:cursor-grabbing p-1"
+        className="text-on-surface-variant hover:text-primary cursor-grab active:cursor-grabbing p-1 touch-none"
       >
         <GripVertical size={18} />
       </div>
