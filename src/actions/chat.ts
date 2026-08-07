@@ -3,6 +3,8 @@
 import { db } from "@/lib/db";
 import { requireUser, assertMemberOf } from "@/lib/session";
 
+import { sendPushToUser } from "@/lib/push";
+
 export async function sendChatMessage(householdId: string, content: string) {
   const user = await requireUser();
   await assertMemberOf(user.id, householdId);
@@ -18,6 +20,23 @@ export async function sendChatMessage(householdId: string, content: string) {
       reactions: true,
     },
   });
+
+  // Notify other members
+  const members = await db.membership.findMany({
+    where: { householdId, userId: { not: user.id } },
+    include: { user: { select: { id: true, name: true } } },
+  });
+
+  for (const m of members) {
+    const isMentioned = m.user.name && notice.content.includes(`@${m.user.name}`);
+    if (!m.chatMuted || isMentioned) {
+      await sendPushToUser(m.userId, {
+        title: isMentioned ? `Te mencionaron en el chat 💬` : `Nuevo mensaje de ${user.name}`,
+        body: notice.content.length > 50 ? notice.content.substring(0, 47) + "..." : notice.content,
+        url: "/hoy",
+      }).catch(() => {});
+    }
+  }
 
   return notice;
 }

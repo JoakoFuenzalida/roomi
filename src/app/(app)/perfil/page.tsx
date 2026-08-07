@@ -7,6 +7,7 @@ import { AvatarInitials } from "@/components/avatar-initials";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { VacationToggle } from "@/components/vacation-toggle";
+import { ChatMuteToggle } from "@/components/chat-mute-toggle";
 import { EditProfileButton } from "@/components/profile-actions";
 
 export default async function PerfilPage() {
@@ -80,6 +81,25 @@ export default async function PerfilPage() {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {memberships.length > 0 && (
+        <section className="mb-4">
+          <h2 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-3">
+            Notificaciones de Chat
+          </h2>
+          <p className="text-[12px] text-on-surface-variant mb-3">
+            Si silencias el chat, solo te avisaremos cuando te mencionen con @.
+          </p>
+          <ChatMuteToggle
+            memberships={memberships.map((m) => ({
+              id: m.id,
+              householdId: m.household.id,
+              householdName: m.household.name,
+              chatMuted: m.chatMuted,
+            }))}
+          />
         </section>
       )}
 

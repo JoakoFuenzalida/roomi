@@ -24,10 +24,10 @@ export async function UserHeaderNav() {
 
   return (
     <div className="flex items-center gap-3 shrink-0">
-      <Link href="/hoy?tab=ranking" className="flex items-center gap-1.5 bg-surface-container-high px-2.5 py-1 rounded-pill border border-outline-variant hover:border-primary transition-colors shadow-sm">
-         <span className="text-[13px] font-bold text-on-surface">{points}</span>
-         <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-white shrink-0">
-           <Image src="/coins.png" alt="RoomiCoins" width={20} height={20} className="object-cover w-full h-full" />
+      <Link href="/hoy?tab=ranking" className="flex items-center gap-2 bg-surface-container-high px-3 py-1.5 rounded-pill border border-outline-variant hover:border-primary transition-colors shadow-sm">
+         <span className="text-[14px] font-extrabold text-on-surface">{points}</span>
+         <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center bg-white shrink-0 ring-1 ring-primary/20 shadow-[0_0_0_2px_rgba(255,255,255,0.8),0_2px_8px_rgba(0,0,0,0.12)]">
+           <Image src="/coins.png" alt="RoomiCoins" width={24} height={24} className="object-cover w-full h-full" />
          </div>
       </Link>
       <Link href="/perfil">
