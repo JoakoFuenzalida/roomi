@@ -788,6 +788,8 @@ export function ChargeCard({
 
 /* ────────────── Month Navigation ────────────── */
 
+import { useRouter } from "next/navigation";
+
 export function MonthNavigator({
   month,
   year,
@@ -797,6 +799,9 @@ export function MonthNavigator({
   year: number;
   basePath: string;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
   const monthNames = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
@@ -805,23 +810,32 @@ export function MonthNavigator({
   const prev = month === 1 ? { m: 12, y: year - 1 } : { m: month - 1, y: year };
   const next = month === 12 ? { m: 1, y: year + 1 } : { m: month + 1, y: year };
 
+  const handleNav = (m: number, y: number) => {
+    startTransition(() => {
+      router.push(`${basePath}&mes=${m}&ano=${y}`);
+    });
+  };
+
   return (
     <div className="flex items-center justify-between mb-4">
-      <Link
-        href={`${basePath}&mes=${prev.m}&ano=${prev.y}`}
-        className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant"
+      <button
+        onClick={() => handleNav(prev.m, prev.y)}
+        disabled={isPending}
+        className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant disabled:opacity-50"
       >
         &larr;
-      </Link>
-      <h2 className="text-[16px] font-bold">
+      </button>
+      <h2 className="text-[16px] font-bold flex items-center gap-2">
         {monthNames[month - 1]} {year}
+        {isPending && <RefreshCw size={14} className="animate-spin text-primary" />}
       </h2>
-      <Link
-        href={`${basePath}&mes=${next.m}&ano=${next.y}`}
-        className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant"
+      <button
+        onClick={() => handleNav(next.m, next.y)}
+        disabled={isPending}
+        className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant disabled:opacity-50"
       >
         &rarr;
-      </Link>
+      </button>
     </div>
   );
 }

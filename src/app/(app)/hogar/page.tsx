@@ -13,6 +13,8 @@ import {
   JoinHouseholdForm,
 } from "@/components/household-forms";
 import { LeaveHouseholdButton } from "@/components/leave-household-button";
+import { RemoveMemberButton } from "@/components/remove-member-button";
+import { removeMember } from "@/actions/household";
 import { QRInviteButton } from "@/components/qr-invite";
 
 export default async function HogarPage() {
@@ -34,7 +36,7 @@ export default async function HogarPage() {
               id: true,
               role: true,
               rotationOrder: true,
-              user: { select: { name: true, image: true } },
+              user: { select: { id: true, name: true, image: true } },
             },
           },
         },
@@ -70,6 +72,7 @@ export default async function HogarPage() {
           household={active.household}
           role={active.role}
           origin={origin}
+          currentUserId={user.id}
         />
       ) : (
         <div className="rounded-[16px] bg-surface-container-low border border-outline-variant p-6 text-center">
@@ -135,7 +138,7 @@ type ActiveHousehold = {
     id: string;
     role: "ADMIN" | "MEMBER";
     rotationOrder: number;
-    user: { name: string; image?: string | null };
+    user: { id: string; name: string; image?: string | null };
   }[];
 };
 
@@ -143,10 +146,12 @@ function ActiveHouseholdCard({
   household,
   role,
   origin,
+  currentUserId,
 }: {
   household: ActiveHousehold;
   role: "ADMIN" | "MEMBER";
   origin: string;
+  currentUserId: string;
 }) {
   const inviteUrl = `${origin}/unirse/${household.inviteCode}`;
   const displayInvite = inviteUrl.replace(/^https?:\/\//, "");
@@ -214,6 +219,15 @@ function ActiveHouseholdCard({
                   </span>
                 )}
               </span>
+              {role === "ADMIN" && m.user.id !== currentUserId && (
+                <RemoveMemberButton 
+                  memberName={m.user.name}
+                  onRemove={async () => {
+                    "use server";
+                    await removeMember(household.id, m.user.id);
+                  }}
+                />
+              )}
             </li>
           ))}
         </ul>

@@ -115,3 +115,30 @@ export async function leaveHousehold(householdId: string) {
   revalidatePath("/hogar");
   redirect("/hogar");
 }
+
+export async function removeMember(householdId: string, userIdToRemove: string) {
+  const user = await requireUser();
+  await assertMemberOf(user.id, householdId);
+
+  // Validate admin
+  const adminMembership = await db.membership.findFirst({
+    where: { householdId, userId: user.id, leftAt: null, role: "ADMIN" }
+  });
+  if (!adminMembership) {
+    throw new Error("No tienes permisos para eliminar miembros");
+  }
+
+  // Set leftAt
+  await db.membership.update({
+    where: { userId_householdId: { userId: userIdToRemove, householdId } },
+    data: { leftAt: new Date() }
+  });
+
+  // Cycle invite code to prevent rejoining
+  await db.household.update({
+    where: { id: householdId },
+    data: { inviteCode: require("crypto").randomUUID() }
+  });
+
+  revalidatePath("/hogar");
+}
