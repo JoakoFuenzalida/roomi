@@ -1,6 +1,6 @@
 {
   "crons": [
     { "path": "/api/cron/advance-overdue", "schedule": "5 3 * * *" },
-    { "path": "/api/cron/daily-reminder", "schedule": "0 13 * * *" }
+    { "path": "/api/cron/daily-reminder", "schedule": "0 14 * * *" }
   ]
 }

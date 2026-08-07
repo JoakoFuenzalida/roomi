@@ -77,6 +77,7 @@ export function HoyTabs({
             householdId={mainHouseholdId}
             currentUserId={currentUserId}
             initialMessages={chatMessages}
+            members={rankingData.map(r => r.user)}
           />
         </div>
       )}

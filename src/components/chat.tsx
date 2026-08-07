@@ -23,13 +23,17 @@ export function ChatClient({
   householdId,
   currentUserId,
   initialMessages,
+  members = [],
 }: {
   householdId: string;
   currentUserId: string;
   initialMessages: ChatMessageData[];
+  members?: { id: string; name: string | null; image: string | null }[];
 }) {
   const [messages, setMessages] = useState<ChatMessageData[]>(initialMessages);
   const [input, setInput] = useState("");
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom
@@ -180,6 +184,62 @@ export function ChatClient({
     }
   }
 
+  const filteredMembers = mentionQuery !== null 
+    ? members.filter(m => m.id !== currentUserId && m.name?.toLowerCase().includes(mentionQuery.toLowerCase()))
+    : [];
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setInput(val);
+
+    const match = val.match(/@([a-zA-Z0-9_]*)$/);
+    if (match) {
+      setMentionQuery(match[1]);
+      setMentionIndex(0);
+    } else {
+      setMentionQuery(null);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mentionQuery !== null && filteredMembers.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex(prev => Math.min(prev + 1, filteredMembers.length - 1));
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex(prev => Math.max(prev - 1, 0));
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertMention(filteredMembers[mentionIndex].name!);
+        return;
+      }
+      if (e.key === "Escape") {
+        setMentionQuery(null);
+        return;
+      }
+    }
+
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(e);
+    }
+  };
+
+  const insertMention = (name: string) => {
+    if (mentionQuery === null) return;
+    const lastAtIndex = input.lastIndexOf("@" + mentionQuery);
+    if (lastAtIndex !== -1) {
+      const newValue = input.substring(0, lastAtIndex) + "@" + name + " ";
+      setInput(newValue);
+    }
+    setMentionQuery(null);
+  };
+
   return (
     <div className="flex flex-col flex-1 h-full min-h-0">
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
@@ -259,29 +319,44 @@ export function ChatClient({
         <div ref={endRef} />
       </div>
 
-      <div className="p-3 bg-surface-container-lowest border-t border-outline-variant">
-        <form onSubmit={handleSend} className="flex gap-2 items-end relative">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Escribe un mensaje..."
-            className="w-full bg-surface-container rounded-[20px] pl-4 pr-12 py-3 max-h-[100px] min-h-[46px] resize-none text-[15px] text-on-surface outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-            rows={1}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend(e);
-              }
-            }}
-          />
-          <button
-            type="submit"
-            disabled={!input.trim()}
-            className="absolute right-2 bottom-1.5 w-8 h-8 flex items-center justify-center bg-primary text-on-primary rounded-full disabled:opacity-50 transition-opacity"
-          >
-            <Send size={15} className="-ml-0.5" />
-          </button>
-        </form>
+      <div className="sticky bottom-[calc(62px+env(safe-area-inset-bottom))] z-20 bg-surface-container-lowest border-t border-outline-variant">
+        {mentionQuery !== null && filteredMembers.length > 0 && (
+          <div className="absolute bottom-full left-0 w-full bg-surface-container border-t border-outline-variant rounded-t-[16px] shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] max-h-[200px] overflow-y-auto">
+            {filteredMembers.map((m, i) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => insertMention(m.name!)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-high transition-colors border-b border-outline-variant/30 last:border-0",
+                  i === mentionIndex && "bg-surface-container-high"
+                )}
+              >
+                <AvatarInitials name={m.name!} imageUrl={m.image} size={28} />
+                <span className="font-semibold text-[15px]">{m.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="p-3">
+          <form onSubmit={handleSend} className="flex gap-2 items-end relative">
+            <textarea
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Escribe un mensaje... (usa @ para mencionar)"
+              className="w-full bg-surface-container rounded-[20px] pl-4 pr-12 py-3 max-h-[100px] min-h-[46px] resize-none text-[15px] text-on-surface outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+              rows={1}
+            />
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className="absolute right-2 bottom-1.5 w-8 h-8 flex items-center justify-center bg-primary text-on-primary rounded-full disabled:opacity-50 transition-opacity"
+            >
+              <Send size={15} className="-ml-0.5" />
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
