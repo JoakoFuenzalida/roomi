@@ -30,6 +30,7 @@ model User {
   billsCreated    MonthlyBill[]    @relation("billCreator")
   monthlyCharges  MonthlyCharge[]  @relation("chargeOwner")
   chargesConfirmed MonthlyCharge[] @relation("chargeConfirmer")
+  billSplitsConfirmed BillItemSplit[] @relation("billSplitConfirmer")
   noticesAuthored Notice[]         @relation("noticeAuthor")
   reactions       Reaction[]
   billItemSplits  BillItemSplit[]
@@ -278,31 +279,35 @@ model BillItem {
 }
 
 model BillItemSplit {
-  id         String @id @default(cuid())
-  billItemId String
-  userId     String
-  amount     Int
+  id            String    @id @default(cuid())
+  billItemId    String
+  userId        String
+  amount        Int
+  paidAt        DateTime?
+  confirmedAt   DateTime?
+  confirmedById String?
 
-  billItem BillItem @relation(fields: [billItemId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  billItem      BillItem @relation(fields: [billItemId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  confirmedBy   User?    @relation("billSplitConfirmer", fields: [confirmedById], references: [id])
 
   @@unique([billItemId, userId])
 }
 
 model MonthlyCharge {
-  id            String    @id @default(cuid())
-  monthlyBillId String
-  userId        String
-  roomAmount    Int
-  sharedAmount  Int
-  totalAmount   Int
-  paidAt        DateTime?
-  confirmedAt   DateTime?
-  confirmedById String?
+  id                String    @id @default(cuid())
+  monthlyBillId     String
+  userId            String
+  roomAmount        Int
+  sharedAmount      Int
+  totalAmount       Int
+  roomPaidAt        DateTime?
+  roomConfirmedAt   DateTime?
+  roomConfirmedById String?
 
-  monthlyBill MonthlyBill @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
-  user        User        @relation("chargeOwner", fields: [userId], references: [id])
-  confirmedBy User?       @relation("chargeConfirmer", fields: [confirmedById], references: [id])
+  monthlyBill       MonthlyBill @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
+  user              User        @relation("chargeOwner", fields: [userId], references: [id])
+  roomConfirmedBy   User?       @relation("chargeConfirmer", fields: [roomConfirmedById], references: [id])
 
   @@unique([monthlyBillId, userId])
 }

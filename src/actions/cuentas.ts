@@ -141,26 +141,11 @@ async function recalcularCobros(billId: string, householdId: string) {
   }
 
   for (const item of bill.items) {
-    if (item.splitMode === "CUSTOM") {
-      for (const split of item.splits) {
-        if (chargesByUser.has(split.userId)) {
-          const current = chargesByUser.get(split.userId)!;
-          current.sharedAmount += split.amount;
-        }
+    for (const split of item.splits) {
+      if (chargesByUser.has(split.userId)) {
+        const current = chargesByUser.get(split.userId)!;
+        current.sharedAmount += split.amount;
       }
-    } else {
-      const participants = allUserIds.filter(
-        (uid) => !item.excludedUserIds.includes(uid),
-      );
-      if (participants.length === 0) continue;
-
-      const perPerson = Math.floor(item.amount / participants.length);
-      const remainder = item.amount - perPerson * participants.length;
-
-      participants.forEach((uid, i) => {
-        const current = chargesByUser.get(uid)!;
-        current.sharedAmount += perPerson + (i < remainder ? 1 : 0);
-      });
     }
   }
 
@@ -237,13 +222,12 @@ export async function agregarBillItem(
   const bill = await getOrCreateBill(householdId, month, year, user.id);
 
   const customSplits: { userId: string; amount: number }[] = [];
+  const activeMembers = await db.membership.findMany({
+    where: { householdId, leftAt: null },
+    select: { userId: true },
+  });
+
   if (splitMode === "CUSTOM") {
-    // Collect custom splits from form data
-    const activeMembers = await db.membership.findMany({
-      where: { householdId, leftAt: null },
-      select: { userId: true },
-    });
-    
     for (const mem of activeMembers) {
       const val = formData.get(`customSplit_${mem.userId}`);
       if (val) {
@@ -252,6 +236,20 @@ export async function agregarBillItem(
           customSplits.push({ userId: mem.userId, amount: amt });
         }
       }
+    }
+  } else {
+    // EQUAL mode: create equal splits
+    const participants = activeMembers.filter((m) => !excludedUserIds.includes(m.userId));
+    if (participants.length > 0) {
+      const perPerson = Math.floor(amount / participants.length);
+      const remainder = amount - perPerson * participants.length;
+
+      participants.forEach((m, i) => {
+        customSplits.push({
+          userId: m.userId,
+          amount: perPerson + (i < remainder ? 1 : 0),
+        });
+      });
     }
   }
 
@@ -264,14 +262,12 @@ export async function agregarBillItem(
       excludedUserIds,
       isRecurring,
       dayOfMonth: isRecurring ? dayOfMonth : null,
-      splits: splitMode === "CUSTOM" && customSplits.length > 0
-        ? {
-            create: customSplits.map((s) => ({
-              userId: s.userId,
-              amount: s.amount,
-            })),
-          }
-        : undefined,
+      splits: {
+        create: customSplits.map((s) => ({
+          userId: s.userId,
+          amount: s.amount,
+        })),
+      },
     },
   });
 
@@ -352,12 +348,12 @@ export async function editarBillItem(
   const { label, amount, excludedUserIds, isRecurring, dayOfMonth } = parse.data;
 
   const customSplits: { userId: string; amount: number }[] = [];
+  const activeMembers = await db.membership.findMany({
+    where: { householdId, leftAt: null },
+    select: { userId: true },
+  });
+
   if (splitMode === "CUSTOM") {
-    const activeMembers = await db.membership.findMany({
-      where: { householdId, leftAt: null },
-      select: { userId: true },
-    });
-    
     for (const mem of activeMembers) {
       const val = formData.get(`customSplit_${mem.userId}`);
       if (val) {
@@ -366,6 +362,20 @@ export async function editarBillItem(
           customSplits.push({ userId: mem.userId, amount: amt });
         }
       }
+    }
+  } else {
+    // EQUAL mode: create equal splits
+    const participants = activeMembers.filter((m) => !excludedUserIds.includes(m.userId));
+    if (participants.length > 0) {
+      const perPerson = Math.floor(amount / participants.length);
+      const remainder = amount - perPerson * participants.length;
+
+      participants.forEach((m, i) => {
+        customSplits.push({
+          userId: m.userId,
+          amount: perPerson + (i < remainder ? 1 : 0),
+        });
+      });
     }
   }
 
@@ -383,14 +393,12 @@ export async function editarBillItem(
       excludedUserIds,
       isRecurring,
       dayOfMonth: isRecurring ? dayOfMonth : null,
-      splits: splitMode === "CUSTOM" && customSplits.length > 0
-        ? {
-            create: customSplits.map((s) => ({
-              userId: s.userId,
-              amount: s.amount,
-            })),
-          }
-        : undefined,
+      splits: {
+        create: customSplits.map((s) => ({
+          userId: s.userId,
+          amount: s.amount,
+        })),
+      },
     },
   });
 
@@ -425,7 +433,7 @@ export async function eliminarBillItem(itemId: string, householdId: string) {
 
 // ============ PAYMENTS ============
 
-export async function marcarPagadoCuenta(chargeId: string, householdId: string) {
+export async function marcarPagadoRoom(chargeId: string, householdId: string) {
   const user = await requireUser();
   await assertMemberOf(user.id, householdId);
 
@@ -444,27 +452,27 @@ export async function marcarPagadoCuenta(chargeId: string, householdId: string) 
     throw new Error("Solo puedes marcar tu propio pago");
   }
 
-  if (charge.paidAt) {
+  if (charge.roomPaidAt) {
     return { error: "Ya marcaste este pago" };
   }
 
   await db.monthlyCharge.update({
     where: { id: chargeId },
-    data: { paidAt: new Date() },
+    data: { roomPaidAt: new Date() },
   });
 
   revalidatePath("/cuentas");
 
   sendPushToUser(charge.monthlyBill.createdById, {
-    title: "Pago registrado 💸",
-    body: `${user.name} marcó como pagado $${charge.totalAmount.toLocaleString("es-CL")}`,
+    title: "Pago de arriendo registrado 💸",
+    body: `${user.name} marcó como pagado $${charge.roomAmount.toLocaleString("es-CL")}`,
     url: "/cuentas",
   }).catch(() => {});
 
   return { success: true };
 }
 
-export async function confirmarPagoCuenta(chargeId: string, householdId: string) {
+export async function confirmarPagoRoom(chargeId: string, householdId: string) {
   const user = await requireUser();
   const membership = await assertMemberOf(user.id, householdId);
 
@@ -481,24 +489,106 @@ export async function confirmarPagoCuenta(chargeId: string, householdId: string)
     throw new Error("Cargo no encontrado");
   }
 
-  if (!charge.paidAt) {
+  if (!charge.roomPaidAt) {
     return { error: "El miembro aún no marca como pagado" };
   }
 
-  if (charge.confirmedAt) {
+  if (charge.roomConfirmedAt) {
     return { error: "Este pago ya fue confirmado" };
   }
 
   await db.monthlyCharge.update({
     where: { id: chargeId },
-    data: { confirmedAt: new Date(), confirmedById: user.id },
+    data: { roomConfirmedAt: new Date(), roomConfirmedById: user.id },
   });
 
   revalidatePath("/cuentas");
 
   sendPushToUser(charge.userId, {
-    title: "Pago confirmado ✅",
-    body: `${user.name} confirmó tu pago de $${charge.totalAmount.toLocaleString("es-CL")}`,
+    title: "Pago de arriendo confirmado ✅",
+    body: `${user.name} confirmó tu pago de $${charge.roomAmount.toLocaleString("es-CL")}`,
+    url: "/cuentas",
+  }).catch(() => {});
+
+  return { success: true };
+}
+
+export async function marcarPagadoBillItem(splitId: string, householdId: string) {
+  const user = await requireUser();
+  await assertMemberOf(user.id, householdId);
+
+  const split = await db.billItemSplit.findUnique({
+    where: { id: splitId },
+    include: {
+      billItem: { include: { monthlyBill: { select: { householdId: true, createdById: true } } } },
+    },
+  });
+
+  if (!split || split.billItem.monthlyBill.householdId !== householdId) {
+    throw new Error("Cargo no encontrado");
+  }
+
+  if (split.userId !== user.id) {
+    throw new Error("Solo puedes marcar tu propio pago");
+  }
+
+  if (split.paidAt) {
+    return { error: "Ya marcaste este pago" };
+  }
+
+  await db.billItemSplit.update({
+    where: { id: splitId },
+    data: { paidAt: new Date() },
+  });
+
+  revalidatePath("/cuentas");
+
+  sendPushToUser(split.billItem.monthlyBill.createdById, {
+    title: `Pago de ${split.billItem.label} registrado 💸`,
+    body: `${user.name} marcó como pagado $${split.amount.toLocaleString("es-CL")}`,
+    url: "/cuentas",
+  }).catch(() => {});
+
+  return { success: true };
+}
+
+export async function confirmarPagoBillItem(splitId: string, householdId: string) {
+  const user = await requireUser();
+  const membership = await assertMemberOf(user.id, householdId);
+
+  if (membership.role !== "ADMIN") {
+    throw new Error("Solo el admin puede confirmar pagos");
+  }
+
+  const split = await db.billItemSplit.findUnique({
+    where: { id: splitId },
+    include: {
+      billItem: { include: { monthlyBill: { select: { householdId: true } } } },
+    },
+  });
+
+  if (!split || split.billItem.monthlyBill.householdId !== householdId) {
+    throw new Error("Cargo no encontrado");
+  }
+
+  if (!split.paidAt) {
+    return { error: "El miembro aún no marca como pagado" };
+  }
+
+  if (split.confirmedAt) {
+    return { error: "Este pago ya fue confirmado" };
+  }
+
+  await db.billItemSplit.update({
+    where: { id: splitId },
+    data: { confirmedAt: new Date(), confirmedById: user.id },
+  });
+
+  revalidatePath("/cuentas");
+
+  sendPushToUser(split.userId, {
+    title: `Pago de ${split.billItem.label} confirmado ✅`,
+    body: `${user.name} confirmó tu pago de $${split.amount.toLocaleString("es-CL")}`,
     url: "/cuentas",
   }).catch(() => {});
 
@@ -611,7 +701,7 @@ export async function getMonthlyBill(householdId: string, month: number, year: n
       charges: {
         include: {
           user: { select: { id: true, name: true, image: true } },
-          confirmedBy: { select: { name: true, image: true } },
+          roomConfirmedBy: { select: { name: true, image: true } },
         },
         orderBy: { totalAmount: "desc" },
       },

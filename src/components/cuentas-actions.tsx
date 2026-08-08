@@ -10,8 +10,10 @@ import {
   agregarBillItem,
   editarBillItem,
   eliminarBillItem,
-  marcarPagadoCuenta,
-  confirmarPagoCuenta,
+  marcarPagadoRoom,
+  confirmarPagoRoom,
+  marcarPagadoBillItem,
+  confirmarPagoBillItem,
   poblarRecurrentes,
 } from "@/actions/cuentas";
 import { Button } from "@/components/ui/button";
@@ -31,6 +33,7 @@ import {
   DollarSign,
   Home,
   RefreshCw,
+  ChevronDown,
 } from "lucide-react";
 
 type Member = {
@@ -65,9 +68,16 @@ type ChargeData = {
   roomAmount: number;
   sharedAmount: number;
   totalAmount: number;
-  paidAt: Date | null;
-  confirmedAt: Date | null;
-  confirmedBy: { name: string } | null;
+  roomPaidAt: Date | null;
+  roomConfirmedAt: Date | null;
+  roomConfirmedBy: { name: string } | null;
+  splits: {
+    id: string;
+    amount: number;
+    paidAt: Date | null;
+    confirmedAt: Date | null;
+    label: string;
+  }[];
 };
 
 function formatPrice(n: number) {
@@ -705,26 +715,94 @@ export function ChargeCard({
   isCurrentUser: boolean;
 }) {
   const [acting, startAction] = useTransition();
+  const [expanded, setExpanded] = useState(false);
 
-  const isPaid = !!charge.paidAt;
-  const isConfirmed = !!charge.confirmedAt;
+  // Computed status for the entire charge card summary
+  const totalPendingItems = (charge.roomAmount > 0 && !charge.roomPaidAt ? 1 : 0) + charge.splits.filter(s => !s.paidAt).length;
+  const totalItems = (charge.roomAmount > 0 ? 1 : 0) + charge.splits.length;
 
-  let statusLabel: string;
-  let statusClass: string;
-  if (isConfirmed) {
-    statusLabel = "Confirmado";
-    statusClass = "bg-success-container text-on-success-container";
-  } else if (isPaid) {
-    statusLabel = "Pagado";
-    statusClass = "bg-warning-container text-on-warning-container";
+  let globalStatusLabel: string;
+  let globalStatusClass: string;
+  
+  if (totalPendingItems === 0 && totalItems > 0) {
+    const allConfirmed = (charge.roomAmount === 0 || charge.roomConfirmedAt) && charge.splits.every(s => s.confirmedAt);
+    if (allConfirmed) {
+      globalStatusLabel = "Completado";
+      globalStatusClass = "bg-success-container text-on-success-container";
+    } else {
+      globalStatusLabel = "Revisión";
+      globalStatusClass = "bg-warning-container text-on-warning-container";
+    }
   } else {
-    statusLabel = "Pendiente";
-    statusClass = "bg-error-container text-on-error-container";
+    globalStatusLabel = `${totalPendingItems} pendientes`;
+    globalStatusClass = "bg-error-container text-on-error-container";
   }
 
+  const renderPaymentAction = (
+    amount: number,
+    isPaid: boolean,
+    isConfirmed: boolean,
+    onPay: () => Promise<void>,
+    onConfirm: () => Promise<void>,
+  ) => {
+    if (isConfirmed) {
+      return (
+        <span className="text-[12px] font-bold text-success flex items-center gap-1">
+          <Check size={14} /> Confirmado
+        </span>
+      );
+    }
+    if (isPaid) {
+      if (isAdmin) {
+        return (
+          <button
+            onClick={() => startAction(onConfirm)}
+            disabled={acting}
+            className="h-7 px-3 rounded-pill bg-success-container text-on-success-container font-bold text-[11px] flex items-center gap-1 hover:bg-success hover:text-on-success transition-colors disabled:opacity-50"
+          >
+            Confirmar pago
+          </button>
+        );
+      }
+      return (
+        <span className="text-[12px] font-bold text-warning flex items-center gap-1">
+          Pagado
+        </span>
+      );
+    }
+    if (isCurrentUser) {
+      return (
+        <button
+          onClick={() => startAction(onPay)}
+          disabled={acting}
+          className="h-7 px-3 rounded-pill bg-primary text-on-primary font-bold text-[11px] flex items-center gap-1 hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          Pagar
+        </button>
+      );
+    }
+    return <span className="text-[12px] font-medium text-error">Pendiente</span>;
+  };
+
+  const handlePayAll = () => {
+    startAction(async () => {
+      if (charge.roomAmount > 0 && !charge.roomPaidAt) {
+        await marcarPagadoRoom(charge.id, householdId);
+      }
+      for (const split of charge.splits) {
+        if (!split.paidAt) {
+          await marcarPagadoBillItem(split.id, householdId);
+        }
+      }
+    });
+  };
+
   return (
-    <li className="rounded-[14px] bg-surface-container-lowest border border-outline-variant p-4 shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
-      <div className="flex items-center gap-3">
+    <li className="rounded-[14px] bg-surface-container-lowest border border-outline-variant shadow-[0_2px_10px_rgba(15,23,42,0.05)] overflow-hidden transition-all duration-300">
+      <button 
+        className="w-full p-4 flex items-center gap-3 text-left hover:bg-surface-container-low transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
         <AvatarInitials name={charge.user.name} imageUrl={charge.user.image} size={36} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -734,10 +812,10 @@ export function ChargeCard({
             <span
               className={cn(
                 "px-2 py-0.5 rounded-pill text-[10px] font-bold uppercase",
-                statusClass,
+                globalStatusClass,
               )}
             >
-              {statusLabel}
+              {globalStatusLabel}
             </span>
           </div>
           <div className="flex gap-3 mt-1 text-[12px] text-on-surface-variant">
@@ -745,40 +823,62 @@ export function ChargeCard({
             <span>Servicios: {formatPrice(charge.sharedAmount)}</span>
           </div>
         </div>
-        <span className="text-[16px] font-bold shrink-0">
-          {formatPrice(charge.totalAmount)}
-        </span>
-      </div>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-[16px] font-bold shrink-0">
+            {formatPrice(charge.totalAmount)}
+          </span>
+          <ChevronDown 
+            size={16} 
+            className={cn("text-on-surface-variant transition-transform duration-300", expanded ? "rotate-180" : "")} 
+          />
+        </div>
+      </button>
 
-      {!isConfirmed && (
-        <div className="flex gap-2 mt-3">
-          {!isPaid && isCurrentUser && (
-            <button
-              onClick={() =>
-                startAction(async () => {
-                  await marcarPagadoCuenta(charge.id, householdId);
-                })
-              }
-              disabled={acting}
-              className="flex-1 h-10 rounded-pill bg-primary text-on-primary font-bold text-[13px] flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <DollarSign size={14} />
-              {acting ? "..." : "Marcar pagado"}
-            </button>
+      {expanded && (
+        <div className="px-4 pb-4 border-t border-outline-variant/50 pt-3 space-y-3 bg-surface-container-low/30">
+          {charge.roomAmount > 0 && (
+            <div className="flex flex-row items-center justify-between py-2 border-b border-outline-variant/50 last:border-0">
+              <div className="flex flex-col">
+                <span className="text-[13px] font-semibold">Arriendo (Pieza)</span>
+                <span className="text-[14px] font-bold text-on-surface-variant">{formatPrice(charge.roomAmount)}</span>
+              </div>
+              {renderPaymentAction(
+                charge.roomAmount,
+                !!charge.roomPaidAt,
+                !!charge.roomConfirmedAt,
+                async () => await marcarPagadoRoom(charge.id, householdId),
+                async () => await confirmarPagoRoom(charge.id, householdId)
+              )}
+            </div>
           )}
-          {isPaid && isAdmin && (
-            <button
-              onClick={() =>
-                startAction(async () => {
-                  await confirmarPagoCuenta(charge.id, householdId);
-                })
-              }
-              disabled={acting}
-              className="flex-1 h-10 rounded-pill bg-success-container text-on-success-container font-bold text-[13px] flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <Check size={14} />
-              {acting ? "..." : "Confirmar pago"}
-            </button>
+
+          {charge.splits.map(split => (
+            <div key={split.id} className="flex flex-row items-center justify-between py-2 border-b border-outline-variant/50 last:border-0">
+              <div className="flex flex-col">
+                <span className="text-[13px] font-semibold">{split.label}</span>
+                <span className="text-[14px] font-bold text-on-surface-variant">{formatPrice(split.amount)}</span>
+              </div>
+              {renderPaymentAction(
+                split.amount,
+                !!split.paidAt,
+                !!split.confirmedAt,
+                async () => await marcarPagadoBillItem(split.id, householdId),
+                async () => await confirmarPagoBillItem(split.id, householdId)
+              )}
+            </div>
+          ))}
+
+          {isCurrentUser && totalPendingItems > 1 && (
+            <div className="pt-2">
+              <button
+                onClick={handlePayAll}
+                disabled={acting}
+                className="w-full h-10 rounded-pill bg-primary text-on-primary font-bold text-[13px] flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <DollarSign size={14} />
+                {acting ? "..." : "Pagar todo lo pendiente"}
+              </button>
+            </div>
           )}
         </div>
       )}

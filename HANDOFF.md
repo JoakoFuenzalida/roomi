@@ -1,4 +1,4 @@
-# Roomi — Handoff completo (actualizado 2026-08-07)
+# Roomi — Handoff completo (actualizado 2026-08-08)
 
 Este archivo captura el estado real del proyecto. Léelo para entender qué hay, cómo funciona, y qué decisiones se tomaron.
 
@@ -29,7 +29,7 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
   - Requiere `adapter` en constructor. Usa `@prisma/adapter-pg` + `pg`
   - `prisma.config.ts` prioriza `DIRECT_URL ?? DATABASE_URL`
   - **Importante**: después de `prisma migrate dev` + `prisma generate`, borrar `.next` y reiniciar dev server para que el singleton Prisma cacheado tome los nuevos modelos
-- **Auth.js v5 beta** (Credentials + bcryptjs + Zod). `session: { strategy: "jwt" }`, callback expone `user.id`
+- **Auth.js v5 beta** (Credentials + Google OAuth + bcryptjs + Zod). `session: { strategy: "jwt" }`, callback expone `user.id`
 - **Supabase Postgres** — proyecto `roomi`, region `sa-east-1`. Pooler transaction (6543) runtime, session (5432) migrate
 - **Web Push VAPID** con `web-push`. Service Worker propio en `public/sw.js`
 - **Zod v4** + `useActionState` (React 19) + Server Actions para todas las mutaciones
@@ -61,14 +61,36 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
   - Implementación de `loading.tsx` en `app/(app)` y flujos de `useTransition` (MonthNavigator) para dar percepción instantánea cross-route a nivel aplicación (spinners skeleton).
   - Corrección de bugs de overflow horizontal en mobile generados por links largos en flexboxes.
 
+## Hardening pre-testers + Fase 2 (2026-08-08)
+
+### Seguridad y Auth
+- **Google OAuth**: Provider Google agregado a Auth.js. Botón "Continuar con Google" en login y registro. Auto-linking por email: si el usuario ya existe con credentials, Google login lo vincula; si no existe, lo crea. `AUTH_GOOGLE_ID` y `AUTH_GOOGLE_SECRET` en `.env`.
+- **Rate limiting en login/registro**: 5 intentos por minuto por IP. Rate limiter in-memory con auto-cleanup. Archivo: `src/lib/rate-limit.ts`.
+- **Validación de uploads**: Server-side file type (`ALLOWED_IMAGE_TYPES`) y tamaño (5 MB max) en `uploadAvatar`.
+- **Fix seguridad chat**: `deleteChatMessage` ahora valida que el mensaje pertenezca al hogar del usuario (antes cualquier usuario autenticado podía borrar mensajes de otros hogares).
+- **Fix crypto**: `require("crypto").randomUUID()` reemplazado por `crypto.randomUUID()` nativo en `household.ts`.
+
+### UX / Bug fixes mobile
+- **Chat: menú contextual mobile**: Reemplazado `group-hover` (invisible en touch) por long-press (500ms). Menú pill flotante con opciones: Copiar, Me gusta/Quitar, Borrar (solo mensajes propios). Se cierra al tocar fuera. También funciona con right-click en desktop.
+- **Perfil: overflow horizontal**: Agregado `overflow-x-hidden` a `<main>` de perfil y al layout wrapper de `(app)`.
+- **Bottom nav sticky**: Corregido indirectamente por el fix de overflow (el overflow horizontal rompía `fixed` en mobile Safari).
+
+### Fase 2
+- **Eliminar cuenta**: Estrategia de anonimización (preserva datos compartidos). En una transacción: elimina reacciones y push subs, sale de todos los hogares (`leftAt`), anonimiza nombre/email/imagen. UI: link "Eliminar mi cuenta" en perfil con confirmación (escribir "ELIMINAR"). Archivos: `src/actions/account.ts`, `src/components/delete-account-button.tsx`.
+- **Offline feedback**: Banner rojo fijo en top `z-50` cuando `navigator.onLine` es false. Se muestra/oculta automáticamente con eventos `online`/`offline`. Archivo: `src/components/offline-banner.tsx`.
+- **Error boundary**: `src/app/(app)/error.tsx` — captura errores en el route group (app) con botones Reintentar e Ir al inicio.
+- **404 personalizado**: `src/app/not-found.tsx` — página con branding Roomi.
+
 ---
 
 ## Módulos implementados (todos funcionales y verificados)
 
-### 1. Auth (registro + login)
+### 1. Auth (registro + login + Google OAuth)
 - Registro con auto-login, login con callbackUrl, logout
+- Google OAuth con auto-linking por email (find-or-create en `signIn` callback)
+- Rate limiting: 5 intentos/min por IP en login y registro (`src/lib/rate-limit.ts`)
 - `safeCallback()` anti-open-redirect (solo paths `/`, no `//`)
-- Archivos: `src/actions/auth.ts`, `src/app/(auth)/{login,registro}/`, `src/lib/auth.ts`, `src/lib/session.ts`
+- Archivos: `src/actions/auth.ts`, `src/app/(auth)/{login,registro}/`, `src/lib/auth.ts`, `src/lib/session.ts`, `src/lib/rate-limit.ts`
 
 ### 2. Hogares (crear, unirse, salir)
 - Crear hogar (user = ADMIN), unirse con invite link `/unirse/[code]`, salir (soft delete), re-unirse
@@ -93,10 +115,13 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
 - Reemplaza Google Sheets del hogar para arriendo + servicios
 - **Piezas (Room)**: CRUD admin, cada pieza tiene costo y ocupante (via membership)
 - **Boleta mensual incremental**: items se agregan a medida que llegan (arriendo el 1, GGCC el 20, etc.)
-- **`recalcularCobros`**: upsert `MonthlyCharge` por usuario (roomAmount + sharedAmount), preserva estado pagado
+- **Refactor Granular de Pagos (Agosto 2026)**:
+  - Antes había un estado único de "pagado" por mes, ahora cada `BillItemSplit` (ej. Luz, Agua) y cada `MonthlyCharge.room` tiene su propio estado de pago y confirmación (`paidAt`, `confirmedAt`).
+  - La tarjeta de cobro (`ChargeCard`) ahora es un desplegable que lista cada ítem adeudado individualmente, permitiendo pagar Arriendo o Servicios por separado.
+  - Al agregar un `BillItem` en modo "Partes iguales" (`EQUAL`), ahora se materializan los `BillItemSplit` inmediatamente en la BD para rastrear pagos individualizados.
 - **Items recurrentes**: flag `isRecurring` + `dayOfMonth`, botón "Traer fijos" copia del mes anterior
 - **Exclusiones por item**: `excludedUserIds` para gastos que no aplican a todos (ej: gimnasio)
-- **Pagos**: miembro marca pagado + push al admin, admin confirma + push al miembro
+- **Pagos**: miembro marca pagado (individual o todo) + push al admin, admin confirma + push al miembro
 - Archivos: `src/actions/cuentas.ts`, `src/components/cuentas-actions.tsx`, `src/components/cuentas-add-bill-button.tsx`, `src/app/(app)/cuentas/page.tsx`
 
 ### 6. Muro de avisos con reacciones
@@ -127,13 +152,16 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
 - Archivos: `src/components/theme-provider.tsx`, `src/components/theme-toggle.tsx`, `src/app/globals.css`
 
 ### 10. Perfil
-- Datos del usuario (nombre, email)
+- Datos del usuario (nombre, email, foto)
+- Editar perfil (nombre + foto de perfil via Supabase Storage)
 - Lista de hogares con badge Admin
+- Silenciar chat por hogar
 - Vacation mode toggle por hogar
 - Dark mode toggle
 - Cerrar sesión
+- Eliminar cuenta (anonimización + salir de hogares + confirmación "ELIMINAR")
 - Accesible desde avatar en header de todas las páginas
-- Archivos: `src/app/(app)/perfil/page.tsx`, `src/components/vacation-toggle.tsx`
+- Archivos: `src/app/(app)/perfil/page.tsx`, `src/components/vacation-toggle.tsx`, `src/components/profile-actions.tsx`, `src/components/delete-account-button.tsx`, `src/actions/account.ts`
 
 ### 11. Vacation mode
 - Campo `onVacationUntil` en Membership (ya existía en schema original)
@@ -192,21 +220,27 @@ roomi/
 ├── src/
 │   ├── generated/prisma/     ← client generado (no editar)
 │   ├── actions/
-│   │   ├── auth.ts           ← register, login
+│   │   ├── auth.ts           ← register, login, googleSignIn (+ rate limiting)
+│   │   ├── account.ts        ← deleteAccount (anonimización)
 │   │   ├── household.ts      ← create/join/leave
 │   │   ├── task.ts           ← createTask, completarTarea, deleteTask, swapTurno
 │   │   ├── shopping.ts       ← CRUD items, marcarComprado
 │   │   ├── settlement.ts     ← marcarPagado, confirmarPago, getBalances
 │   │   ├── cuentas.ts        ← rooms CRUD, billItems, charges, recurrentes
 │   │   ├── notices.ts        ← crearAviso, eliminar, togglePin, toggleReaction
+│   │   ├── chat.ts           ← sendChatMessage, deleteChatMessage, toggleChatReaction
+│   │   ├── chat-mute.ts      ← toggleChatMute
+│   │   ├── profile.ts        ← updateProfileName, uploadAvatar (con validación)
 │   │   └── vacation.ts       ← setVacation
 │   ├── app/
 │   │   ├── layout.tsx        ← root layout, fonts, ThemeProvider, anti-FOUC script
 │   │   ├── globals.css       ← MD3 tokens light + dark
 │   │   ├── page.tsx          ← landing
 │   │   ├── (auth)/           ← login, registro (server+client split)
+│   │   ├── not-found.tsx     ← 404 personalizado con branding
 │   │   ├── (app)/
-│   │   │   ├── layout.tsx    ← auth gate + BottomNav + PushPrompt + InstallPrompt
+│   │   │   ├── layout.tsx    ← auth gate + BottomNav + OfflineBanner + PushPrompt + InstallPrompt
+│   │   │   ├── error.tsx     ← error boundary con Reintentar + Ir al inicio
 │   │   │   ├── muro/         ← notice board
 │   │   │   ├── hoy/          ← today dashboard
 │   │   │   ├── tareas/       ← task list + /nueva
@@ -229,22 +263,33 @@ roomi/
 │   │   ├── cuentas-actions.tsx
 │   │   ├── cuentas-add-bill-button.tsx
 │   │   ├── household-forms.tsx
+│   │   ├── chat.tsx              ← ChatClient con Realtime + long-press context menu
+│   │   ├── chat-mute-toggle.tsx
+│   │   ├── delete-account-button.tsx
 │   │   ├── install-prompt.tsx
 │   │   ├── muro-actions.tsx
+│   │   ├── offline-banner.tsx
+│   │   ├── profile-actions.tsx    ← EditProfileButton + EditProfileSheet
+│   │   ├── profile-picture-upload.tsx
 │   │   ├── push-prompt.tsx
+│   │   ├── qr-invite.tsx
 │   │   ├── roomi-logo.tsx
 │   │   ├── shopping-actions.tsx
 │   │   ├── sw-register.tsx
 │   │   ├── task-actions.tsx
+│   │   ├── task-participants-order.tsx ← drag & drop (@dnd-kit) + ruleta (confetti)
 │   │   ├── theme-provider.tsx
 │   │   ├── theme-toggle.tsx
+│   │   ├── user-header-nav.tsx    ← server component, RC + avatar
 │   │   └── vacation-toggle.tsx
 │   ├── lib/
 │   │   ├── db.ts             ← Prisma singleton con PrismaPg adapter
-│   │   ├── auth.ts           ← Auth.js config
+│   │   ├── auth.ts           ← Auth.js config (Credentials + Google)
 │   │   ├── session.ts        ← requireUser(), assertMemberOf()
 │   │   ├── push.ts           ← sendPushToUser, sendPushToHousehold
+│   │   ├── rate-limit.ts     ← in-memory rate limiter por IP
 │   │   ├── rotation.ts       ← computeInitialDueDate, computeNextDueDate
+│   │   ├── supabase-client.ts ← Supabase client para Realtime
 │   │   ├── validators.ts     ← Zod schemas
 │   │   └── utils.ts          ← cn()
 │   └── types/next-auth.d.ts
@@ -255,7 +300,7 @@ roomi/
 ## Decisiones de diseño clave
 
 1. **Deudas derivadas, no persistidas**: balance = `sum(ExpenseSplit) - sum(Settlement confirmados)`. Sin tabla `Debt`.
-2. **Cuentas incrementales**: items se agregan a lo largo del mes. `recalcularCobros` hace upsert (preserva estado pagado).
+2. **Cuentas incrementales y granulares**: items se agregan a lo largo del mes. Los pagos ahora son individualizados por servicio (`BillItemSplit`) y arriendo (`roomPaidAt`).
 3. **`excludedUserIds` por BillItem**: permite gastos que no aplican a todos (ej: gimnasio solo para algunos).
 4. **Rotación por `rotationOrder`**: posición densa en el ciclo. Nuevo miembro entra al final. `onVacationUntil` en el futuro = saltado.
 5. **`TaskExecution @@unique([taskId, cycleNumber])`**: idempotencia natural, mata races sin locks.
@@ -288,4 +333,6 @@ Si `prisma generate` falla, borrar `src/generated/prisma/` y regenerar. Si los m
 ## Qué queda por hacer (nice-to-have, todo lo core está hecho)
 
 - **Evidencia fotográfica** — Supabase Storage + foto opcional al completar tarea
-- **Supabase Realtime** — muro y compras en vivo sin refresh
+- **Supabase Realtime en muro/compras** — ya implementado en chat, falta extenderlo a avisos y compras para updates en vivo sin refresh
+- **Recuperar contraseña** — flujo de reset por email (SendGrid / Resend)
+- **App nativa** — considerar Capacitor o React Native si se valida con testers

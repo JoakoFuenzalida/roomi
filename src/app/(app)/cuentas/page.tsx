@@ -225,15 +225,29 @@ export default async function CuentasPage({
                 Cobros por persona
               </h3>
               <ul className="space-y-2">
-                {charges.map((charge) => (
-                  <ChargeCard
-                    key={charge.id}
-                    charge={charge}
-                    householdId={active.householdId}
-                    isAdmin={isAdmin}
-                    isCurrentUser={charge.userId === user.id}
-                  />
-                ))}
+                {charges.map((charge) => {
+                  const userSplits = items.flatMap(item => 
+                    item.splits
+                      .filter(s => s.userId === charge.userId)
+                      .map(s => ({
+                        id: s.id,
+                        amount: s.amount,
+                        paidAt: s.paidAt,
+                        confirmedAt: s.confirmedAt,
+                        label: item.label,
+                      }))
+                  );
+                  const augmentedCharge = { ...charge, splits: userSplits };
+                  return (
+                    <ChargeCard
+                      key={charge.id}
+                      charge={augmentedCharge}
+                      householdId={active.householdId}
+                      isAdmin={isAdmin}
+                      isCurrentUser={charge.userId === user.id}
+                    />
+                  );
+                })}
               </ul>
             </>
           )}
