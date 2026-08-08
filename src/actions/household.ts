@@ -137,7 +137,7 @@ export async function removeMember(householdId: string, userIdToRemove: string) 
   // Cycle invite code to prevent rejoining
   await db.household.update({
     where: { id: householdId },
-    data: { inviteCode: require("crypto").randomUUID() }
+    data: { inviteCode: crypto.randomUUID() },
   });
 
   revalidatePath("/hogar");

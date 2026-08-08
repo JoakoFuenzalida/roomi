@@ -6,6 +6,10 @@ import { db } from "@/lib/db";
 import { signIn } from "@/lib/auth";
 import { registerSchema, loginSchema } from "@/lib/validators";
 
+export async function googleSignIn(callbackUrl?: string) {
+  await signIn("google", { redirectTo: callbackUrl || "/hoy" });
+}
+
 export type AuthState = { error: string } | null;
 
 function safeCallback(raw: FormDataEntryValue | null): string {

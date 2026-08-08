@@ -47,7 +47,11 @@ export async function deleteChatMessage(messageId: string, householdId: string) 
 
   const notice = await db.notice.findUnique({ where: { id: messageId } });
   if (!notice) return;
-  
+
+  if (notice.householdId !== householdId) {
+    throw new Error("Mensaje no pertenece a este hogar");
+  }
+
   if (notice.authorId !== user.id) {
     throw new Error("No puedes borrar mensajes de otros");
   }

@@ -5,11 +5,27 @@ import { requireUser } from "@/lib/session";
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
+const ALLOWED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
 export async function uploadAvatar(formData: FormData) {
   const user = await requireUser();
   const file = formData.get("file") as File | null;
-  
+
   if (!file) throw new Error("No se envió ningún archivo");
+
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    throw new Error("Solo se permiten imágenes (JPG, PNG, WebP, GIF)");
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("La imagen no debe pesar más de 5 MB");
+  }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; 
