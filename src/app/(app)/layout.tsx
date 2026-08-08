@@ -13,7 +13,7 @@ export default async function AppLayout({
   if (!session?.user) redirect("/login");
 
   return (
-    <div className="min-h-svh bg-background flex flex-col relative">
+    <div className="min-h-svh bg-background flex flex-col relative overflow-x-hidden">
       <div className="flex-1 flex flex-col pb-[calc(62px+env(safe-area-inset-bottom))]">
         {children}
       </div>

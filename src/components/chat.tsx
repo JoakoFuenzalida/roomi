@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { AvatarInitials } from "./avatar-initials";
 import { sendChatMessage, deleteChatMessage, toggleChatReaction } from "@/actions/chat";
-import { Send, Trash2, Heart } from "lucide-react";
+import { Send, Trash2, Heart, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ReactionData = { id: string; userId: string; emoji: string };
@@ -34,11 +34,29 @@ export function ChatClient({
   const [input, setInput] = useState("");
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
 
-  // Scroll to bottom
+  const closeMenu = useCallback(() => setActiveMenu(null), []);
+
   useEffect(() => {
-    // Jump instantly on mount
+    if (!activeMenu) return;
+    const handler = (e: TouchEvent | MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("[data-context-menu]")) return;
+      closeMenu();
+    };
+    document.addEventListener("touchstart", handler, { passive: true });
+    document.addEventListener("mousedown", handler);
+    return () => {
+      document.removeEventListener("touchstart", handler);
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [activeMenu, closeMenu]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       endRef.current?.scrollIntoView({ behavior: "auto" });
     }, 50);
@@ -46,7 +64,6 @@ export function ChatClient({
   }, []);
 
   useEffect(() => {
-    // Smooth scroll when new messages arrive
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
@@ -64,8 +81,8 @@ export function ChatClient({
       })
       .on("broadcast", { event: "toggle_reaction" }, ({ payload }) => {
         const { messageId, userId, emoji, added } = payload;
-        if (userId === currentUserId) return; // Ya lo manejamos optimísticamente
-        
+        if (userId === currentUserId) return;
+
         setMessages((prev) =>
           prev.map((m) => {
             if (m.id !== messageId) return m;
@@ -93,7 +110,6 @@ export function ChatClient({
     const content = input.trim();
     setInput("");
 
-    // Optimistic message
     const tempId = `temp-${Date.now()}`;
     const optimisticMsg: ChatMessageData = {
       id: tempId,
@@ -109,13 +125,11 @@ export function ChatClient({
 
     try {
       const realMsg = await sendChatMessage(householdId, content);
-      
-      // Update local state with real message
+
       setMessages((prev) =>
         prev.map((m) => (m.id === tempId ? { ...realMsg, isOptimistic: false } : m))
       );
 
-      // Broadcast to others
       supabase.channel(`room_${householdId}`).send({
         type: "broadcast",
         event: "new_message",
@@ -123,14 +137,14 @@ export function ChatClient({
       });
     } catch (err) {
       console.error(err);
-      // Rollback
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
     }
   }
 
   async function handleDelete(messageId: string) {
+    setActiveMenu(null);
     setMessages((prev) => prev.filter((m) => m.id !== messageId));
-    
+
     supabase.channel(`room_${householdId}`).send({
       type: "broadcast",
       event: "delete_message",
@@ -141,22 +155,20 @@ export function ChatClient({
       await deleteChatMessage(messageId, householdId);
     } catch (e) {
       console.error(e);
-      // Ideally rollback on error
     }
   }
 
   async function handleReaction(messageId: string) {
+    setActiveMenu(null);
     const emoji = "❤️";
-    
-    // Check if we already liked it
+
     const msgIndex = messages.findIndex((m) => m.id === messageId);
     if (msgIndex === -1) return;
-    
+
     const msg = messages[msgIndex];
     const hasLiked = msg.reactions.some((r) => r.userId === currentUserId && r.emoji === emoji);
     const added = !hasLiked;
 
-    // Optimistic update
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id !== messageId) return m;
@@ -170,7 +182,6 @@ export function ChatClient({
       })
     );
 
-    // Broadcast
     supabase.channel(`room_${householdId}`).send({
       type: "broadcast",
       event: "toggle_reaction",
@@ -184,7 +195,46 @@ export function ChatClient({
     }
   }
 
-  const filteredMembers = mentionQuery !== null 
+  async function handleCopy(content: string) {
+    setActiveMenu(null);
+    try {
+      await navigator.clipboard.writeText(content);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement("textarea");
+      textarea.value = content;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+  }
+
+  function handleLongPressStart(msgId: string) {
+    didLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      didLongPress.current = true;
+      setActiveMenu(msgId);
+    }, 500);
+  }
+
+  function handleLongPressEnd() {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }
+
+  function handleLongPressMove() {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }
+
+  const filteredMembers = mentionQuery !== null
     ? members.filter(m => m.id !== currentUserId && m.name?.toLowerCase().includes(mentionQuery.toLowerCase()))
     : [];
 
@@ -249,11 +299,12 @@ export function ChatClient({
             <p className="text-sm font-semibold">¡Escribe el primer mensaje!</p>
           </div>
         )}
-        
+
         {messages.map((msg) => {
           const isMine = msg.authorId === currentUserId;
           const likesCount = msg.reactions.filter((r) => r.emoji === "❤️").length;
           const iLiked = msg.reactions.some((r) => r.userId === currentUserId && r.emoji === "❤️");
+          const menuOpen = activeMenu === msg.id;
 
           return (
             <div
@@ -268,49 +319,78 @@ export function ChatClient({
                   </span>
                 </div>
               )}
-              
-              <div className="group relative flex items-end gap-2 max-w-[80%]">
-                {isMine && !msg.isOptimistic && (
-                  <button
-                    onClick={() => handleDelete(msg.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-on-surface-variant hover:text-error"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
 
+              <div className="relative max-w-[80%]">
                 <div
-                  className={cn(
-                    "px-4 py-2.5 rounded-[18px] relative",
-                    isMine
-                      ? "bg-primary text-on-primary rounded-tr-[4px]"
-                      : "bg-surface-container text-on-surface rounded-tl-[4px]",
-                    msg.isOptimistic && "opacity-70"
-                  )}
+                  className="select-none"
+                  onTouchStart={() => !msg.isOptimistic && handleLongPressStart(msg.id)}
+                  onTouchEnd={handleLongPressEnd}
+                  onTouchMove={handleLongPressMove}
+                  onContextMenu={(e) => {
+                    if (msg.isOptimistic) return;
+                    e.preventDefault();
+                    setActiveMenu(msg.id);
+                  }}
                 >
-                  <p className="text-[15px] leading-[1.3] whitespace-pre-wrap">{msg.content}</p>
-                  
-                  {likesCount > 0 && (
-                    <div
-                      className={cn(
-                        "absolute -bottom-2 px-1.5 py-0.5 rounded-full border border-surface-container-lowest bg-surface-container-high flex items-center gap-1 cursor-pointer transition-transform hover:scale-110",
-                        isMine ? "-left-2" : "-right-2"
-                      )}
-                      onClick={() => handleReaction(msg.id)}
-                    >
-                      <Heart size={12} className={iLiked ? "fill-error text-error" : "text-on-surface-variant"} />
-                      <span className="text-[10px] font-bold">{likesCount}</span>
-                    </div>
-                  )}
+                  <div
+                    className={cn(
+                      "px-4 py-2.5 rounded-[18px] relative transition-colors",
+                      isMine
+                        ? "bg-primary text-on-primary rounded-tr-[4px]"
+                        : "bg-surface-container text-on-surface rounded-tl-[4px]",
+                      msg.isOptimistic && "opacity-70",
+                      menuOpen && "ring-2 ring-primary/40"
+                    )}
+                  >
+                    <p className="text-[15px] leading-[1.3] whitespace-pre-wrap">{msg.content}</p>
+
+                    {likesCount > 0 && (
+                      <div
+                        className={cn(
+                          "absolute -bottom-2 px-1.5 py-0.5 rounded-full border border-surface-container-lowest bg-surface-container-high flex items-center gap-1 cursor-pointer transition-transform hover:scale-110",
+                          isMine ? "-left-2" : "-right-2"
+                        )}
+                        onClick={() => handleReaction(msg.id)}
+                      >
+                        <Heart size={12} className={iLiked ? "fill-error text-error" : "text-on-surface-variant"} />
+                        <span className="text-[10px] font-bold">{likesCount}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {!isMine && (
-                  <button
-                    onClick={() => handleReaction(msg.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-on-surface-variant hover:text-error"
+                {menuOpen && (
+                  <div
+                    data-context-menu
+                    className={cn(
+                      "absolute z-50 flex items-center gap-0.5 rounded-full bg-surface-container-highest shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-outline-variant/50 p-1 animate-in fade-in zoom-in-95 duration-150",
+                      isMine ? "right-0 bottom-full mb-2" : "left-0 bottom-full mb-2"
+                    )}
                   >
-                    <Heart size={14} className={iLiked ? "fill-error text-error" : ""} />
-                  </button>
+                    <button
+                      onClick={() => handleCopy(msg.content)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] font-semibold text-on-surface hover:bg-surface-container transition-colors"
+                    >
+                      <Copy size={15} />
+                      Copiar
+                    </button>
+                    <button
+                      onClick={() => handleReaction(msg.id)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] font-semibold text-on-surface hover:bg-surface-container transition-colors"
+                    >
+                      <Heart size={15} className={iLiked ? "fill-error text-error" : ""} />
+                      {iLiked ? "Quitar" : "Me gusta"}
+                    </button>
+                    {isMine && !msg.isOptimistic && (
+                      <button
+                        onClick={() => handleDelete(msg.id)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] font-semibold text-error hover:bg-error-container transition-colors"
+                      >
+                        <Trash2 size={15} />
+                        Borrar
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

@@ -25,7 +25,7 @@ export default async function PerfilPage() {
   });
 
   return (
-    <main className="max-w-md mx-auto px-5 pt-6">
+    <main className="max-w-md mx-auto px-5 pt-6 overflow-x-hidden">
       <header className="flex items-center justify-between mb-6">
         <RoomiHeader />
         <AvatarInitials name={name} imageUrl={image} size={40} />
