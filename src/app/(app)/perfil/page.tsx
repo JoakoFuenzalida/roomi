@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { VacationToggle } from "@/components/vacation-toggle";
 import { ChatMuteToggle } from "@/components/chat-mute-toggle";
 import { EditProfileButton } from "@/components/profile-actions";
+import { DeleteAccountButton } from "@/components/delete-account-button";
 
 export default async function PerfilPage() {
   const session = await auth();
@@ -143,6 +144,10 @@ export default async function PerfilPage() {
           Cerrar sesión
         </Button>
       </form>
+
+      <div className="mt-6">
+        <DeleteAccountButton />
+      </div>
 
       <div className="pb-24" />
     </main>

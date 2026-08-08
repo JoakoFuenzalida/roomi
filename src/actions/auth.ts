@@ -2,9 +2,19 @@
 
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
+import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { signIn } from "@/lib/auth";
 import { registerSchema, loginSchema } from "@/lib/validators";
+import { rateLimit } from "@/lib/rate-limit";
+
+const AUTH_RATE_LIMIT = 5;
+const AUTH_WINDOW_MS = 60_000;
+
+async function getClientIp(): Promise<string> {
+  const h = await headers();
+  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+}
 
 export async function googleSignIn(callbackUrl?: string) {
   await signIn("google", { redirectTo: callbackUrl || "/hoy" });
@@ -21,6 +31,13 @@ export async function register(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  const ip = await getClientIp();
+  const { allowed, retryAfterMs } = rateLimit(`register:${ip}`, AUTH_RATE_LIMIT, AUTH_WINDOW_MS);
+  if (!allowed) {
+    const secs = Math.ceil(retryAfterMs / 1000);
+    return { error: `Demasiados intentos. Intenta en ${secs}s.` };
+  }
+
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -63,6 +80,13 @@ export async function login(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  const ip = await getClientIp();
+  const { allowed, retryAfterMs } = rateLimit(`login:${ip}`, AUTH_RATE_LIMIT, AUTH_WINDOW_MS);
+  if (!allowed) {
+    const secs = Math.ceil(retryAfterMs / 1000);
+    return { error: `Demasiados intentos. Intenta en ${secs}s.` };
+  }
+
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),

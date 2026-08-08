@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { BottomNav } from "@/components/bottom-nav";
 import { PushPrompt } from "@/components/push-prompt";
 import { InstallPrompt } from "@/components/install-prompt";
+import { OfflineBanner } from "@/components/offline-banner";
 
 export default async function AppLayout({
   children,
@@ -18,6 +19,7 @@ export default async function AppLayout({
         {children}
       </div>
       <BottomNav />
+      <OfflineBanner />
       <PushPrompt vapidPublicKey={process.env.VAPID_PUBLIC_KEY!} />
       <InstallPrompt />
     </div>
