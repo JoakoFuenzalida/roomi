@@ -41,6 +41,7 @@ model Household {
   name       String
   inviteCode String   @unique @default(cuid())
   createdAt  DateTime @default(now())
+  coverImage String?
 
   members       Membership[]
   tasks         Task[]

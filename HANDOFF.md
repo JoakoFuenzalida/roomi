@@ -55,6 +55,7 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
   - Historial mensual de cuentas: **MonthNavigator** para viajar instantáneamente a meses pasados (usando transiciones en cliente y validación en servidor).
   - Confirmación al borrar servicios, e items sugeridos por default (Luz, Agua, GGCC, Internet).
 - **Hogar e Invitaciones**:
+  - **Portada del Hogar**: Rediseño inmersivo de la sección Hogar (`/hogar`) agregando una foto de portada personalizable. Los Admins pueden subir la foto de su depa que se difumina detrás del nombre del hogar.
   - Nuevo botón para generar **Código QR** grande e invitar a roomis presencialmente escaneando la pantalla.
   - El Admin puede eliminar miembros con confirmación destructiva. Al hacerlo, el `inviteCode` del hogar **se regenera automáticamente** por seguridad.
 - **UX Fluido y Nativo**:

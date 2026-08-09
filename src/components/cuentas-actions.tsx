@@ -918,24 +918,32 @@ export function MonthNavigator({
 
   return (
     <div className="flex items-center justify-between mb-4">
-      <button
-        onClick={() => handleNav(prev.m, prev.y)}
-        disabled={isPending}
-        className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant disabled:opacity-50"
+      <Link
+        href={`${basePath}&mes=${prev.m}&ano=${prev.y}`}
+        prefetch={true}
+        onClick={(e) => {
+          e.preventDefault();
+          handleNav(prev.m, prev.y);
+        }}
+        className={cn("p-2 rounded-full hover:bg-surface-container text-on-surface-variant transition-colors", isPending && "opacity-50")}
       >
         &larr;
-      </button>
+      </Link>
       <h2 className="text-[16px] font-bold flex items-center gap-2">
         {monthNames[month - 1]} {year}
         {isPending && <RefreshCw size={14} className="animate-spin text-primary" />}
       </h2>
-      <button
-        onClick={() => handleNav(next.m, next.y)}
-        disabled={isPending}
-        className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant disabled:opacity-50"
+      <Link
+        href={`${basePath}&mes=${next.m}&ano=${next.y}`}
+        prefetch={true}
+        onClick={(e) => {
+          e.preventDefault();
+          handleNav(next.m, next.y);
+        }}
+        className={cn("p-2 rounded-full hover:bg-surface-container text-on-surface-variant transition-colors", isPending && "opacity-50")}
       >
         &rarr;
-      </button>
+      </Link>
     </div>
   );
 }

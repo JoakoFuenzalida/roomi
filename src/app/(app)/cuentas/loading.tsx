@@ -2,7 +2,7 @@ import { RoomiHeader } from "@/components/roomi-logo";
 
 export default function CuentasLoading() {
   return (
-    <main className="max-w-md mx-auto px-5 pt-6 relative min-h-svh">
+    <main className="max-w-md mx-auto w-full px-5 pt-6 relative min-h-svh flex flex-col flex-1">
       <header className="flex items-center justify-between mb-6">
         <RoomiHeader />
         <div className="w-10 h-10 rounded-full bg-surface-container animate-pulse" />

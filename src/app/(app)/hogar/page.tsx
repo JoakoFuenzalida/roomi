@@ -16,6 +16,7 @@ import { LeaveHouseholdButton } from "@/components/leave-household-button";
 import { RemoveMemberButton } from "@/components/remove-member-button";
 import { removeMember } from "@/actions/household";
 import { QRInviteButton } from "@/components/qr-invite";
+import { HouseholdCoverUpload } from "@/components/household-cover-upload";
 
 export default async function HogarPage() {
   const user = await requireUser();
@@ -29,6 +30,7 @@ export default async function HogarPage() {
           id: true,
           name: true,
           inviteCode: true,
+          coverImage: true,
           members: {
             where: { leftAt: null },
             orderBy: { rotationOrder: "asc" },
@@ -134,6 +136,7 @@ type ActiveHousehold = {
   id: string;
   name: string;
   inviteCode: string;
+  coverImage?: string | null;
   members: {
     id: string;
     role: "ADMIN" | "MEMBER";
@@ -157,17 +160,42 @@ function ActiveHouseholdCard({
   const displayInvite = inviteUrl.replace(/^https?:\/\//, "");
 
   return (
-    <section className="rounded-[16px] bg-surface-container-lowest border border-outline-variant p-5 shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
-      <div className="flex items-center gap-2 mb-1">
-        <h2 className="font-display font-semibold text-[19px]">
-          {household.name}
-        </h2>
-        <span className="text-[10px] font-bold uppercase tracking-wide bg-success-container text-on-success-container px-2 py-0.5 rounded-pill">
-          Activo
-        </span>
+    <section className="rounded-[16px] bg-surface-container-lowest border border-outline-variant shadow-[0_2px_10px_rgba(15,23,42,0.05)] overflow-hidden">
+      {/* Cover Image Section */}
+      <div className="relative h-36 w-full group overflow-hidden bg-secondary-container">
+        {household.coverImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img 
+            src={household.coverImage} 
+            alt={`Portada de ${household.name}`} 
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" 
+          />
+        ) : (
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-primary/60 to-tertiary/40" />
+        )}
+        
+        {/* Gradient Overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/80" />
+        
+        {/* Upload Button */}
+        {role === "ADMIN" && (
+          <HouseholdCoverUpload householdId={household.id} />
+        )}
+
+        <div className="absolute bottom-4 left-5 right-5 flex items-end justify-between z-10">
+          <div>
+            <h2 className="font-display font-bold text-[22px] text-white drop-shadow-md">
+              {household.name}
+            </h2>
+            <span className="text-[10px] font-bold uppercase tracking-wide bg-success text-on-success px-2 py-0.5 rounded-pill shadow-sm mt-1 inline-block">
+              Activo
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 mt-3">
+      <div className="p-5 pt-4">
+        <div className="flex items-center gap-3">
         <div className="flex -space-x-[9px]">
           {household.members.slice(0, 4).map((m) => (
             <div
@@ -233,13 +261,14 @@ function ActiveHouseholdCard({
         </ul>
       </div>
 
-      <div className="mt-5">
-        <LeaveHouseholdButton
-          onLeave={async () => {
-            "use server";
-            await leaveHousehold(household.id);
-          }}
-        />
+        <div className="mt-5">
+          <LeaveHouseholdButton
+            onLeave={async () => {
+              "use server";
+              await leaveHousehold(household.id);
+            }}
+          />
+        </div>
       </div>
     </section>
   );

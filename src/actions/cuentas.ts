@@ -49,6 +49,14 @@ export async function crearRoom(
     },
   });
 
+  const now = new Date();
+  const currentBill = await db.monthlyBill.findUnique({
+    where: { householdId_month_year: { householdId, month: now.getMonth() + 1, year: now.getFullYear() } }
+  });
+  if (currentBill) {
+    await recalcularCobros(currentBill.id, householdId);
+  }
+
   revalidatePath("/cuentas");
   return { success: true, ts: Date.now() };
 }
@@ -87,6 +95,14 @@ export async function editarRoom(
     },
   });
 
+  const now = new Date();
+  const currentBill = await db.monthlyBill.findUnique({
+    where: { householdId_month_year: { householdId, month: now.getMonth() + 1, year: now.getFullYear() } }
+  });
+  if (currentBill) {
+    await recalcularCobros(currentBill.id, householdId);
+  }
+
   revalidatePath("/cuentas");
   return { success: true, ts: Date.now() };
 }
@@ -102,6 +118,14 @@ export async function eliminarRoom(roomId: string, householdId: string) {
   await db.room.delete({
     where: { id: roomId, householdId },
   });
+
+  const now = new Date();
+  const currentBill = await db.monthlyBill.findUnique({
+    where: { householdId_month_year: { householdId, month: now.getMonth() + 1, year: now.getFullYear() } }
+  });
+  if (currentBill) {
+    await recalcularCobros(currentBill.id, householdId);
+  }
 
   revalidatePath("/cuentas");
 }
@@ -691,7 +715,7 @@ export async function getMonthlyBill(householdId: string, month: number, year: n
   const user = await requireUser();
   await assertMemberOf(user.id, householdId);
 
-  return db.monthlyBill.findUnique({
+  let bill = await db.monthlyBill.findUnique({
     where: { householdId_month_year: { householdId, month, year } },
     include: {
       items: { 
@@ -707,4 +731,40 @@ export async function getMonthlyBill(householdId: string, month: number, year: n
       },
     },
   });
+
+  if (!bill) {
+    bill = await db.monthlyBill.create({
+      data: { householdId, month, year, createdById: user.id },
+      include: {
+        items: { include: { splits: true } },
+        charges: {
+          include: {
+            user: { select: { id: true, name: true, image: true } },
+            roomConfirmedBy: { select: { name: true, image: true } },
+          }
+        }
+      }
+    });
+    
+    await recalcularCobros(bill.id, householdId);
+
+    bill = await db.monthlyBill.findUniqueOrThrow({
+      where: { id: bill.id },
+      include: {
+        items: { 
+          orderBy: { createdAt: "asc" },
+          include: { splits: true }
+        },
+        charges: {
+          include: {
+            user: { select: { id: true, name: true, image: true } },
+            roomConfirmedBy: { select: { name: true, image: true } },
+          },
+          orderBy: { totalAmount: "desc" },
+        },
+      },
+    });
+  }
+
+  return bill;
 }
