@@ -742,8 +742,8 @@ export function ChargeCard({
     amount: number,
     isPaid: boolean,
     isConfirmed: boolean,
-    onPay: () => Promise<void>,
-    onConfirm: () => Promise<void>,
+    onPay: () => Promise<any>,
+    onConfirm: () => Promise<any>,
   ) => {
     if (isConfirmed) {
       return (

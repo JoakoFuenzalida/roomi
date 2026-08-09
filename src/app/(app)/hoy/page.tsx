@@ -51,19 +51,37 @@ export default async function HoyPage({
   });
 
   // 2. Cuentas (Mensuales) por pagar por el usuario
-  const pendingBills = await db.monthlyCharge.findMany({
+  const pendingBillsRaw = await db.monthlyBill.findMany({
     where: {
-      userId,
-      paidAt: null,
-      monthlyBill: { householdId: { in: householdIds } },
+      householdId: { in: householdIds },
+      OR: [
+        { charges: { some: { userId, roomAmount: { gt: 0 }, roomPaidAt: null } } },
+        { items: { some: { splits: { some: { userId, paidAt: null } } } } }
+      ]
     },
     include: {
-      monthlyBill: {
-        include: { household: { select: { name: true } } },
-      },
+      household: { select: { name: true } },
+      charges: { where: { userId } },
+      items: { include: { splits: { where: { userId } } } }
     },
-    orderBy: { monthlyBill: { createdAt: "desc" } },
+    orderBy: { createdAt: "desc" },
     take: 3,
+  });
+
+  const pendingBills = pendingBillsRaw.map(bill => {
+    const charge = bill.charges[0];
+    const pendingRoom = charge?.roomAmount > 0 && !charge?.roomPaidAt ? charge.roomAmount : 0;
+    const pendingSplits = bill.items.flatMap(i => i.splits).filter(s => !s.paidAt).reduce((acc, s) => acc + s.amount, 0);
+    
+    return {
+      id: bill.id,
+      totalAmount: pendingRoom + pendingSplits,
+      monthlyBill: {
+        month: bill.month,
+        year: bill.year,
+        household: { name: bill.household.name }
+      }
+    };
   });
 
   // 3. Compras pendientes (Lista general)
