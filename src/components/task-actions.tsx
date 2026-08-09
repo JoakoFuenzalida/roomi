@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeftRight, Minus, Plus, Trash2 } from "lucide-react";
 import { createTask, completarTarea, deleteTask, swapTurno } from "@/actions/task";
 import { AvatarInitials } from "./avatar-initials";
@@ -40,10 +41,19 @@ export function CreateTaskForm({
   householdId: string;
   members: { id: string; name: string; image: string | null }[];
 }) {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     createTask.bind(null, householdId),
     null,
   );
+
+  useEffect(() => {
+    if (state && "success" in state) {
+      broadcastUpdate(householdId);
+      router.push(`/tareas?hogarId=${householdId}`);
+    }
+  }, [state, householdId, router]);
+
   const [freq, setFreq] = useState<(typeof FREQUENCIES)[number]["value"]>(
     "ONCE",
   );
@@ -89,6 +99,7 @@ export function CreateTaskForm({
             id="title"
             name="title"
             required
+            autoCapitalize="sentences"
             placeholder="Ej: Limpiar el baño"
             className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
           />

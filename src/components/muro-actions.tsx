@@ -214,6 +214,7 @@ export function NewNoticeSheet({
                 name="content"
                 rows={3}
                 maxLength={500}
+                autoCapitalize="sentences"
                 placeholder="Escribe tu aviso..."
                 className="w-full rounded-[12px] border border-outline-variant bg-surface-container-low px-4 py-3 text-[15px] text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary resize-none"
               />

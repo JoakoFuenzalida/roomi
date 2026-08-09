@@ -78,6 +78,7 @@ function EditProfileSheet({
                 name="name"
                 defaultValue={name}
                 required
+                autoCapitalize="words"
                 minLength={2}
                 maxLength={40}
                 className="mt-1 w-full h-12 rounded-[12px] border border-outline-variant bg-surface-container-lowest px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary"

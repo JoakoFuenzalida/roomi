@@ -5,7 +5,6 @@ import { requireUser, assertMemberOf } from "@/lib/session";
 import { taskSchema } from "@/lib/validators";
 import { computeInitialDueDate, computeNextDueDate } from "@/lib/rotation";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { TaskFrequency } from "@/generated/prisma/client";
 import { sendPushToHousehold, sendPushToUser } from "@/lib/push";
 
@@ -92,7 +91,7 @@ export async function createTask(
 
   revalidatePath("/tareas");
   revalidatePath("/hoy");
-  redirect(`/tareas?hogarId=${householdId}`);
+  return { success: true, ts: Date.now() };
 }
 
 export async function deleteTask(taskId: string, householdId: string) {

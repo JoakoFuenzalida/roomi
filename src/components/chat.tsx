@@ -424,6 +424,7 @@ export function ChatClient({
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
+              autoCapitalize="sentences"
               placeholder="Mensaje"
               className="w-full bg-surface-container rounded-[20px] pl-4 pr-12 py-3 max-h-[100px] min-h-[46px] resize-none text-[15px] text-on-surface outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
               rows={1}

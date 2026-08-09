@@ -12,6 +12,7 @@ export function CreateHouseholdForm() {
         name="name"
         required
         maxLength={40}
+        autoCapitalize="sentences"
         placeholder="Depa Ñuñoa"
         className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
       />

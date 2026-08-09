@@ -120,6 +120,7 @@ export function AddItemSheet({
             </label>
             <input
               name="title"
+              autoCapitalize="sentences"
               placeholder="Ej: Detergente, Leche..."
               className="mt-1.5 w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
               autoFocus
@@ -132,6 +133,7 @@ export function AddItemSheet({
             </label>
             <input
               name="quantity"
+              autoCapitalize="sentences"
               placeholder="Ej: 2 litros, 1 paquete"
               className="mt-1.5 w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
             />
@@ -403,16 +405,22 @@ export function DeleteItemButton({
 
 /* ────────────── Mark Paid Sheet ────────────── */
 
+type MyDebt = { toUserId: string; amount: number };
+
 export function MarkPaidSheet({
   householdId,
   members,
   currentUserId,
+  myDebts = [],
+  preselectedToUserId,
   open,
   onOpenChange,
 }: {
   householdId: string;
   members: Member[];
   currentUserId: string;
+  myDebts?: MyDebt[];
+  preselectedToUserId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -421,6 +429,8 @@ export function MarkPaidSheet({
     null,
   );
   const [method, setMethod] = useState<string | undefined>();
+  const [toUserId, setToUserId] = useState<string>("");
+  const [amountStr, setAmountStr] = useState<string>("");
 
   useEffect(() => {
     if (state && "success" in state) {
@@ -429,13 +439,38 @@ export function MarkPaidSheet({
     }
   }, [state, onOpenChange, householdId]);
 
+  useEffect(() => {
+    if (open) {
+      const initial = preselectedToUserId ?? "";
+      setToUserId(initial);
+      const initialDebt = myDebts.find((d) => d.toUserId === initial)?.amount ?? 0;
+      setAmountStr(initialDebt > 0 ? String(initialDebt) : "");
+    }
+  }, [open, preselectedToUserId, myDebts]);
+
   function handleOpenChange(o: boolean) {
     onOpenChange(o);
-    if (!o) setMethod(undefined);
+    if (!o) {
+      setMethod(undefined);
+      setToUserId("");
+      setAmountStr("");
+    }
+  }
+
+  function handleSelectUser(uid: string) {
+    setToUserId(uid);
+    const debt = myDebts.find((d) => d.toUserId === uid)?.amount ?? 0;
+    setAmountStr(debt > 0 ? String(debt) : "");
   }
 
   const otherMembers = members.filter((m) => m.userId !== currentUserId);
   const methods = ["Transferencia", "Efectivo", "Otro"];
+
+  const debtToSelected = toUserId
+    ? myDebts.find((d) => d.toUserId === toUserId)?.amount ?? 0
+    : 0;
+  const payAmount = parseInt(amountStr) || 0;
+  const remainingAfter = debtToSelected - payAmount;
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -453,35 +488,89 @@ export function MarkPaidSheet({
 
         <form action={formAction} className="flex flex-col gap-4">
           {method && <input type="hidden" name="method" value={method} />}
+          <input type="hidden" name="toUserId" value={toUserId} />
 
           <div>
             <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
               ¿A quién le pagaste?
             </label>
-            <select
-              name="toUserId"
-              className="mt-1.5 w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
-            >
-              <option value="">Seleccionar...</option>
-              {otherMembers.map((m) => (
-                <option key={m.userId} value={m.userId}>
-                  {m.userName}
-                </option>
-              ))}
-            </select>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {otherMembers.map((m) => {
+                const debt = myDebts.find((d) => d.toUserId === m.userId)?.amount ?? 0;
+                const selected = toUserId === m.userId;
+                return (
+                  <button
+                    key={m.userId}
+                    type="button"
+                    onClick={() => handleSelectUser(m.userId)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-pill border transition-colors",
+                      selected
+                        ? "bg-primary-container border-primary text-on-primary-container"
+                        : "bg-surface-container border-outline-variant text-on-surface",
+                    )}
+                  >
+                    <AvatarInitials name={m.userName} imageUrl={m.image} size={22} />
+                    <span className="text-[13px] font-semibold">
+                      {m.userName.split(" ")[0]}
+                    </span>
+                    {debt > 0 && (
+                      <span className={cn(
+                        "text-[11px] font-bold px-1.5 py-0.5 rounded-full",
+                        selected
+                          ? "bg-primary text-on-primary"
+                          : "bg-error-container text-on-error-container",
+                      )}>
+                        ${debt.toLocaleString("es-CL")}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-              Monto
-            </label>
+            <div className="flex items-baseline justify-between">
+              <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+                Monto a pagar
+              </label>
+              {toUserId && debtToSelected > 0 && (
+                <span className="text-[11px] text-on-surface-variant">
+                  Debes: <span className="font-bold text-on-surface">${debtToSelected.toLocaleString("es-CL")}</span>
+                </span>
+              )}
+            </div>
             <div className="relative mt-1.5">
               <CurrencyInput
                 name="amount"
+                value={amountStr}
+                onValueChange={(val) => setAmountStr(val.toString())}
                 placeholder="$0"
                 className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
               />
             </div>
+            {toUserId && debtToSelected > 0 && payAmount > 0 && (
+              <p className={cn(
+                "text-[12px] font-semibold mt-1.5",
+                remainingAfter === 0
+                  ? "text-success"
+                  : remainingAfter > 0
+                    ? "text-warning"
+                    : "text-primary",
+              )}>
+                {remainingAfter === 0
+                  ? "✓ Quedas al día"
+                  : remainingAfter > 0
+                    ? `Aún debes: $${remainingAfter.toLocaleString("es-CL")}`
+                    : `Pagas $${Math.abs(remainingAfter).toLocaleString("es-CL")} de más (crédito a favor)`}
+              </p>
+            )}
+            {toUserId && debtToSelected === 0 && (
+              <p className="text-[12px] text-on-surface-variant mt-1.5">
+                No tienes deuda con esta persona.
+              </p>
+            )}
           </div>
 
           <div>
@@ -513,6 +602,7 @@ export function MarkPaidSheet({
             </label>
             <input
               name="note"
+              autoCapitalize="sentences"
               placeholder="Ej: transferencia banco estado"
               className="mt-1.5 w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
             />
@@ -701,10 +791,12 @@ export function AccountsSection({
   householdId,
   members,
   currentUserId,
+  myDebts,
 }: {
   householdId: string;
   members: Member[];
   currentUserId: string;
+  myDebts: MyDebt[];
 }) {
   const [payOpen, setPayOpen] = useState(false);
 
@@ -720,6 +812,7 @@ export function AccountsSection({
         householdId={householdId}
         members={members}
         currentUserId={currentUserId}
+        myDebts={myDebts}
         open={payOpen}
         onOpenChange={setPayOpen}
       />
@@ -731,10 +824,14 @@ export function DebtPayButton({
   householdId,
   members,
   currentUserId,
+  myDebts,
+  toUserId,
 }: {
   householdId: string;
   members: Member[];
   currentUserId: string;
+  myDebts: MyDebt[];
+  toUserId: string;
 }) {
   const [payOpen, setPayOpen] = useState(false);
 
@@ -750,6 +847,8 @@ export function DebtPayButton({
         householdId={householdId}
         members={members}
         currentUserId={currentUserId}
+        myDebts={myDebts}
+        preselectedToUserId={toUserId}
         open={payOpen}
         onOpenChange={setPayOpen}
       />

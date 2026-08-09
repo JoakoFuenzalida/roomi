@@ -115,6 +115,10 @@ export default async function ComprasPage({
   const debts = await getBalances(active.householdId);
   const pendingSettlements = await getPendingSettlements(active.householdId);
 
+  const myDebts = debts
+    .filter((d) => d.fromUserId === user.id)
+    .map((d) => ({ toUserId: d.toUserId, amount: d.amount }));
+
   return (
     <main className="max-w-md mx-auto w-full px-5 pb-6 flex flex-col flex-1">
       <header className="sticky top-0 z-30 bg-background pt-6 pb-4 -mx-5 px-5 flex items-center justify-between mb-2 shrink-0">
@@ -230,6 +234,7 @@ export default async function ComprasPage({
             householdId={active.householdId}
             members={membersList}
             currentUserId={user.id}
+            myDebts={myDebts}
           />
         </div>
 
@@ -323,6 +328,8 @@ export default async function ComprasPage({
                         householdId={active.householdId}
                         members={membersList}
                         currentUserId={d.fromUserId}
+                        myDebts={myDebts}
+                        toUserId={d.toUserId}
                       />
                     )}
                     {isCreditor && (

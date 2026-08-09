@@ -144,6 +144,7 @@ export function RoomSheet({
             <input
               name="name"
               defaultValue={room?.name ?? ""}
+              autoCapitalize="sentences"
               placeholder="Pieza 1, Pieza matrimonial..."
               required
               className="mt-1 w-full h-12 rounded-[12px] border border-outline-variant bg-surface-container-lowest px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary"
@@ -500,6 +501,7 @@ export function BillItemSheet({
               name="label"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
+              autoCapitalize="sentences"
               placeholder="GGCC, Luz, Agua, Gas, Gimnasio..."
               required
               className="mt-1 w-full h-12 rounded-[12px] border border-outline-variant bg-surface-container-lowest px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary"

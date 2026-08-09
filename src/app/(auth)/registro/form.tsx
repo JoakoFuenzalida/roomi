@@ -62,6 +62,7 @@ export function RegistroForm({ callbackUrl }: { callbackUrl?: string }) {
               name="name"
               required
               autoComplete="name"
+              autoCapitalize="words"
               className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
             />
           </Field>

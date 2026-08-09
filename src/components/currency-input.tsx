@@ -1,18 +1,20 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { cn } from "@/lib/utils";
 
 interface CurrencyInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "onChange" | "defaultValue"> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "onChange" | "defaultValue" | "value"> {
   name: string;
   defaultValue?: number | string;
+  value?: number | string;
   onValueChange?: (value: number) => void;
 }
 
 export function CurrencyInput({
   name,
   defaultValue,
+  value,
   className,
   placeholder = "$0",
   onValueChange,
@@ -20,8 +22,18 @@ export function CurrencyInput({
 }: CurrencyInputProps) {
   // Inicializamos el valor numérico crudo
   const [rawValue, setRawValue] = useState<string>(
-    defaultValue ? defaultValue.toString() : ""
+    value !== undefined
+      ? value.toString()
+      : defaultValue
+        ? defaultValue.toString()
+        : ""
   );
+
+  useEffect(() => {
+    if (value !== undefined) {
+      setRawValue(value.toString());
+    }
+  }, [value]);
 
   // Formateamos el número a CLP (ej: $1.000)
   const formatCurrency = (val: string) => {
