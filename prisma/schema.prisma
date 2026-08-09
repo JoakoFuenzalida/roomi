@@ -36,6 +36,8 @@ model User {
   reactions           Reaction[]
   billItemSplits      BillItemSplit[]
   passwordResets      PasswordReset[]
+
+  pushMutedUntil DateTime?
 }
 
 model Household {

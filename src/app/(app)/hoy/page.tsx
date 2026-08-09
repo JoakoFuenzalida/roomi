@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Sparkles, ShoppingCart, Wallet, Receipt, ArrowRight } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { Button } from "@/components/ui/button";
 import { CompleteTaskButton } from "@/components/task-actions";
-import { RoomiHeader, RoomiSymbol } from "@/components/roomi-logo";
+import { RoomiHeader } from "@/components/roomi-logo";
 import { UserHeaderNav } from "@/components/user-header-nav";
+import { OnboardingEmpty } from "@/components/onboarding-empty";
 import { getBalances } from "@/actions/settlement";
 import { HoyTabs } from "./client";
 
@@ -162,7 +162,7 @@ export default async function HoyPage({
       </header>
 
       {activeMemberships.length === 0 ? (
-        <EmptyHogar />
+        <OnboardingEmpty firstName={firstName} />
       ) : (
         <HoyTabs
           mainHouseholdId={mainHouseholdId}
@@ -207,29 +207,6 @@ export default async function HoyPage({
         </HoyTabs>
       )}
     </main>
-  );
-}
-
-function EmptyHogar() {
-  return (
-    <div className="rounded-[14px] bg-surface-container-low border border-outline-variant p-6 flex flex-col items-center text-center gap-4 mt-10">
-      <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center">
-        <RoomiSymbol size={36} />
-      </div>
-      <div>
-        <p className="font-display font-semibold text-lg">Todavía sin hogar</p>
-        <p className="text-sm text-on-surface-variant mt-1">
-          Crea uno o únete con un código para partir.
-        </p>
-      </div>
-      <Button
-        render={<Link href="/hogar" />}
-        nativeButton={false}
-        className="w-full h-12 rounded-pill font-bold shadow-[0_3px_9px_rgba(255,107,107,0.35)]"
-      >
-        Ir a hogar
-      </Button>
-    </div>
   );
 }
 

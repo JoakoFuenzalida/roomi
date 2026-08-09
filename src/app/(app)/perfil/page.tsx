@@ -10,6 +10,7 @@ import { VacationToggle } from "@/components/vacation-toggle";
 import { ChatMuteToggle } from "@/components/chat-mute-toggle";
 import { EditProfileButton } from "@/components/profile-actions";
 import { DeleteAccountButton } from "@/components/delete-account-button";
+import { PushSettings } from "@/components/push-settings";
 
 export default async function PerfilPage() {
   const session = await auth();
@@ -84,6 +85,19 @@ export default async function PerfilPage() {
           </ul>
         </section>
       )}
+
+      <section className="mb-4">
+        <h2 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-3">
+          Notificaciones
+        </h2>
+        <p className="text-[12px] text-on-surface-variant mb-3">
+          Silencia todas las notificaciones push por un tiempo o para siempre.
+        </p>
+        <PushSettings
+          vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!}
+          mutedUntil={dbUser?.pushMutedUntil ?? null}
+        />
+      </section>
 
       {memberships.length > 0 && (
         <section className="mb-4">

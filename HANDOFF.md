@@ -62,6 +62,26 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
   - Implementación de `loading.tsx` en `app/(app)` y flujos de `useTransition` (MonthNavigator) para dar percepción instantánea cross-route a nivel aplicación (spinners skeleton).
   - Corrección de bugs de overflow horizontal en mobile generados por links largos en flexboxes.
 
+## Onboarding + control de notificaciones (2026-08-09)
+
+### Onboarding primer uso
+- Usuario nuevo que llega a `/hoy` sin hogar ahora ve un onboarding real (antes era un card simple "Todavía sin hogar").
+- Componente [onboarding-empty.tsx](src/components/onboarding-empty.tsx): saludo con nombre, tarjeta con 3 features (Tareas rotan / Compras / Cuentas), tabs "Crear hogar" / "Unirme" con los forms inline (reusa `CreateHouseholdForm` y `JoinHouseholdForm`).
+- El usuario no tiene que navegar a `/hogar` — puede crear o unirse desde `/hoy` directamente.
+
+### Control global de notificaciones push
+- Nuevo campo en User: `pushMutedUntil DateTime?`. Null o pasado = activas; fecha futura = silenciadas; año 9999 = "para siempre".
+- Server action [push-mute.ts](src/actions/push-mute.ts): `setPushMute("24h" | "1w" | "forever" | null)`.
+- `sendPushToUser` en [push.ts](src/lib/push.ts) chequea `pushMutedUntil` antes de enviar (early return).
+- Componente [push-settings.tsx](src/components/push-settings.tsx) en perfil con 4 estados:
+  - **Denied** (bloqueadas por navegador): mensaje para desbloquear desde configuración.
+  - **Default** (nunca pidió): card con botón "Activar" — segunda oportunidad si rechazó al inicio.
+  - **Granted + activas**: card verde "Activas" + chips (24h / 1 semana / Siempre).
+  - **Granted + silenciadas**: card warning "Silenciadas hasta X" + botón "Reactivar".
+- Activar cuando estaba muted también desmutea automáticamente.
+
+---
+
 ## Realtime + UX pre-testers (2026-08-09)
 
 ### Realtime cross-cliente (Supabase broadcast)

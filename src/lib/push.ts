@@ -14,6 +14,15 @@ type PushPayload = {
 };
 
 export async function sendPushToUser(userId: string, payload: PushPayload) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { pushMutedUntil: true },
+  });
+
+  if (user?.pushMutedUntil && user.pushMutedUntil > new Date()) {
+    return [];
+  }
+
   const subs = await db.pushSubscription.findMany({
     where: { userId },
   });
