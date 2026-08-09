@@ -11,6 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { CurrencyInput } from "@/components/currency-input";
 import { cn } from "@/lib/utils";
 import {
   Plus,
@@ -303,15 +304,10 @@ export function MarkBoughtSheet({
               ¿Cuánto costó?
             </label>
             <div className="relative mt-1.5">
-              <span className="absolute left-[14px] top-1/2 -translate-y-1/2 text-on-surface-variant font-semibold">
-                $
-              </span>
-              <input
+              <CurrencyInput
                 name="amount"
-                type="number"
-                inputMode="numeric"
-                placeholder="0"
-                className="w-full rounded-[12px] border-[1.5px] border-outline pl-8 pr-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
+                placeholder="$0"
+                className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
                 autoFocus
               />
             </div>
@@ -469,15 +465,10 @@ export function MarkPaidSheet({
               Monto
             </label>
             <div className="relative mt-1.5">
-              <span className="absolute left-[14px] top-1/2 -translate-y-1/2 text-on-surface-variant font-semibold">
-                $
-              </span>
-              <input
+              <CurrencyInput
                 name="amount"
-                type="number"
-                inputMode="numeric"
-                placeholder="0"
-                className="w-full rounded-[12px] border-[1.5px] border-outline pl-8 pr-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
+                placeholder="$0"
+                className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
               />
             </div>
           </div>

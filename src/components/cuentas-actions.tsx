@@ -26,6 +26,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { CurrencyInput } from "@/components/currency-input";
 import { cn } from "@/lib/utils";
 import {
   Plus,
@@ -148,13 +149,11 @@ export function RoomSheet({
             <label className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wide">
               Arriendo mensual (CLP)
             </label>
-            <input
+            <CurrencyInput
               name="monthlyCost"
-              type="number"
               defaultValue={room?.monthlyCost ?? ""}
-              placeholder="170000"
+              placeholder="$170.000"
               required
-              min={0}
               className="mt-1 w-full h-12 rounded-[12px] border border-outline-variant bg-surface-container-lowest px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -519,14 +518,12 @@ export function BillItemSheet({
             <label className="text-[12px] font-semibold text-on-surface-variant uppercase tracking-wide">
               Monto (CLP)
             </label>
-            <input
+            <CurrencyInput
               name="amount"
-              type="number"
-              value={amountStr}
-              onChange={(e) => setAmountStr(e.target.value)}
-              placeholder="140000"
+              defaultValue={amountStr}
+              onValueChange={(val) => setAmountStr(val.toString())}
+              placeholder="$140.000"
               required
-              min={0}
               className="mt-1 w-full h-12 rounded-[12px] border border-outline-variant bg-surface-container-lowest px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -602,17 +599,13 @@ export function BillItemSheet({
                       <AvatarInitials name={m.userName} imageUrl={m.image} size={24} />
                       <span className="text-[13px] font-semibold">{m.userName.split(" ")[0]}</span>
                     </div>
-                    <div className="relative w-[120px]">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-on-surface-variant">$</span>
-                      <input
-                        type="number"
+                      <CurrencyInput
                         name={`customSplit_${m.userId}`}
-                        value={customSplits[m.userId] ?? ""}
-                        onChange={(e) => setCustomSplits(s => ({ ...s, [m.userId]: e.target.value }))}
-                        className="w-full h-9 rounded-[8px] border border-outline-variant bg-surface-container pl-6 pr-3 text-[13px] font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
-                        placeholder="0"
+                        defaultValue={customSplits[m.userId] ?? ""}
+                        onValueChange={(val) => setCustomSplits(s => ({ ...s, [m.userId]: val.toString() }))}
+                        className="w-full h-9 rounded-[8px] border border-outline-variant bg-surface-container px-3 text-[13px] font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                        placeholder="$0"
                       />
-                    </div>
                   </div>
                 ))}
               </div>
