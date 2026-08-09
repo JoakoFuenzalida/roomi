@@ -9,7 +9,7 @@ import {
   RoomCard,
   AddRoomButton,
   BillItemRow,
-  ChargeCard,
+  ChargesList,
   MonthNavigator,
 } from "@/components/cuentas-actions";
 import { AddBillItemButton } from "@/components/cuentas-add-bill-button";
@@ -220,36 +220,25 @@ export default async function CuentasPage({
 
           {/* Charges per person */}
           {charges.length > 0 && (
-            <>
-              <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide pt-2">
-                Cobros por persona
-              </h3>
-              <ul className="space-y-2">
-                {charges.map((charge) => {
-                  const userSplits = items.flatMap(item => 
-                    item.splits
-                      .filter(s => s.userId === charge.userId)
-                      .map(s => ({
-                        id: s.id,
-                        amount: s.amount,
-                        paidAt: s.paidAt,
-                        confirmedAt: s.confirmedAt,
-                        label: item.label,
-                      }))
-                  );
-                  const augmentedCharge = { ...charge, splits: userSplits };
-                  return (
-                    <ChargeCard
-                      key={charge.id}
-                      charge={augmentedCharge}
-                      householdId={active.householdId}
-                      isAdmin={isAdmin}
-                      isCurrentUser={charge.userId === user.id}
-                    />
-                  );
-                })}
-              </ul>
-            </>
+            <ChargesList
+              charges={charges.map((charge) => ({
+                ...charge,
+                splits: items.flatMap((item) =>
+                  item.splits
+                    .filter((s) => s.userId === charge.userId)
+                    .map((s) => ({
+                      id: s.id,
+                      amount: s.amount,
+                      paidAt: s.paidAt,
+                      confirmedAt: s.confirmedAt,
+                      label: item.label,
+                    }))
+                ),
+              }))}
+              householdId={active.householdId}
+              isAdmin={isAdmin}
+              currentUserId={user.id}
+            />
           )}
         </div>
       </section>

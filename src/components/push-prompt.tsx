@@ -9,13 +9,25 @@ export function PushPrompt({ vapidPublicKey }: { vapidPublicKey: string }) {
 
   useEffect(() => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+
+    // Check if on iOS and NOT standalone. If so, push notifications aren't supported yet, 
+    // we must wait for them to install the PWA.
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone;
+    
+    if (isIOS && !isStandalone) {
+      return; // Can't request push on iOS Safari until installed as PWA
+    }
+
     if (Notification.permission === "granted") {
       subscribeQuietly(vapidPublicKey);
       return;
     }
+    
     if (Notification.permission === "default") {
-      const dismissed = sessionStorage.getItem("roomi-push-dismissed");
-      if (!dismissed) setShow(true);
+      // Force it to show, ignoring previous dismissals to be more aggressive
+      setShow(true);
     }
   }, [vapidPublicKey]);
 
@@ -33,7 +45,6 @@ export function PushPrompt({ vapidPublicKey }: { vapidPublicKey: string }) {
   }
 
   function handleDismiss() {
-    sessionStorage.setItem("roomi-push-dismissed", "1");
     setShow(false);
   }
 

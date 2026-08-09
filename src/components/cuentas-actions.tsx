@@ -990,3 +990,47 @@ export function MonthNavigator({
     </div>
   );
 }
+
+export function ChargesList({
+  charges,
+  householdId,
+  isAdmin,
+  currentUserId,
+}: {
+  charges: ChargeData[];
+  householdId: string;
+  isAdmin: boolean;
+  currentUserId: string;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  return (
+    <>
+      <div className="flex items-center justify-between pt-2 mb-2">
+        <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">
+          Cobros por persona
+        </h3>
+        {isAdmin && (
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className={cn("p-1.5 rounded-full transition-colors", isEditing ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-container")}
+            title="Editar cobros"
+          >
+            <Pencil size={14} />
+          </button>
+        )}
+      </div>
+      <ul className="space-y-2">
+        {charges.map((charge) => (
+          <ChargeCard
+            key={charge.id}
+            charge={charge}
+            householdId={householdId}
+            isAdmin={isEditing}
+            isCurrentUser={charge.user.id === currentUserId}
+          />
+        ))}
+      </ul>
+    </>
+  );
+}

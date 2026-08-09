@@ -7,6 +7,7 @@ import { AvatarInitials } from "./avatar-initials";
 import { TaskParticipantsOrder } from "./task-participants-order";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const FREQUENCIES = [
   { value: "ONCE", label: "Una vez" },
@@ -228,12 +229,17 @@ export function CreateTaskForm({
             >
               <Minus size={20} />
             </button>
-            <span
-              className="font-display font-semibold w-16 text-center"
-              style={{ fontSize: 34, lineHeight: 1 }}
-            >
-              {points}
-            </span>
+            <div className="flex items-center gap-1 justify-center w-24">
+              <span
+                className="font-display font-semibold text-center"
+                style={{ fontSize: 34, lineHeight: 1 }}
+              >
+                {points}
+              </span>
+              <div className="w-8 h-8 flex items-center justify-center shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.15)]">
+                <Image src="/coins.png" alt="RC" width={32} height={32} className="object-contain w-full h-full" />
+              </div>
+            </div>
             <button
               type="button"
               onClick={() => setPoints((p) => Math.min(10, p + 1))}
