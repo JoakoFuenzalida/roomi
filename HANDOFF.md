@@ -1,4 +1,4 @@
-# Roomi — Handoff completo (actualizado 2026-08-08)
+# Roomi — Handoff completo (actualizado 2026-08-09)
 
 Este archivo captura el estado real del proyecto. Léelo para entender qué hay, cómo funciona, y qué decisiones se tomaron.
 
@@ -61,6 +61,41 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
 - **UX Fluido y Nativo**:
   - Implementación de `loading.tsx` en `app/(app)` y flujos de `useTransition` (MonthNavigator) para dar percepción instantánea cross-route a nivel aplicación (spinners skeleton).
   - Corrección de bugs de overflow horizontal en mobile generados por links largos en flexboxes.
+
+## Realtime + UX pre-testers (2026-08-09)
+
+### Realtime cross-cliente (Supabase broadcast)
+- **Patrón `RealtimeRefresh` + `broadcastUpdate`**: componente cliente que se suscribe al canal `sync_${householdId}` y llama `router.refresh()` con debounce 300ms cuando llega evento `data_changed`. Cualquier acción mutante llama `broadcastUpdate(householdId)` para notificar a todos los suscritos.
+- **Detalle crítico**: usa canal reutilizado por hogar (cache `Map<string, RealtimeChannel>`) con `broadcast.self: true`. La v1 creaba un canal nuevo y llamaba `.send()` sin `.subscribe()`, que Supabase descartaba silenciosamente. Ahora funciona tanto para el emisor como para los demás.
+- **Módulos con realtime**: muro (`/hoy`), compras, tareas, cuentas. Las acciones broadcast: crear/completar/swap/eliminar tarea, agregar/marcar/eliminar item, marcar/confirmar/deshacer pago (arriendo + servicios), agregar/editar/eliminar gasto, agregar/editar/eliminar pieza, poblar recurrentes, crear/eliminar aviso, reaccionar, fijar.
+- Archivos: `src/components/realtime-refresh.tsx`, integrado en `/hoy`, `/compras`, `/tareas`, `/cuentas`.
+
+### Fix crear tarea (redirect + realtime)
+- `createTask` ya no hace `redirect()` en el server, retorna `{ success }`. CreateTaskForm hace `broadcastUpdate` + `router.push` desde `useEffect`. Antes el redirect interrumpía el flow del cliente y ni el emisor ni los demás veían el cambio sin recargar.
+
+### MarkPaidSheet con vista de deuda y cálculo en vivo
+- El sheet de registrar pago (deuda en compras) ahora recibe `myDebts: MyDebt[]` y opcionalmente `preselectedToUserId`.
+- Los chips de usuarios muestran badge con la deuda ($X.XXX).
+- Al seleccionar usuario, el monto se autocompleta con la deuda exacta.
+- Muestra en vivo: "✓ Quedas al día" (verde), "Aún debes: $X" (warning), o "Pagas $X de más (crédito a favor)" (primary).
+- Botón "Pagar" en una deuda específica preselecciona ese usuario y monto — un click y confirma.
+- `CurrencyInput` ahora soporta prop `value` controlada (además de `defaultValue`).
+
+### Push notifications en cuentas (completado)
+- `deshacerPagoRoom` y `deshacerPagoBillItem` avisan al miembro que su pago fue revertido.
+- `poblarRecurrentes` avisa al hogar cuando el admin carga los fijos del mes.
+
+### Mayúsculas automáticas (mobile)
+- `autoCapitalize="sentences"` en: título de tarea, contenido de aviso, mensaje de chat, título/cantidad/nota de compras, nombre de pieza, concepto de gasto, nombre de hogar.
+- `autoCapitalize="words"` en: nombre de perfil, nombre en registro.
+- No aplicado a: email, password, código de invitación, montos (currency).
+
+### Páginas legales
+- `/terminos` y `/privacidad` públicas con branding Roomi (RoomiSymbol + botón volver). 10 secciones cada una.
+- Links reales en la landing.
+- Archivos: `src/app/terminos/page.tsx`, `src/app/privacidad/page.tsx`.
+
+---
 
 ## Hardening pre-testers + Fase 2 (2026-08-08)
 
@@ -202,15 +237,15 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
 
 ## Navegación
 
-**Bottom nav (5 tabs):** Muro | Tareas | Compras | Cuentas | Hogar
+**Bottom nav (5 tabs):** Hoy | Tareas | Compras | Cuentas | Hogar
 
-- `/muro` — avisos del hogar (reemplazó a `/hoy` en el nav)
+- `/hoy` — dashboard con 3 tabs (Muro | Chat en vivo | Ranking). No hay ruta `/muro` — el muro es un tab acá.
 - `/tareas` — lista de tareas + crear nueva + swap
 - `/compras` — lista de compras + gastos + deudas + settlements
 - `/cuentas` — piezas + boleta mensual + cobros
 - `/hogar` — miembros + invite link + salir
 - `/perfil` — accesible desde avatar header (no tiene tab)
-- `/hoy` — dashboard resumen (existe pero fuera del nav)
+- `/terminos`, `/privacidad` — páginas públicas linkeadas desde landing
 
 Multi-hogar: todas las páginas tienen chip selector cuando el usuario pertenece a >1 hogar.
 
@@ -350,6 +385,5 @@ Si `prisma generate` falla, borrar `src/generated/prisma/` y regenerar. Si los m
 ## Qué queda por hacer (nice-to-have, todo lo core está hecho)
 
 - **Evidencia fotográfica** — Supabase Storage + foto opcional al completar tarea
-- **Supabase Realtime en muro/compras** — ya implementado en chat, falta extenderlo a avisos y compras para updates en vivo sin refresh
-- **Recuperar contraseña** — flujo de reset por email (SendGrid / Resend)
+- **Email verification** — cualquier email sirve para registrarse
 - **App nativa** — considerar Capacitor o React Native si se valida con testers
