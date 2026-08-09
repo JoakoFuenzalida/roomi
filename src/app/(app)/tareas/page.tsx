@@ -18,7 +18,10 @@ const FREQ_LABEL: Record<string, string> = {
 
 function formatDue(d: Date) {
   const now = new Date();
-  const diff = Math.floor((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  now.setHours(0, 0, 0, 0);
+  const due = new Date(d);
+  due.setHours(0, 0, 0, 0);
+  const diff = Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   if (diff < 0) return `Venció hace ${Math.abs(diff)} día${Math.abs(diff) === 1 ? "" : "s"}`;
   if (diff === 0) return "Vence hoy";
   if (diff === 1) return "Vence mañana";

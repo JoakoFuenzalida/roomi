@@ -182,6 +182,22 @@ PWA mobile-first para gestionar la convivencia entre estudiantes que arriendan u
 - Push notification al receptor
 - Archivos: `swapTurno` en `src/actions/task.ts`, `SwapButton` en `src/components/task-actions.tsx`
 
+### 14. Input de Monedas Enmascarado
+- Componente `CurrencyInput` para mostrar precios en formato Chileno (`$1.000`) mientras mantiene un input numérico oculto para Server Actions.
+- Aplicado en formularios de `/cuentas` y `/compras`.
+- Archivo: `src/components/currency-input.tsx`
+
+### 15. Eliminación de Cobros (Fantasmas) y Ajustes de RoomiCoins
+- Botón "Reiniciar Ranking" movido de `/hogar` a la pestaña de ranking en `/hoy` exclusivo para admins.
+- Botón (Modo edición - Lápiz) en "Cobros por persona" (`/cuentas`) que habilita la eliminación de cobros mensuales enteros (para limpiar cobros fantasmas).
+- Icono visual de RoomiCoins (`coins.png`) incluido en el formulario de creación de Tareas.
+- Archivos: `src/components/cuentas-actions.tsx`, `src/app/(app)/cuentas/page.tsx`, `src/app/(app)/hoy/client.tsx`, `src/components/task-actions.tsx`
+
+### 16. Instalación PWA y Notificaciones (Estrategia iOS/Android)
+- `InstallPrompt`: Adaptado con lógica condicional iOS vs Android. En Android usa `beforeinstallprompt` + popup nativo; en iOS detecta plataforma y obliga/guía manual ("Compartir > Agregar a Inicio"). Demoras de ocultamiento eliminadas (persistencia agresiva).
+- `PushPrompt`: Se omite la solicitud si el iPhone no está en modo `standalone`. Esto fuerza al usuario de iOS a primero instalar la PWA para luego activar Notificaciones.
+- Archivos: `src/components/install-prompt.tsx`, `src/components/push-prompt.tsx`
+
 ---
 
 ## Navegación

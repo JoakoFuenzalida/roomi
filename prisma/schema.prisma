@@ -34,6 +34,7 @@ model User {
   noticesAuthored Notice[]         @relation("noticeAuthor")
   reactions       Reaction[]
   billItemSplits  BillItemSplit[]
+  passwordResets  PasswordReset[]
 }
 
 model Household {
@@ -351,6 +352,19 @@ model PushSubscription {
   p256dh    String
   auth      String
   createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============ PASSWORD RESET ============
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

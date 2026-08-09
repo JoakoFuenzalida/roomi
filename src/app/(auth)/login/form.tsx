@@ -93,6 +93,13 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
               {state?.error}
             </p>
           )}
+
+          <Link
+            href="/olvidaste"
+            className="text-xs text-primary font-semibold"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
         </div>
 
         <div className="mt-auto pt-8 space-y-4">
