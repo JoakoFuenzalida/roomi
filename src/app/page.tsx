@@ -54,9 +54,14 @@ export default async function Home() {
           Entrar
         </Button>
         <p className="text-center text-[11px] text-on-surface-variant leading-relaxed mt-1">
-          Al continuar aceptas los términos y la
-          <br />
-          política de privacidad de roomi.
+          Al continuar aceptas los{" "}
+          <Link href="/terminos" className="text-primary font-semibold underline">
+            términos de uso
+          </Link>{" "}
+          y la{" "}
+          <Link href="/privacidad" className="text-primary font-semibold underline">
+            política de privacidad
+          </Link>.
         </p>
       </div>
     </main>

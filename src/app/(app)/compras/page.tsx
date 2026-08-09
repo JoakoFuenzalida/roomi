@@ -15,6 +15,7 @@ import {
   ConfirmSettlementButton,
   ReportErrorButton,
 } from "@/components/shopping-actions";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { cn } from "@/lib/utils";
 
 function formatPrice(n: number) {
@@ -339,6 +340,7 @@ export default async function ComprasPage({
 
       <div className="pb-24" />
       <ComprasFAB householdId={active.householdId} />
+      <RealtimeRefresh householdId={active.householdId} />
     </main>
   );
 }

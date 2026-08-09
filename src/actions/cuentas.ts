@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { requireUser, assertMemberOf } from "@/lib/session";
 import { roomSchema, billItemSchema } from "@/lib/validators";
 import { revalidatePath } from "next/cache";
-import { sendPushToUser } from "@/lib/push";
+import { sendPushToUser, sendPushToHousehold } from "@/lib/push";
 
 // ============ ROOMS ============
 
@@ -575,6 +575,13 @@ export async function deshacerPagoRoom(chargeId: string, householdId: string) {
   });
 
   revalidatePath("/cuentas");
+
+  sendPushToUser(charge.userId, {
+    title: "Pago de arriendo revertido ↩️",
+    body: `${user.name} deshizo la confirmación de tu pago`,
+    url: "/cuentas",
+  }).catch(() => {});
+
   return { success: true };
 }
 
@@ -711,6 +718,13 @@ export async function deshacerPagoBillItem(splitId: string, householdId: string)
   });
 
   revalidatePath("/cuentas");
+
+  sendPushToUser(split.userId, {
+    title: `Pago de ${split.billItem.label} revertido ↩️`,
+    body: `${user.name} deshizo la confirmación de tu pago`,
+    url: "/cuentas",
+  }).catch(() => {});
+
   return { success: true };
 }
 
@@ -786,6 +800,23 @@ export async function poblarRecurrentes(householdId: string) {
   }
 
   revalidatePath("/cuentas");
+
+  if (added > 0) {
+    const monthNames = [
+      "enero", "febrero", "marzo", "abril", "mayo", "junio",
+      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+    ];
+    sendPushToHousehold(
+      householdId,
+      {
+        title: "Gastos fijos cargados 📋",
+        body: `Se agregaron ${added} gasto${added === 1 ? "" : "s"} recurrente${added === 1 ? "" : "s"} a ${monthNames[month - 1]}`,
+        url: "/cuentas",
+      },
+      user.id,
+    ).catch(() => {});
+  }
+
   return { success: true, added };
 }
 

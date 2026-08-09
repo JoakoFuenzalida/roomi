@@ -16,6 +16,7 @@ import {
   togglePin,
   toggleReaction,
 } from "@/actions/notices";
+import { broadcastUpdate } from "./realtime-refresh";
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "👀", "🔥", "✅"];
 
@@ -93,7 +94,10 @@ export function NoticeCard({
               <button
                 disabled={pending}
                 onClick={() =>
-                  startTransition(() => togglePin(notice.id, householdId))
+                  startTransition(async () => {
+                    await togglePin(notice.id, householdId);
+                    broadcastUpdate(householdId);
+                  })
                 }
                 className={`p-1.5 rounded-full transition-colors ${
                   notice.pinned
@@ -107,7 +111,10 @@ export function NoticeCard({
             <button
               disabled={pending}
               onClick={() =>
-                startTransition(() => eliminarAviso(notice.id, householdId))
+                startTransition(async () => {
+                  await eliminarAviso(notice.id, householdId);
+                  broadcastUpdate(householdId);
+                })
               }
               className="p-1.5 rounded-full text-on-surface-variant hover:text-error hover:bg-error-container transition-colors"
             >
@@ -126,9 +133,10 @@ export function NoticeCard({
               key={emoji}
               disabled={pending}
               onClick={() =>
-                startTransition(() =>
-                  toggleReaction(notice.id, householdId, emoji),
-                )
+                startTransition(async () => {
+                  await toggleReaction(notice.id, householdId, emoji);
+                  broadcastUpdate(householdId);
+                })
               }
               className={`flex items-center gap-1 px-2 py-0.5 rounded-pill text-[13px] border transition-colors ${
                 isMine
@@ -148,9 +156,10 @@ export function NoticeCard({
             key={emoji}
             disabled={pending}
             onClick={() =>
-              startTransition(() =>
-                toggleReaction(notice.id, householdId, emoji),
-              )
+              startTransition(async () => {
+                await toggleReaction(notice.id, householdId, emoji);
+                broadcastUpdate(householdId);
+              })
             }
             className="px-1.5 py-0.5 rounded-pill text-[13px] border border-dashed border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors opacity-50 hover:opacity-100"
           >
@@ -172,8 +181,11 @@ export function NewNoticeSheet({
   const [state, formAction, isPending] = useActionState(action, null);
 
   useEffect(() => {
-    if (state && "success" in state) setOpen(false);
-  }, [state]);
+    if (state && "success" in state) {
+      broadcastUpdate(householdId);
+      setOpen(false);
+    }
+  }, [state, householdId]);
 
   return (
     <>

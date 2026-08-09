@@ -237,6 +237,7 @@ function EmptyHogar() {
 
 type PendingTask = {
   id: string;
+  householdId: string;
   title: string;
   points: number;
   nextDueDate: Date;
@@ -273,7 +274,7 @@ function TasksCard({ tasks }: { tasks: PendingTask[] }) {
                   {overdue && <span className="text-error font-bold">· Atrasada</span>}
                 </p>
               </div>
-              <CompleteTaskButton taskId={task.id} />
+              <CompleteTaskButton taskId={task.id} householdId={task.householdId} />
             </li>
           );
         })}

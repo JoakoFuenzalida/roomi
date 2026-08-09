@@ -13,6 +13,7 @@ import {
   MonthNavigator,
 } from "@/components/cuentas-actions";
 import { AddBillItemButton } from "@/components/cuentas-add-bill-button";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { cn } from "@/lib/utils";
 
 function formatPrice(n: number) {
@@ -244,6 +245,7 @@ export default async function CuentasPage({
       </section>
 
       <div className="pb-24" />
+      <RealtimeRefresh householdId={active.householdId} />
     </main>
   );
 }

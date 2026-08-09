@@ -30,14 +30,14 @@ export async function crearAviso(
     },
   });
 
-  revalidatePath("/muro");
+  revalidatePath("/hoy");
 
   sendPushToHousehold(
     householdId,
     {
       title: `${user.name} publicó un aviso 📌`,
       body: parse.data.content.slice(0, 100),
-      url: "/muro",
+      url: "/hoy",
     },
     user.id,
   ).catch(() => {});
@@ -64,7 +64,7 @@ export async function eliminarAviso(noticeId: string, householdId: string) {
   }
 
   await db.notice.delete({ where: { id: noticeId } });
-  revalidatePath("/muro");
+  revalidatePath("/hoy");
 }
 
 export async function togglePin(noticeId: string, householdId: string) {
@@ -87,7 +87,7 @@ export async function togglePin(noticeId: string, householdId: string) {
     data: { pinned: !notice.pinned },
   });
 
-  revalidatePath("/muro");
+  revalidatePath("/hoy");
 }
 
 export async function toggleReaction(
@@ -112,7 +112,7 @@ export async function toggleReaction(
     });
   }
 
-  revalidatePath("/muro");
+  revalidatePath("/hoy");
 }
 
 export async function getNotices(householdId: string) {

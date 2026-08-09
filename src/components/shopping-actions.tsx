@@ -3,6 +3,7 @@
 import { useActionState, useTransition, useState, useEffect } from "react";
 import { agregarItem, marcarComprado, eliminarItem } from "@/actions/shopping";
 import { marcarPagado, confirmarPago, reportarErrorPago } from "@/actions/settlement";
+import { broadcastUpdate } from "./realtime-refresh";
 import { Button } from "@/components/ui/button";
 import { AvatarInitials } from "@/components/avatar-initials";
 import {
@@ -52,8 +53,11 @@ export function AddItemSheet({
   const [selectedDaysOfMonth, setSelectedDaysOfMonth] = useState<number[]>([]);
 
   useEffect(() => {
-    if (state && "success" in state) onOpenChange(false);
-  }, [state, onOpenChange]);
+    if (state && "success" in state) {
+      broadcastUpdate(householdId);
+      onOpenChange(false);
+    }
+  }, [state, onOpenChange, householdId]);
 
   function handleOpenChange(o: boolean) {
     onOpenChange(o);
@@ -257,8 +261,11 @@ export function MarkBoughtSheet({
   const [excluded, setExcluded] = useState<string[]>([]);
 
   useEffect(() => {
-    if (state && "success" in state) onOpenChange(false);
-  }, [state, onOpenChange]);
+    if (state && "success" in state) {
+      broadcastUpdate(householdId);
+      onOpenChange(false);
+    }
+  }, [state, onOpenChange, householdId]);
 
   function handleOpenChange(o: boolean) {
     onOpenChange(o);
@@ -383,6 +390,7 @@ export function DeleteItemButton({
         if (confirm("¿Estás seguro que deseas eliminar esta compra?")) {
           startTransition(async () => {
             await eliminarItem(itemId, householdId);
+            broadcastUpdate(householdId);
           });
         }
       }}
@@ -415,8 +423,11 @@ export function MarkPaidSheet({
   const [method, setMethod] = useState<string | undefined>();
 
   useEffect(() => {
-    if (state && "success" in state) onOpenChange(false);
-  }, [state, onOpenChange]);
+    if (state && "success" in state) {
+      broadcastUpdate(householdId);
+      onOpenChange(false);
+    }
+  }, [state, onOpenChange, householdId]);
 
   function handleOpenChange(o: boolean) {
     onOpenChange(o);
@@ -541,6 +552,7 @@ export function ConfirmSettlementButton({
       onClick={() =>
         startTransition(async () => {
           await confirmarPago(settlementId, householdId);
+          broadcastUpdate(householdId);
         })
       }
       className={cn(
@@ -569,6 +581,7 @@ export function ReportErrorButton({
       onClick={() =>
         startTransition(async () => {
           await reportarErrorPago(settlementId, householdId);
+          broadcastUpdate(householdId);
         })
       }
       className={cn(

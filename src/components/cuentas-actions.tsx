@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/sheet";
 import { CurrencyInput } from "@/components/currency-input";
 import { cn } from "@/lib/utils";
+import { broadcastUpdate } from "./realtime-refresh";
 import {
   Plus,
   Trash2,
@@ -115,8 +116,11 @@ export function RoomSheet({
   );
 
   useEffect(() => {
-    if (state && "success" in state) onOpenChange(false);
-  }, [state, onOpenChange]);
+    if (state && "success" in state) {
+      broadcastUpdate(householdId);
+      onOpenChange(false);
+    }
+  }, [state, onOpenChange, householdId]);
 
   useEffect(() => {
     if (open && room?.membership?.id) {
@@ -259,7 +263,7 @@ export function RoomCard({
                 <button
                   onClick={() => {
                     if (confirm(`¿Estás seguro que deseas eliminar la pieza "${room.name}"?`)) {
-                      startDelete(async () => { await eliminarRoom(room.id, householdId); })
+                      startDelete(async () => { await eliminarRoom(room.id, householdId); broadcastUpdate(householdId); })
                     }
                   }}
                   disabled={deleting}
@@ -367,7 +371,7 @@ export function BillItemRow({
             <button
               onClick={() => {
                 if (confirm(`¿Estás seguro que deseas eliminar "${item.label}"?`)) {
-                  startDelete(async () => { await eliminarBillItem(item.id, householdId); })
+                  startDelete(async () => { await eliminarBillItem(item.id, householdId); broadcastUpdate(householdId); })
                 }
               }}
               disabled={deleting}
@@ -463,9 +467,10 @@ export function BillItemSheet({
 
   useEffect(() => {
     if (state && "success" in state) {
+      broadcastUpdate(householdId);
       onOpenChange(false);
     }
-  }, [state, onOpenChange]);
+  }, [state, onOpenChange, householdId]);
 
   function toggleExcluded(userId: string) {
     setExcludedIds((prev) =>
@@ -687,7 +692,7 @@ export function PopulateRecurringButton({
   return (
     <button
       onClick={() =>
-        startAction(async () => { await poblarRecurrentes(householdId); })
+        startAction(async () => { await poblarRecurrentes(householdId); broadcastUpdate(householdId); })
       }
       disabled={acting}
       className="h-10 px-4 rounded-pill border border-primary text-primary font-semibold text-[13px] flex items-center gap-2 hover:bg-primary-container/20 transition-colors disabled:opacity-50"
@@ -815,6 +820,7 @@ export function ChargeCard({
           await marcarPagadoBillItem(split.id, householdId);
         }
       }
+      broadcastUpdate(householdId);
     });
   };
 
@@ -863,6 +869,7 @@ export function ChargeCard({
               if (window.confirm("¿Seguro que deseas eliminar este cobro mensual completo? (Esta acción no se puede deshacer)")) {
                 startAction(async () => {
                   await eliminarCobroMensual(charge.id, householdId);
+                  broadcastUpdate(householdId);
                 });
               }
             }}
@@ -887,9 +894,9 @@ export function ChargeCard({
                 charge.roomAmount,
                 !!charge.roomPaidAt,
                 !!charge.roomConfirmedAt,
-                async () => await marcarPagadoRoom(charge.id, householdId),
-                async () => await confirmarPagoRoom(charge.id, householdId),
-                async () => await deshacerPagoRoom(charge.id, householdId)
+                async () => { await marcarPagadoRoom(charge.id, householdId); broadcastUpdate(householdId); },
+                async () => { await confirmarPagoRoom(charge.id, householdId); broadcastUpdate(householdId); },
+                async () => { await deshacerPagoRoom(charge.id, householdId); broadcastUpdate(householdId); }
               )}
             </div>
           )}
@@ -904,9 +911,9 @@ export function ChargeCard({
                 split.amount,
                 !!split.paidAt,
                 !!split.confirmedAt,
-                async () => await marcarPagadoBillItem(split.id, householdId),
-                async () => await confirmarPagoBillItem(split.id, householdId),
-                async () => await deshacerPagoBillItem(split.id, householdId)
+                async () => { await marcarPagadoBillItem(split.id, householdId); broadcastUpdate(householdId); },
+                async () => { await confirmarPagoBillItem(split.id, householdId); broadcastUpdate(householdId); },
+                async () => { await deshacerPagoBillItem(split.id, householdId); broadcastUpdate(householdId); }
               )}
             </div>
           ))}

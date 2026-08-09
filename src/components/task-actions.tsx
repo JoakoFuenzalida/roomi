@@ -7,6 +7,7 @@ import { AvatarInitials } from "./avatar-initials";
 import { TaskParticipantsOrder } from "./task-participants-order";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { broadcastUpdate } from "./realtime-refresh";
 import Image from "next/image";
 
 const FREQUENCIES = [
@@ -341,7 +342,7 @@ function MonthCalendarPicker({
   );
 }
 
-export function CompleteTaskButton({ taskId }: { taskId: string }) {
+export function CompleteTaskButton({ taskId, householdId }: { taskId: string; householdId: string }) {
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -350,6 +351,7 @@ export function CompleteTaskButton({ taskId }: { taskId: string }) {
       onClick={() => {
         startTransition(async () => {
           await completarTarea(taskId);
+          broadcastUpdate(householdId);
         });
       }}
       className="h-9 rounded-pill px-4 text-sm font-bold shadow-[0_3px_9px_rgba(255,107,107,0.35)]"
@@ -363,9 +365,11 @@ type SwapMember = { id: string; userName: string };
 
 export function SwapButton({
   taskId,
+  householdId,
   members,
 }: {
   taskId: string;
+  householdId: string;
   members: { id: string; userName: string; userImage?: string | null }[];
 }) {
   const [open, setOpen] = useState(false);
@@ -396,6 +400,7 @@ export function SwapButton({
               onClick={() => {
                 startTransition(async () => {
                   await swapTurno(taskId, m.id);
+                  broadcastUpdate(householdId);
                   setOpen(false);
                 });
               }}
@@ -432,6 +437,7 @@ export function DeleteTaskButton({
         if (confirm("¿Eliminar esta tarea?")) {
           startTransition(async () => {
             await deleteTask(taskId, householdId);
+            broadcastUpdate(householdId);
           });
         }
       }}

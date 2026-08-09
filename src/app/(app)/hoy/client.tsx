@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ChatClient } from "@/components/chat";
 import { AvatarInitials } from "@/components/avatar-initials";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import Image from "next/image";
 import { ResetRankingButton } from "@/components/reset-ranking-button";
 import { resetRoomiCoins } from "@/actions/household";
@@ -45,6 +46,7 @@ export function HoyTabs({
 
   return (
     <>
+      <RealtimeRefresh householdId={mainHouseholdId} />
       <div className="sticky top-[80px] z-20 flex bg-surface-container-high rounded-[14px] p-1 mb-6 shrink-0 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)]">
         <button
           onClick={() => setTab("muro")}

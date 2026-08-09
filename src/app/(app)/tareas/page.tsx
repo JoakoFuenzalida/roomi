@@ -7,6 +7,7 @@ import { RoomiHeader, RoomiSymbol } from "@/components/roomi-logo";
 import { AvatarInitials } from "@/components/avatar-initials";
 import { UserHeaderNav } from "@/components/user-header-nav";
 import { CompleteTaskButton, DeleteTaskButton, SwapButton } from "@/components/task-actions";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { cn } from "@/lib/utils";
 
 const FREQ_LABEL: Record<string, string> = {
@@ -178,6 +179,7 @@ export default async function TareasPage({
                   {task.nextAssigneeMembershipId === active.id && (
                     <SwapButton
                       taskId={task.id}
+                      householdId={task.householdId}
                       members={activeMembers
                         .filter((m) => m.id !== active.id)
                         .map((m) => ({ id: m.id, userName: m.user.name, userImage: m.user.image }))}
@@ -189,7 +191,7 @@ export default async function TareasPage({
                       householdId={task.householdId}
                     />
                   )}
-                  <CompleteTaskButton taskId={task.id} />
+                  <CompleteTaskButton taskId={task.id} householdId={task.householdId} />
                 </div>
               </div>
             </li>
@@ -197,6 +199,7 @@ export default async function TareasPage({
         </ul>
       )}
 
+      <RealtimeRefresh householdId={active.householdId} />
       <Link
         href={`/tareas/nueva?hogarId=${active.householdId}`}
         className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-5 z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-[0_8px_20px_rgba(255,107,107,0.45)] flex items-center justify-center active:scale-95 transition-transform"
