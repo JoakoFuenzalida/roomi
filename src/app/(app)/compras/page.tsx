@@ -117,7 +117,7 @@ export default async function ComprasPage({
 
   const myDebts = debts
     .filter((d) => d.fromUserId === user.id)
-    .map((d) => ({ toUserId: d.toUserId, amount: d.amount }));
+    .map((d) => ({ toUserId: d.toUserId, amount: d.amount, pendingAmount: d.pendingAmount }));
 
   return (
     <main className="max-w-md mx-auto w-full px-5 pb-6 flex flex-col flex-1">

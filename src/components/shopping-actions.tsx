@@ -408,7 +408,7 @@ export function DeleteItemButton({
 
 /* ────────────── Mark Paid Sheet ────────────── */
 
-type MyDebt = { toUserId: string; amount: number };
+type MyDebt = { toUserId: string; amount: number; pendingAmount: number; };
 
 export function MarkPaidSheet({
   householdId,
@@ -840,14 +840,20 @@ export function DebtPayButton({
   toUserId: string;
 }) {
   const [payOpen, setPayOpen] = useState(false);
+  const debt = myDebts.find((d) => d.toUserId === toUserId);
+  const isPending = debt ? debt.pendingAmount >= debt.amount : false;
 
   return (
     <>
       <button
         onClick={() => setPayOpen(true)}
-        className="px-3 py-1.5 rounded-pill bg-primary text-on-primary text-[12px] font-bold"
+        disabled={isPending}
+        className={cn(
+          "px-3 py-1.5 rounded-pill text-[12px] font-bold transition-colors disabled:opacity-70",
+          isPending ? "bg-warning-container text-on-warning-container" : "bg-primary text-on-primary"
+        )}
       >
-        Pagar
+        {isPending ? "Esperando conf." : "Pagar"}
       </button>
       <MarkPaidSheet
         householdId={householdId}

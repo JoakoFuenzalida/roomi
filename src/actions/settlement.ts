@@ -157,6 +157,7 @@ export type DebtSummary = {
   toUserName: string;
   toUserImage?: string | null;
   amount: number;
+  pendingAmount: number;
 };
 
 export async function getBalances(householdId: string): Promise<DebtSummary[]> {
@@ -190,12 +191,26 @@ export async function getBalances(householdId: string): Promise<DebtSummary[]> {
     },
   });
 
+  const unconfirmedSettlements = await db.settlement.findMany({
+    where: {
+      householdId,
+      confirmedAt: null,
+      OR: [
+        { fromUserId: { in: userIds } },
+        { toUserId: { in: userIds } },
+      ],
+    },
+  });
+
   // net[A][B] > 0 means A owes B that amount
   const net: Record<string, Record<string, number>> = {};
+  const pendingNet: Record<string, Record<string, number>> = {};
   for (const uid of userIds) {
     net[uid] = {};
+    pendingNet[uid] = {};
     for (const uid2 of userIds) {
       net[uid][uid2] = 0;
+      pendingNet[uid][uid2] = 0;
     }
   }
 
@@ -210,6 +225,11 @@ export async function getBalances(householdId: string): Promise<DebtSummary[]> {
   for (const s of confirmedSettlements) {
     if (!net[s.fromUserId] || !net[s.toUserId]) continue;
     net[s.fromUserId][s.toUserId] -= s.amount;
+  }
+
+  for (const s of unconfirmedSettlements) {
+    if (!pendingNet[s.fromUserId] || !pendingNet[s.toUserId]) continue;
+    pendingNet[s.fromUserId][s.toUserId] += s.amount;
   }
 
   // Collapse pairwise: if A owes B and B owes A, net it out
@@ -236,6 +256,7 @@ export async function getBalances(householdId: string): Promise<DebtSummary[]> {
           toUserName: userMap.get(b)?.name || "?",
           toUserImage: userMap.get(b)?.image,
           amount: netAmount,
+          pendingAmount: pendingNet[a][b] || 0,
         });
       } else if (netAmount < 0) {
         debts.push({
@@ -246,6 +267,7 @@ export async function getBalances(householdId: string): Promise<DebtSummary[]> {
           toUserName: userMap.get(a)?.name || "?",
           toUserImage: userMap.get(a)?.image,
           amount: -netAmount,
+          pendingAmount: pendingNet[b][a] || 0,
         });
       }
     }
