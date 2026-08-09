@@ -142,3 +142,31 @@ export async function removeMember(householdId: string, userIdToRemove: string) 
 
   revalidatePath("/hogar");
 }
+
+export async function resetRoomiCoins(householdId: string) {
+  const user = await requireUser();
+  await assertMemberOf(user.id, householdId);
+
+  const adminMembership = await db.membership.findFirst({
+    where: { householdId, userId: user.id, leftAt: null, role: "ADMIN" }
+  });
+  if (!adminMembership) {
+    throw new Error("No tienes permisos para reiniciar el ranking");
+  }
+
+  const tasks = await db.task.findMany({
+    where: { householdId },
+    select: { id: true }
+  });
+  const taskIds = tasks.map(t => t.id);
+
+  if (taskIds.length > 0) {
+    await db.taskExecution.updateMany({
+      where: { taskId: { in: taskIds } },
+      data: { pointsEarned: 0 },
+    });
+  }
+
+  revalidatePath("/hoy");
+  revalidatePath("/hogar");
+}

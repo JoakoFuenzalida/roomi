@@ -14,9 +14,10 @@ import {
 } from "@/components/household-forms";
 import { LeaveHouseholdButton } from "@/components/leave-household-button";
 import { RemoveMemberButton } from "@/components/remove-member-button";
-import { removeMember } from "@/actions/household";
+import { removeMember, resetRoomiCoins } from "@/actions/household";
 import { QRInviteButton } from "@/components/qr-invite";
 import { HouseholdCoverUpload } from "@/components/household-cover-upload";
+import { ResetRankingButton } from "@/components/reset-ranking-button";
 
 export default async function HogarPage() {
   const user = await requireUser();
@@ -261,8 +262,17 @@ function ActiveHouseholdCard({
         </ul>
       </div>
 
-        <div className="mt-5">
-          <LeaveHouseholdButton
+      <div className="mt-8 flex flex-col gap-3">
+        {role === "ADMIN" && (
+          <ResetRankingButton
+            onReset={async () => {
+              "use server";
+              await resetRoomiCoins(household.id);
+            }}
+          />
+        )}
+        
+        <LeaveHouseholdButton
             onLeave={async () => {
               "use server";
               await leaveHousehold(household.id);

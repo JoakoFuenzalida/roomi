@@ -14,6 +14,8 @@ import {
   confirmarPagoRoom,
   marcarPagadoBillItem,
   confirmarPagoBillItem,
+  deshacerPagoRoom,
+  deshacerPagoBillItem,
   poblarRecurrentes,
 } from "@/actions/cuentas";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,7 @@ import {
   Home,
   RefreshCw,
   ChevronDown,
+  RotateCcw,
 } from "lucide-react";
 
 type Member = {
@@ -744,30 +747,54 @@ export function ChargeCard({
     isConfirmed: boolean,
     onPay: () => Promise<any>,
     onConfirm: () => Promise<any>,
+    onUndo?: () => Promise<any>,
   ) => {
     if (isConfirmed) {
       return (
-        <span className="text-[12px] font-bold text-success flex items-center gap-1">
-          <Check size={14} /> Confirmado
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[12px] font-bold text-success flex items-center gap-1">
+            <Check size={14} /> Confirmado
+          </span>
+          {isAdmin && onUndo && (
+            <button
+              onClick={() => startAction(onUndo)}
+              disabled={acting}
+              className="p-1 rounded-full hover:bg-error-container text-on-surface-variant hover:text-error transition-colors disabled:opacity-50"
+              title="Deshacer pago"
+            >
+              <RotateCcw size={14} />
+            </button>
+          )}
+        </div>
       );
     }
     if (isPaid) {
-      if (isAdmin) {
-        return (
-          <button
-            onClick={() => startAction(onConfirm)}
-            disabled={acting}
-            className="h-7 px-3 rounded-pill bg-success-container text-on-success-container font-bold text-[11px] flex items-center gap-1 hover:bg-success hover:text-on-success transition-colors disabled:opacity-50"
-          >
-            Confirmar pago
-          </button>
-        );
-      }
       return (
-        <span className="text-[12px] font-bold text-warning flex items-center gap-1">
-          Pagado
-        </span>
+        <div className="flex items-center gap-2">
+          {isAdmin ? (
+            <button
+              onClick={() => startAction(onConfirm)}
+              disabled={acting}
+              className="h-7 px-3 rounded-pill bg-success-container text-on-success-container font-bold text-[11px] flex items-center gap-1 hover:bg-success hover:text-on-success transition-colors disabled:opacity-50"
+            >
+              Confirmar pago
+            </button>
+          ) : (
+            <span className="text-[12px] font-bold text-warning flex items-center gap-1">
+              Pagado
+            </span>
+          )}
+          {isAdmin && onUndo && (
+            <button
+              onClick={() => startAction(onUndo)}
+              disabled={acting}
+              className="p-1 rounded-full hover:bg-error-container text-on-surface-variant hover:text-error transition-colors disabled:opacity-50"
+              title="Deshacer pago"
+            >
+              <RotateCcw size={14} />
+            </button>
+          )}
+        </div>
       );
     }
     if (isCurrentUser) {
@@ -847,7 +874,8 @@ export function ChargeCard({
                 !!charge.roomPaidAt,
                 !!charge.roomConfirmedAt,
                 async () => await marcarPagadoRoom(charge.id, householdId),
-                async () => await confirmarPagoRoom(charge.id, householdId)
+                async () => await confirmarPagoRoom(charge.id, householdId),
+                async () => await deshacerPagoRoom(charge.id, householdId)
               )}
             </div>
           )}
@@ -863,7 +891,8 @@ export function ChargeCard({
                 !!split.paidAt,
                 !!split.confirmedAt,
                 async () => await marcarPagadoBillItem(split.id, householdId),
-                async () => await confirmarPagoBillItem(split.id, householdId)
+                async () => await confirmarPagoBillItem(split.id, householdId),
+                async () => await deshacerPagoBillItem(split.id, householdId)
               )}
             </div>
           ))}

@@ -140,59 +140,74 @@ async function recalcularCobros(billId: string, householdId: string) {
 
   if (!bill) return;
 
+  const members = await db.membership.findMany({
+    where: { householdId, leftAt: null },
+    select: { userId: true },
+  });
+
   const rooms = await db.room.findMany({
     where: { householdId, membershipId: { not: null } },
     include: { membership: { select: { userId: true } } },
   });
 
-  if (rooms.length === 0) return;
-
   const userRoomMap = new Map(
     rooms.map((r) => [r.membership!.userId, r.monthlyCost]),
   );
-  const allUserIds = rooms.map((r) => r.membership!.userId);
 
   const chargesByUser = new Map<
     string,
     { roomAmount: number; sharedAmount: number }
   >();
 
-  for (const uid of allUserIds) {
-    chargesByUser.set(uid, {
-      roomAmount: userRoomMap.get(uid) ?? 0,
+  // Initialize for all active members
+  for (const m of members) {
+    chargesByUser.set(m.userId, {
+      roomAmount: userRoomMap.get(m.userId) ?? 0,
       sharedAmount: 0,
     });
   }
 
+  // Also initialize for users that might have left but still have splits in this bill
   for (const item of bill.items) {
     for (const split of item.splits) {
-      if (chargesByUser.has(split.userId)) {
-        const current = chargesByUser.get(split.userId)!;
-        current.sharedAmount += split.amount;
+      if (!chargesByUser.has(split.userId)) {
+        chargesByUser.set(split.userId, {
+          roomAmount: userRoomMap.get(split.userId) ?? 0,
+          sharedAmount: 0,
+        });
       }
+      const current = chargesByUser.get(split.userId)!;
+      current.sharedAmount += split.amount;
     }
   }
 
   for (const [userId, amounts] of chargesByUser) {
     const totalAmount = amounts.roomAmount + amounts.sharedAmount;
 
-    await db.monthlyCharge.upsert({
-      where: {
-        monthlyBillId_userId: { monthlyBillId: billId, userId },
-      },
-      create: {
-        monthlyBillId: billId,
-        userId,
-        roomAmount: amounts.roomAmount,
-        sharedAmount: amounts.sharedAmount,
-        totalAmount,
-      },
-      update: {
-        roomAmount: amounts.roomAmount,
-        sharedAmount: amounts.sharedAmount,
-        totalAmount,
-      },
-    });
+    if (totalAmount === 0) {
+      // If total amount is 0, delete the charge if it exists
+      await db.monthlyCharge.deleteMany({
+        where: { monthlyBillId: billId, userId },
+      });
+    } else {
+      await db.monthlyCharge.upsert({
+        where: {
+          monthlyBillId_userId: { monthlyBillId: billId, userId },
+        },
+        create: {
+          monthlyBillId: billId,
+          userId,
+          roomAmount: amounts.roomAmount,
+          sharedAmount: amounts.sharedAmount,
+          totalAmount,
+        },
+        update: {
+          roomAmount: amounts.roomAmount,
+          sharedAmount: amounts.sharedAmount,
+          totalAmount,
+        },
+      });
+    }
   }
 }
 
@@ -537,6 +552,32 @@ export async function confirmarPagoRoom(chargeId: string, householdId: string) {
   return { success: true };
 }
 
+export async function deshacerPagoRoom(chargeId: string, householdId: string) {
+  const user = await requireUser();
+  const membership = await assertMemberOf(user.id, householdId);
+
+  if (membership.role !== "ADMIN") {
+    throw new Error("Solo el admin puede deshacer pagos");
+  }
+
+  const charge = await db.monthlyCharge.findUnique({
+    where: { id: chargeId },
+    include: { monthlyBill: { select: { householdId: true } } },
+  });
+
+  if (!charge || charge.monthlyBill.householdId !== householdId) {
+    throw new Error("Cargo no encontrado");
+  }
+
+  await db.monthlyCharge.update({
+    where: { id: chargeId },
+    data: { roomPaidAt: null, roomConfirmedAt: null, roomConfirmedById: null },
+  });
+
+  revalidatePath("/cuentas");
+  return { success: true };
+}
+
 export async function marcarPagadoBillItem(splitId: string, householdId: string) {
   const user = await requireUser();
   await assertMemberOf(user.id, householdId);
@@ -616,6 +657,34 @@ export async function confirmarPagoBillItem(splitId: string, householdId: string
     url: "/cuentas",
   }).catch(() => {});
 
+  return { success: true };
+}
+
+export async function deshacerPagoBillItem(splitId: string, householdId: string) {
+  const user = await requireUser();
+  const membership = await assertMemberOf(user.id, householdId);
+
+  if (membership.role !== "ADMIN") {
+    throw new Error("Solo el admin puede deshacer pagos");
+  }
+
+  const split = await db.billItemSplit.findUnique({
+    where: { id: splitId },
+    include: {
+      billItem: { include: { monthlyBill: { select: { householdId: true } } } },
+    },
+  });
+
+  if (!split || split.billItem.monthlyBill.householdId !== householdId) {
+    throw new Error("Cargo no encontrado");
+  }
+
+  await db.billItemSplit.update({
+    where: { id: splitId },
+    data: { paidAt: null, confirmedAt: null, confirmedById: null },
+  });
+
+  revalidatePath("/cuentas");
   return { success: true };
 }
 
