@@ -578,6 +578,32 @@ export async function deshacerPagoRoom(chargeId: string, householdId: string) {
   return { success: true };
 }
 
+export async function eliminarCobroMensual(chargeId: string, householdId: string) {
+  const user = await requireUser();
+  const membership = await assertMemberOf(user.id, householdId);
+
+  if (membership.role !== "ADMIN") {
+    throw new Error("Solo el admin puede eliminar cobros");
+  }
+
+  const charge = await db.monthlyCharge.findUnique({
+    where: { id: chargeId },
+    include: { monthlyBill: { select: { householdId: true } } },
+  });
+
+  if (!charge || charge.monthlyBill.householdId !== householdId) {
+    throw new Error("Cargo no encontrado");
+  }
+
+  await db.monthlyCharge.delete({
+    where: { id: chargeId },
+  });
+
+  revalidatePath("/cuentas");
+  revalidatePath("/hoy");
+  return { success: true };
+}
+
 export async function marcarPagadoBillItem(splitId: string, householdId: string) {
   const user = await requireUser();
   await assertMemberOf(user.id, householdId);

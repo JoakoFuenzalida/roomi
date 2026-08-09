@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { ChatClient } from "@/components/chat";
 import { AvatarInitials } from "@/components/avatar-initials";
 import Image from "next/image";
+import { ResetRankingButton } from "@/components/reset-ranking-button";
+import { resetRoomiCoins } from "@/actions/household";
 
 type RankingUser = {
   user: { id: string; name: string | null; image: string | null };
@@ -24,6 +26,7 @@ export function HoyTabs({
   chatMessages,
   rankingData,
   initialTab = "muro",
+  isAdmin,
   children,
 }: {
   mainHouseholdId: string;
@@ -31,6 +34,7 @@ export function HoyTabs({
   chatMessages: any[];
   rankingData: RankingUser[];
   initialTab?: "muro" | "chat" | "ranking";
+  isAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const [tab, setTab] = useState<"muro" | "chat" | "ranking">(initialTab);
@@ -141,6 +145,16 @@ export function HoyTabs({
           <div className="text-center text-sm text-on-surface-variant px-4 mt-6">
             <p>Se reinicia el 1 de cada mes. ¡El último paga las pizzas! 🍕</p>
           </div>
+
+          {isAdmin && (
+            <div className="mt-6 px-4 pb-6">
+              <ResetRankingButton 
+                onReset={async () => {
+                  await resetRoomiCoins(mainHouseholdId);
+                }} 
+              />
+            </div>
+          )}
         </div>
       )}
     </>

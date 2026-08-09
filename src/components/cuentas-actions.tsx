@@ -17,6 +17,7 @@ import {
   deshacerPagoRoom,
   deshacerPagoBillItem,
   poblarRecurrentes,
+  eliminarCobroMensual,
 } from "@/actions/cuentas";
 import { Button } from "@/components/ui/button";
 import { AvatarInitials } from "@/components/avatar-initials";
@@ -819,40 +820,60 @@ export function ChargeCard({
 
   return (
     <li className="rounded-[14px] bg-surface-container-lowest border border-outline-variant shadow-[0_2px_10px_rgba(15,23,42,0.05)] overflow-hidden transition-all duration-300">
-      <button 
-        className="w-full p-4 flex items-center gap-3 text-left hover:bg-surface-container-low transition-colors"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <AvatarInitials name={charge.user.name} imageUrl={charge.user.image} size={36} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-[14px] font-semibold truncate">
-              {charge.user.name.split(" ")[0]}
-            </p>
-            <span
-              className={cn(
-                "px-2 py-0.5 rounded-pill text-[10px] font-bold uppercase",
-                globalStatusClass,
-              )}
-            >
-              {globalStatusLabel}
+      <div className="w-full p-4 flex items-center gap-3 hover:bg-surface-container-low transition-colors">
+        <div 
+          className="flex-1 min-w-0 flex items-center gap-3 cursor-pointer text-left"
+          onClick={() => setExpanded(!expanded)}
+        >
+          <AvatarInitials name={charge.user.name} imageUrl={charge.user.image} size={36} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-[14px] font-semibold truncate">
+                {charge.user.name.split(" ")[0]}
+              </p>
+              <span
+                className={cn(
+                  "px-2 py-0.5 rounded-pill text-[10px] font-bold uppercase",
+                  globalStatusClass,
+                )}
+              >
+                {globalStatusLabel}
+              </span>
+            </div>
+            <div className="flex gap-3 mt-1 text-[12px] text-on-surface-variant">
+              <span>Pieza: {formatPrice(charge.roomAmount)}</span>
+              <span>Servicios: {formatPrice(charge.sharedAmount)}</span>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-[16px] font-bold shrink-0">
+              {formatPrice(charge.totalAmount)}
             </span>
-          </div>
-          <div className="flex gap-3 mt-1 text-[12px] text-on-surface-variant">
-            <span>Pieza: {formatPrice(charge.roomAmount)}</span>
-            <span>Servicios: {formatPrice(charge.sharedAmount)}</span>
+            <ChevronDown 
+              size={16} 
+              className={cn("text-on-surface-variant transition-transform duration-300", expanded ? "rotate-180" : "")} 
+            />
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-[16px] font-bold shrink-0">
-            {formatPrice(charge.totalAmount)}
-          </span>
-          <ChevronDown 
-            size={16} 
-            className={cn("text-on-surface-variant transition-transform duration-300", expanded ? "rotate-180" : "")} 
-          />
-        </div>
-      </button>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (window.confirm("¿Seguro que deseas eliminar este cobro mensual completo? (Esta acción no se puede deshacer)")) {
+                startAction(async () => {
+                  await eliminarCobroMensual(charge.id, householdId);
+                });
+              }
+            }}
+            disabled={acting}
+            className="p-2 text-error hover:bg-error/10 rounded-full transition-colors flex-shrink-0 disabled:opacity-50"
+            title="Eliminar cobro mensual"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+      </div>
 
       {expanded && (
         <div className="px-4 pb-4 border-t border-outline-variant/50 pt-3 space-y-3 bg-surface-container-low/30">

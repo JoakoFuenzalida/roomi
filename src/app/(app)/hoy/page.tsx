@@ -170,6 +170,7 @@ export default async function HoyPage({
           chatMessages={chatMessages}
           rankingData={ranking}
           initialTab={initialTab as any}
+          isAdmin={activeMemberships[0]?.role === "ADMIN"}
         >
           <div className="flex-1 overflow-y-auto pb-4">
             <div className="mb-6">
