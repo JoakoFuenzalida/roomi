@@ -853,7 +853,7 @@ export function DebtPayButton({
           isPending ? "bg-warning-container text-on-warning-container" : "bg-primary text-on-primary"
         )}
       >
-        {isPending ? "Esperando conf." : "Pagar"}
+        {isPending ? "Confirmación" : "Pagar"}
       </button>
       <MarkPaidSheet
         householdId={householdId}
