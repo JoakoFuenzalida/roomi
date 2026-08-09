@@ -50,6 +50,20 @@ export default async function HoyPage({
     take: 5,
   });
 
+  const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const completedTasks = await db.taskExecution.findMany({
+    where: {
+      task: { householdId: { in: householdIds } },
+      completedAt: { gte: last24h },
+    },
+    include: {
+      task: { select: { title: true, household: { select: { name: true } } } },
+      completedBy: { select: { name: true } },
+      assignedTo: { select: { name: true } },
+    },
+    orderBy: { completedAt: "desc" },
+  });
+
   // 2. Cuentas (Mensuales) por pagar por el usuario
   const pendingBillsRaw = await db.monthlyBill.findMany({
     where: {
@@ -187,6 +201,11 @@ export default async function HoyPage({
             <div className="space-y-4">
               {/* TAREAS */}
               <TasksCard tasks={pendingTasks} />
+              
+              {/* HISTORIAL TAREAS RECIENTES */}
+              {completedTasks.length > 0 && (
+                <TasksHistoryCard executions={completedTasks} />
+              )}
 
               {/* DEUDAS COMPRAS */}
               {myDebts.length > 0 && (
@@ -285,6 +304,58 @@ function TasksCard({ tasks }: { tasks: PendingTask[] }) {
     </section>
   );
 }
+
+type TaskExecutionProp = {
+  id: string;
+  completedAt: Date;
+  task: { title: string; household: { name: string } };
+  completedBy: { name: string };
+  assignedTo: { name: string } | null;
+  pointsEarned: number;
+};
+
+function TasksHistoryCard({ executions }: { executions: TaskExecutionProp[] }) {
+  return (
+    <section className="rounded-[14px] bg-surface-container-lowest border border-outline-variant p-4 shadow-[0_2px_10px_rgba(15,23,42,0.05)] opacity-80 hover:opacity-100 transition-opacity">
+      <header className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Sparkles size={18} className="text-primary" />
+          <h2 className="font-display font-semibold text-[16px]">Tareas hechas (24h)</h2>
+        </div>
+      </header>
+
+      <ul className="divide-y divide-outline-variant -mx-1">
+        {executions.map((exec) => {
+          const samePerson = !exec.assignedTo || exec.completedBy.name === exec.assignedTo.name;
+          
+          return (
+            <li key={exec.id} className="flex items-center gap-3 px-1 py-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-[15px] truncate line-through text-on-surface-variant">
+                  {exec.task.title}
+                </p>
+                <p className="text-xs text-on-surface-variant mt-0.5 leading-snug">
+                  {samePerson ? (
+                    <span>Turno: <span className="font-semibold">{exec.completedBy.name}</span></span>
+                  ) : (
+                    <span>
+                      Turno: <span className="font-semibold">{exec.assignedTo?.name}</span>, hecha por: <span className="font-semibold">{exec.completedBy.name}</span>
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-[11px] font-bold text-primary">+{exec.pointsEarned} RC</span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+
 
 type DebtProp = {
   fromUserId: string;

@@ -198,7 +198,20 @@ export async function marcarComprado(
     }
   });
 
+  const notice = await db.notice.create({
+    data: {
+      householdId,
+      authorId: user.id,
+      content: `🛒 ${user.name} compró "${item.title}" por $${amount.toLocaleString("es-CL")}`,
+    },
+    include: {
+      author: { select: { name: true, image: true } },
+      reactions: true,
+    },
+  });
+
   revalidatePath("/compras");
+  revalidatePath("/hoy");
 
   sendPushToHousehold(
     householdId,
@@ -210,7 +223,7 @@ export async function marcarComprado(
     user.id,
   ).catch(() => {});
 
-  return { success: true, ts: Date.now() };
+  return { success: true, ts: Date.now(), notice };
 }
 
 export async function eliminarItem(itemId: string, householdId: string) {

@@ -3,7 +3,7 @@
 import { useActionState, useTransition, useState, useEffect } from "react";
 import { agregarItem, marcarComprado, eliminarItem } from "@/actions/shopping";
 import { marcarPagado, confirmarPago, reportarErrorPago } from "@/actions/settlement";
-import { broadcastUpdate } from "./realtime-refresh";
+import { broadcastUpdate, broadcastNotice } from "./realtime-refresh";
 import { Button } from "@/components/ui/button";
 import { AvatarInitials } from "@/components/avatar-initials";
 import {
@@ -265,6 +265,9 @@ export function MarkBoughtSheet({
   useEffect(() => {
     if (state && "success" in state) {
       broadcastUpdate(householdId);
+      if ((state as any).notice) {
+        broadcastNotice(householdId, (state as any).notice);
+      }
       onOpenChange(false);
     }
   }, [state, onOpenChange, householdId]);
@@ -435,6 +438,9 @@ export function MarkPaidSheet({
   useEffect(() => {
     if (state && "success" in state) {
       broadcastUpdate(householdId);
+      if ((state as any).notice) {
+        broadcastNotice(householdId, (state as any).notice);
+      }
       onOpenChange(false);
     }
   }, [state, onOpenChange, householdId]);

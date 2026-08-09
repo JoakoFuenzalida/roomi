@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fredoka, DM_Sans } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AutoCapitalize } from "@/components/auto-capitalize";
 import "./globals.css";
 
 const themeScript = `try{var t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`;
@@ -53,6 +54,7 @@ export default function RootLayout({
           {children}
         </ThemeProvider>
         <ServiceWorkerRegister />
+        <AutoCapitalize />
       </body>
     </html>
   );

@@ -121,6 +121,7 @@ export async function completarTarea(taskId: string) {
       householdId: true,
       cycleNumber: true,
       nextAssigneeMembershipId: true,
+      nextAssignee: { select: { userId: true } },
       points: true,
       frequency: true,
       nextDueDate: true,
@@ -144,6 +145,7 @@ export async function completarTarea(taskId: string) {
         taskId,
         cycleNumber: task.cycleNumber,
         completedById: user.id,
+        assignedToUserId: task.nextAssignee?.userId,
         wasAssigned: task.nextAssigneeMembershipId === membership.id,
         pointsEarned: task.nextAssigneeMembershipId === membership.id ? task.points : Math.ceil(task.points * 1.5),
       },
@@ -227,11 +229,24 @@ export async function completarTarea(taskId: string) {
   revalidatePath("/hoy");
   revalidatePath("/tareas");
 
+  let notice = null;
   const taskData = await db.task.findUnique({
     where: { id: taskId },
-    select: { title: true, householdId: true },
+    select: { title: true, householdId: true, points: true },
   });
   if (taskData) {
+    notice = await db.notice.create({
+      data: {
+        householdId: taskData.householdId,
+        authorId: user.id,
+        content: `✨ ${user.name} completó la tarea "${taskData.title}" y ganó ${taskData.points} puntos.`,
+      },
+      include: {
+        author: { select: { name: true, image: true } },
+        reactions: true,
+      },
+    });
+
     sendPushToHousehold(
       taskData.householdId,
       {
@@ -242,6 +257,8 @@ export async function completarTarea(taskId: string) {
       user.id,
     ).catch(() => {});
   }
+
+  return { success: true, notice };
 }
 
 export async function swapTurno(taskId: string, toMembershipId: string) {

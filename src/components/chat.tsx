@@ -72,7 +72,7 @@ export function ChatClient({
 
     channel
       .on("broadcast", { event: "new_message" }, ({ payload }) => {
-        if (payload.message.authorId !== currentUserId) {
+        if (payload.message.authorId !== currentUserId || payload.isSystem) {
           setMessages((prev) => [...prev, payload.message]);
         }
       })

@@ -8,7 +8,7 @@ import { AvatarInitials } from "./avatar-initials";
 import { TaskParticipantsOrder } from "./task-participants-order";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { broadcastUpdate } from "./realtime-refresh";
+import { broadcastUpdate, broadcastNotice } from "./realtime-refresh";
 import Image from "next/image";
 
 const FREQUENCIES = [
@@ -361,8 +361,11 @@ export function CompleteTaskButton({ taskId, householdId }: { taskId: string; ho
       disabled={isPending}
       onClick={() => {
         startTransition(async () => {
-          await completarTarea(taskId);
+          const res = await completarTarea(taskId);
           broadcastUpdate(householdId);
+          if (res?.notice) {
+            broadcastNotice(householdId, res.notice);
+          }
         });
       }}
       className="h-9 rounded-pill px-4 text-sm font-bold shadow-[0_3px_9px_rgba(255,107,107,0.35)]"

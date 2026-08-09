@@ -17,24 +17,25 @@ model User {
   image          String?
   createdAt      DateTime @default(now())
 
-  memberships     Membership[]
-  taskExecutions  TaskExecution[]
-  pushSubs        PushSubscription[]
-  itemsCreated    ShoppingItem[]   @relation("itemCreator")
-  itemsChecked    ShoppingItem[]   @relation("itemChecker")
-  paidExpenses    Expense[]        @relation("payer")
-  expenseSplits   ExpenseSplit[]
-  settlementsSent Settlement[]     @relation("settleFrom")
-  settlementsRcvd Settlement[]     @relation("settleTo")
-  settlementsMade Settlement[]     @relation("settleRecorder")
-  billsCreated    MonthlyBill[]    @relation("billCreator")
-  monthlyCharges  MonthlyCharge[]  @relation("chargeOwner")
-  chargesConfirmed MonthlyCharge[] @relation("chargeConfirmer")
-  billSplitsConfirmed BillItemSplit[] @relation("billSplitConfirmer")
-  noticesAuthored Notice[]         @relation("noticeAuthor")
-  reactions       Reaction[]
-  billItemSplits  BillItemSplit[]
-  passwordResets  PasswordReset[]
+  memberships         Membership[]
+  taskExecutions      TaskExecution[]    @relation("CompletedBy")
+  tasksAssigned       TaskExecution[]    @relation("AssignedTo")
+  pushSubs            PushSubscription[]
+  itemsCreated        ShoppingItem[]     @relation("itemCreator")
+  itemsChecked        ShoppingItem[]     @relation("itemChecker")
+  paidExpenses        Expense[]          @relation("payer")
+  expenseSplits       ExpenseSplit[]
+  settlementsSent     Settlement[]       @relation("settleFrom")
+  settlementsRcvd     Settlement[]       @relation("settleTo")
+  settlementsMade     Settlement[]       @relation("settleRecorder")
+  billsCreated        MonthlyBill[]      @relation("billCreator")
+  monthlyCharges      MonthlyCharge[]    @relation("chargeOwner")
+  chargesConfirmed    MonthlyCharge[]    @relation("chargeConfirmer")
+  billSplitsConfirmed BillItemSplit[]    @relation("billSplitConfirmer")
+  noticesAuthored     Notice[]           @relation("noticeAuthor")
+  reactions           Reaction[]
+  billItemSplits      BillItemSplit[]
+  passwordResets      PasswordReset[]
 }
 
 model Household {
@@ -70,12 +71,12 @@ model Membership {
   joinedAt        DateTime      @default(now())
   leftAt          DateTime?
 
-  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  household        Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  assignedTasks    Task[]         @relation("nextAssignee")
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household          Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  assignedTasks      Task[]            @relation("nextAssignee")
   taskParticipations TaskParticipant[]
-  nextShoppingFor  ShoppingItem[] @relation("nextBuyer")
-  room             Room?
+  nextShoppingFor    ShoppingItem[]    @relation("nextBuyer")
+  room               Room?
 
   @@unique([userId, householdId])
   @@index([householdId, leftAt, rotationOrder])
@@ -107,8 +108,8 @@ model Task {
   nextDueDate              DateTime
   cycleNumber              Int      @default(0)
 
-  household    Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  nextAssignee Membership?     @relation("nextAssignee", fields: [nextAssigneeMembershipId], references: [id])
+  household    Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  nextAssignee Membership?       @relation("nextAssignee", fields: [nextAssigneeMembershipId], references: [id])
   executions   TaskExecution[]
   participants TaskParticipant[]
 
@@ -129,17 +130,19 @@ model TaskParticipant {
 }
 
 model TaskExecution {
-  id            String   @id @default(cuid())
-  taskId        String
-  completedById String
-  cycleNumber   Int
-  wasAssigned   Boolean
-  photoUrl      String?
-  pointsEarned  Int
-  completedAt   DateTime @default(now())
+  id               String   @id @default(cuid())
+  taskId           String
+  completedById    String
+  assignedToUserId String?
+  cycleNumber      Int
+  wasAssigned      Boolean
+  photoUrl         String?
+  pointsEarned     Int
+  completedAt      DateTime @default(now())
 
-  task        Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  completedBy User @relation(fields: [completedById], references: [id])
+  task        Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  completedBy User  @relation("CompletedBy", fields: [completedById], references: [id])
+  assignedTo  User? @relation("AssignedTo", fields: [assignedToUserId], references: [id])
 
   @@unique([taskId, cycleNumber])
   @@index([completedById, completedAt])
@@ -159,10 +162,10 @@ model ShoppingItem {
   // Recurrencia opcional — mismo motor que Task (computeInitialDueDate / computeNextDueDate).
   // frequency null = item de una sola vez.
   frequency   TaskFrequency?
-  daysOfWeek  Int[]     @default([])
-  daysOfMonth Int[]     @default([])
+  daysOfWeek  Int[]          @default([])
+  daysOfMonth Int[]          @default([])
   nextDueDate DateTime?
-  cycleNumber Int       @default(0)
+  cycleNumber Int            @default(0)
 
   nextBuyerMembershipId String?
 
@@ -189,9 +192,9 @@ model Expense {
   shoppingItemId String?
   paidAt         DateTime @default(now())
 
-  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  payer        User          @relation("payer", fields: [payerId], references: [id])
-  shoppingItem ShoppingItem? @relation(fields: [shoppingItemId], references: [id])
+  household    Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  payer        User           @relation("payer", fields: [payerId], references: [id])
+  shoppingItem ShoppingItem?  @relation(fields: [shoppingItemId], references: [id])
   splits       ExpenseSplit[]
 
   @@index([householdId, paidAt])
@@ -266,17 +269,17 @@ model MonthlyBill {
 }
 
 model BillItem {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   monthlyBillId   String
   label           String
   amount          Int
   splitMode       SplitMode @default(EQUAL)
   excludedUserIds String[]
-  isRecurring     Boolean  @default(false)
+  isRecurring     Boolean   @default(false)
   dayOfMonth      Int?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
 
-  monthlyBill MonthlyBill @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
+  monthlyBill MonthlyBill     @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
   splits      BillItemSplit[]
 }
 
@@ -289,9 +292,9 @@ model BillItemSplit {
   confirmedAt   DateTime?
   confirmedById String?
 
-  billItem      BillItem @relation(fields: [billItemId], references: [id], onDelete: Cascade)
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  confirmedBy   User?    @relation("billSplitConfirmer", fields: [confirmedById], references: [id])
+  billItem    BillItem @relation(fields: [billItemId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  confirmedBy User?    @relation("billSplitConfirmer", fields: [confirmedById], references: [id])
 
   @@unique([billItemId, userId])
 }
@@ -307,9 +310,9 @@ model MonthlyCharge {
   roomConfirmedAt   DateTime?
   roomConfirmedById String?
 
-  monthlyBill       MonthlyBill @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
-  user              User        @relation("chargeOwner", fields: [userId], references: [id])
-  roomConfirmedBy   User?       @relation("chargeConfirmer", fields: [roomConfirmedById], references: [id])
+  monthlyBill     MonthlyBill @relation(fields: [monthlyBillId], references: [id], onDelete: Cascade)
+  user            User        @relation("chargeOwner", fields: [userId], references: [id])
+  roomConfirmedBy User?       @relation("chargeConfirmer", fields: [roomConfirmedById], references: [id])
 
   @@unique([monthlyBillId, userId])
 }

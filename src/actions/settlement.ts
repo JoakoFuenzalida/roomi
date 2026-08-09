@@ -45,7 +45,20 @@ export async function marcarPagado(
     },
   });
 
+  const notice = await db.notice.create({
+    data: {
+      householdId,
+      authorId: user.id,
+      content: `💸 ${user.name} registró un pago de $${amount.toLocaleString("es-CL")} a otro miembro.`,
+    },
+    include: {
+      author: { select: { name: true, image: true } },
+      reactions: true,
+    },
+  });
+
   revalidatePath("/compras");
+  revalidatePath("/hoy");
 
   sendPushToUser(toUserId, {
     title: "Pago registrado 💸",
@@ -53,7 +66,7 @@ export async function marcarPagado(
     url: "/compras",
   }).catch(() => {});
 
-  return { success: true, ts: Date.now() };
+  return { success: true, ts: Date.now(), notice };
 }
 
 export async function confirmarPago(settlementId: string, householdId: string) {
@@ -81,7 +94,20 @@ export async function confirmarPago(settlementId: string, householdId: string) {
     data: { confirmedAt: new Date() },
   });
 
+  const notice = await db.notice.create({
+    data: {
+      householdId,
+      authorId: user.id,
+      content: `✅ ${user.name} confirmó el pago de $${settlement.amount.toLocaleString("es-CL")}.`,
+    },
+    include: {
+      author: { select: { name: true, image: true } },
+      reactions: true,
+    },
+  });
+
   revalidatePath("/compras");
+  revalidatePath("/hoy");
 
   sendPushToUser(settlement.fromUserId, {
     title: "Pago confirmado ✅",
@@ -89,7 +115,7 @@ export async function confirmarPago(settlementId: string, householdId: string) {
     url: "/compras",
   }).catch(() => {});
 
-  return { success: true };
+  return { success: true, notice };
 }
 
 export async function reportarErrorPago(

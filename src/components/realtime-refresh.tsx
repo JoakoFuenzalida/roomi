@@ -20,12 +20,34 @@ function getChannel(householdId: string) {
   return channel;
 }
 
+function getChatChannel(householdId: string) {
+  const key = `room_${householdId}`;
+  let channel = activeChannels.get(key);
+  if (!channel) {
+    channel = supabase.channel(key, {
+      config: { broadcast: { self: true } },
+    });
+    channel.subscribe();
+    activeChannels.set(key, channel);
+  }
+  return channel;
+}
+
 export function broadcastUpdate(householdId: string) {
   const channel = getChannel(householdId);
   channel.send({
     type: "broadcast",
     event: "data_changed",
     payload: { ts: Date.now() },
+  });
+}
+
+export function broadcastNotice(householdId: string, notice: any) {
+  const channel = getChatChannel(householdId);
+  channel.send({
+    type: "broadcast",
+    event: "new_message",
+    payload: { message: notice, isSystem: true },
   });
 }
 
