@@ -23,7 +23,6 @@ export const metadata: Metadata = {
   title: "Roomi",
   description: "Convivencia que se organiza sola.",
   manifest: "/manifest.json",
-  themeColor: "#FF6B6B",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -33,6 +32,14 @@ export const metadata: Metadata = {
     icon: "/icon.svg",
     apple: "/icon-192.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#FF6B6B",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

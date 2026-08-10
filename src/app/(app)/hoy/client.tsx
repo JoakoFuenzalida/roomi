@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ChatClient } from "@/components/chat";
 import { AvatarInitials } from "@/components/avatar-initials";
-import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RealtimeRefresh, broadcastUpdate } from "@/components/realtime-refresh";
 import Image from "next/image";
 import { ResetRankingButton } from "@/components/reset-ranking-button";
 import { resetRoomiCoins } from "@/actions/household";
@@ -153,6 +153,7 @@ export function HoyTabs({
               <ResetRankingButton 
                 onReset={async () => {
                   await resetRoomiCoins(mainHouseholdId);
+                  broadcastUpdate(mainHouseholdId);
                 }} 
               />
             </div>
