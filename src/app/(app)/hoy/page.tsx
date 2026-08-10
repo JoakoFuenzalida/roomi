@@ -143,7 +143,8 @@ export default async function HoyPage({
       by: ['completedById'],
       where: {
         completedById: { in: memberIds },
-        completedAt: { gte: startOfMonth }
+        completedAt: { gte: startOfMonth },
+        task: { householdId: mainHouseholdId }
       },
       _sum: { pointsEarned: true }
     });
@@ -158,7 +159,7 @@ export default async function HoyPage({
     <main className="max-w-md mx-auto w-full px-5 pb-6 flex flex-col flex-1 min-h-0">
       <header className="sticky top-0 z-30 bg-background pt-6 pb-4 -mx-5 px-5 flex items-center justify-between shrink-0">
         <RoomiHeader />
-        <UserHeaderNav />
+        <UserHeaderNav householdId={mainHouseholdId} />
       </header>
 
       {activeMemberships.length === 0 ? (

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 
-export async function UserHeaderNav() {
+export async function UserHeaderNav({ householdId }: { householdId?: string }) {
   const user = await requireUser();
   
   // Calculate points for this month
@@ -15,7 +15,8 @@ export async function UserHeaderNav() {
   const executions = await db.taskExecution.findMany({
     where: { 
       completedById: user.id,
-      completedAt: { gte: startOfMonth }
+      completedAt: { gte: startOfMonth },
+      ...(householdId ? { task: { householdId } } : {})
     },
     select: { pointsEarned: true }
   });
