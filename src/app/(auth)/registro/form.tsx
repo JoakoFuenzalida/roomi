@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { register, googleSignIn } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/password-input";
 import { cn } from "@/lib/utils";
 
 function GoogleIcon() {
@@ -83,14 +84,12 @@ export function RegistroForm({ callbackUrl }: { callbackUrl?: string }) {
           </Field>
 
           <Field label="Contraseña" htmlFor="password">
-            <input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors text-[16px]"
             />
             <p className="text-[11px] text-on-surface-variant mt-1">
               Mínimo 8 caracteres.

@@ -154,15 +154,15 @@ export async function resetRoomiCoins(householdId: string) {
     throw new Error("No tienes permisos para reiniciar el ranking");
   }
 
-  const tasks = await db.task.findMany({
-    where: { householdId },
+  const executions = await db.taskExecution.findMany({
+    where: { task: { householdId } },
     select: { id: true }
   });
-  const taskIds = tasks.map(t => t.id);
+  const executionIds = executions.map(e => e.id);
 
-  if (taskIds.length > 0) {
+  if (executionIds.length > 0) {
     await db.taskExecution.updateMany({
-      where: { taskId: { in: taskIds } },
+      where: { id: { in: executionIds } },
       data: { pointsEarned: 0 },
     });
   }

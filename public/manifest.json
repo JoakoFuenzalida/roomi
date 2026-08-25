@@ -3,6 +3,7 @@
   "short_name": "Roomi",
   "description": "Convivencia que se organiza sola.",
   "start_url": "/hoy",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#FFF7F5",
   "theme_color": "#FF6B6B",
