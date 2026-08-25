@@ -27,8 +27,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const parsed = credentialsSchema.safeParse(raw);
         if (!parsed.success) return null;
 
+        const email = parsed.data.email.toLowerCase();
         const user = await db.user.findUnique({
-          where: { email: parsed.data.email },
+          where: { email },
         });
         if (!user?.hashedPassword) return null;
 
@@ -50,10 +51,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        const email = user.email;
+        const email = user.email?.toLowerCase();
         if (!email) return false;
 
-        let dbUser = await db.user.findUnique({ where: { email } });
+        let dbUser = await db.user.findFirst({ where: { email } });
 
         if (!dbUser) {
           dbUser = await db.user.create({

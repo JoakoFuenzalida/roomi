@@ -62,8 +62,7 @@ export function RegistroForm({ callbackUrl }: { callbackUrl?: string }) {
               name="name"
               required
               autoComplete="name"
-              autoCapitalize="words"
-              className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
+              className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors text-[16px]"
             />
           </Field>
 
@@ -75,7 +74,7 @@ export function RegistroForm({ callbackUrl }: { callbackUrl?: string }) {
               required
               autoComplete="email"
               className={cn(
-                "w-full rounded-[12px] border-[1.5px] px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors",
+                "w-full rounded-[12px] border-[1.5px] px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors text-[16px]",
                 hasError
                   ? "border-error bg-error-container/50"
                   : "border-outline",
@@ -91,7 +90,7 @@ export function RegistroForm({ callbackUrl }: { callbackUrl?: string }) {
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors"
+              className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors text-[16px]"
             />
             <p className="text-[11px] text-on-surface-variant mt-1">
               Mínimo 8 caracteres.

@@ -48,8 +48,10 @@ export async function register(
   }
   const callbackUrl = safeCallback(formData.get("callbackUrl"));
 
-  const existing = await db.user.findUnique({
-    where: { email: parsed.data.email },
+  const email = parsed.data.email.toLowerCase();
+  
+  const existing = await db.user.findFirst({
+    where: { email },
     select: { id: true },
   });
   if (existing) return { error: "Ese email ya está registrado" };
@@ -58,7 +60,7 @@ export async function register(
   await db.user.create({
     data: {
       name: parsed.data.name,
-      email: parsed.data.email,
+      email,
       hashedPassword,
     },
   });
