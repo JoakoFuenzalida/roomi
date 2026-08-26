@@ -37,7 +37,7 @@ export const taskSchema = z
       .default(1),
     daysOfWeek: z.array(z.coerce.number().int().min(0).max(6)).default([]),
     daysOfMonth: z.array(z.coerce.number().int().min(1).max(31)).default([]),
-    onceDate: z.string().optional(),
+    onceDate: z.string().nullable().optional(),
   })
   .refine(
     (v) =>

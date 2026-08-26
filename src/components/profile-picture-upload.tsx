@@ -22,8 +22,8 @@ export function ProfilePictureUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("La imagen no debe pesar más de 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      setError("La imagen no debe pesar más de 10MB");
       return;
     }
 
@@ -74,14 +74,14 @@ export function ProfilePictureUpload({
       <input
         type="file"
         ref={galleryInputRef}
-        accept="image/*"
+        accept="image/jpeg, image/png, image/webp, image/gif"
         className="hidden"
         onChange={handleFileChange}
       />
       <input
         type="file"
         ref={cameraInputRef}
-        accept="image/*"
+        accept="image/jpeg, image/png, image/webp, image/gif"
         capture="user"
         className="hidden"
         onChange={handleFileChange}

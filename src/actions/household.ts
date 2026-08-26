@@ -88,7 +88,12 @@ export async function joinHousehold(
     return { error: parsed.error.issues[0]?.message ?? "Código inválido" };
   }
 
-  const result = await joinCore(user.id, parsed.data.code);
+  let codeToUse = parsed.data.code;
+  if (codeToUse.includes("/unirse/")) {
+    codeToUse = codeToUse.split("/unirse/")[1].split("?")[0].split("#")[0];
+  }
+
+  const result = await joinCore(user.id, codeToUse);
   if (!result.ok) return { error: result.error };
 
   revalidatePath("/hogar");

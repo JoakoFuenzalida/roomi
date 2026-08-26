@@ -61,11 +61,16 @@ export function RoomiWordmark({
   );
 }
 
+import { HeaderRefreshButton } from "./header-refresh-button";
+
 export function RoomiHeader({ className }: { className?: string }) {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      <RoomiSymbol size={30} />
-      <RoomiWordmark size={20} />
+    <div className={cn("flex items-center gap-1", className)}>
+      <div className="flex items-center gap-2">
+        <RoomiSymbol size={30} />
+        <RoomiWordmark size={20} />
+      </div>
+      <HeaderRefreshButton />
     </div>
   );
 }
