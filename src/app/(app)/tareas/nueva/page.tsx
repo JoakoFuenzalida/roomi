@@ -15,8 +15,7 @@ export default async function NuevaTareaPage({
 
   if (!hogarId) redirect("/tareas");
 
-  // Cualquier miembro del hogar puede crear tareas
-  await assertMemberOf(user.id, hogarId);
+  const membership = await assertMemberOf(user.id, hogarId);
 
   const members = await db.membership.findMany({
     where: {
@@ -44,9 +43,10 @@ export default async function NuevaTareaPage({
         <div className="w-[38px]" />
       </header>
 
-      <CreateTaskForm 
-        householdId={hogarId} 
-        members={members.map(m => ({ id: m.id, name: m.user.name, image: m.user.image }))} 
+      <CreateTaskForm
+        householdId={hogarId}
+        members={members.map(m => ({ id: m.id, name: m.user.name, image: m.user.image }))}
+        isAdmin={membership.role === "ADMIN"}
       />
     </main>
   );

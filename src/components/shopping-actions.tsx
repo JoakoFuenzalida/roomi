@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useTransition, useState, useEffect } from "react";
-import { agregarItem, marcarComprado, eliminarItem } from "@/actions/shopping";
+import { agregarItem, marcarComprado, eliminarItem, eliminarGasto } from "@/actions/shopping";
 import { marcarPagado, confirmarPago, reportarErrorPago } from "@/actions/settlement";
 import { broadcastUpdate, broadcastNotice } from "./realtime-refresh";
 import { Button } from "@/components/ui/button";
@@ -400,6 +400,40 @@ export function DeleteItemButton({
         }
       }}
       className="p-2 rounded-[10px] text-on-surface-variant hover:text-error hover:bg-error-container transition-colors"
+    >
+      <Trash2 size={16} />
+    </button>
+  );
+}
+
+export function DeleteExpenseButton({
+  expenseId,
+  householdId,
+  title,
+}: {
+  expenseId: string;
+  householdId: string;
+  title: string;
+}) {
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <button
+      disabled={pending}
+      aria-label="Borrar gasto"
+      onClick={() => {
+        if (!confirm(`¿Borrar el gasto "${title}"? Se recalculan las deudas de todos.`)) return;
+        startTransition(async () => {
+          const res = await eliminarGasto(expenseId, householdId);
+          if ("error" in res) {
+            alert(res.error);
+            return;
+          }
+          broadcastUpdate(householdId);
+          broadcastNotice(householdId, res.notice);
+        });
+      }}
+      className="p-2 -mr-2 rounded-[10px] text-on-surface-variant hover:text-error hover:bg-error-container transition-colors disabled:opacity-50"
     >
       <Trash2 size={16} />
     </button>

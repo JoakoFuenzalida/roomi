@@ -1,6 +1,7 @@
 {
+  "regions": ["gru1"],
   "crons": [
-    { "path": "/api/cron/advance-overdue", "schedule": "5 3 * * *" },
+    { "path": "/api/cron/advance-overdue", "schedule": "5 4 * * *" },
     { "path": "/api/cron/daily-reminder", "schedule": "0 14 * * *" }
   ]
 }

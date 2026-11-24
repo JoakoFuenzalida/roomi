@@ -6,28 +6,20 @@ import { Button } from "@/components/ui/button";
 import { RoomiHeader, RoomiSymbol } from "@/components/roomi-logo";
 import { AvatarInitials } from "@/components/avatar-initials";
 import { UserHeaderNav } from "@/components/user-header-nav";
-import { CompleteTaskButton, DeleteTaskButton, SwapButton } from "@/components/task-actions";
+import { CompleteTaskButton, DeleteTaskButton, EffortBadge, SwapButton } from "@/components/task-actions";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { DueChip } from "@/components/due-chip";
+import { chileToday } from "@/lib/dates";
+import { isPersonal } from "@/lib/effort";
 import { cn } from "@/lib/utils";
 
 const FREQ_LABEL: Record<string, string> = {
+  ONCE: "Una vez",
   DAILY: "Diaria",
   WEEKLY: "Semanal",
   BIWEEKLY: "Quincenal",
   MONTHLY: "Mensual",
 };
-
-function formatDue(d: Date) {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const due = new Date(d);
-  due.setHours(0, 0, 0, 0);
-  const diff = Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff < 0) return `Venció hace ${Math.abs(diff)} día${Math.abs(diff) === 1 ? "" : "s"}`;
-  if (diff === 0) return "Vence hoy";
-  if (diff === 1) return "Vence mañana";
-  return `Vence en ${diff} días`;
-}
 
 export default async function TareasPage({
   searchParams,
@@ -74,9 +66,13 @@ export default async function TareasPage({
 
   const tasks = await db.task.findMany({
     where: { householdId: active.householdId, active: true },
-    include: { nextAssignee: { include: { user: true } } },
+    include: {
+      nextAssignee: { include: { user: true } },
+      _count: { select: { participants: true } },
+    },
     orderBy: { nextDueDate: "asc" },
   });
+  const today = chileToday();
 
   const isAdmin = active.role === "ADMIN";
 
@@ -93,7 +89,13 @@ export default async function TareasPage({
       completedAt: { gte: last24h },
     },
     include: {
-      task: { select: { title: true, household: { select: { name: true } } } },
+      task: {
+        select: {
+          title: true,
+          household: { select: { name: true } },
+          _count: { select: { participants: true } },
+        },
+      },
       completedBy: { select: { name: true } },
       assignedTo: { select: { name: true } },
     },
@@ -159,9 +161,13 @@ export default async function TareasPage({
                     {task.title}
                   </h3>
                 </div>
-                <span className="bg-primary-container text-on-primary-container text-[11px] font-bold px-2.5 py-1 rounded-pill">
-                  {task.points} RC
-                </span>
+                <EffortBadge
+                  taskId={task.id}
+                  householdId={task.householdId}
+                  points={task.points}
+                  personal={isPersonal(task._count.participants)}
+                  isAdmin={isAdmin}
+                />
               </div>
 
               {task.nextAssignee && (
@@ -185,9 +191,7 @@ export default async function TareasPage({
                   <span className="bg-secondary-container text-on-secondary-container text-[11px] font-semibold px-2.5 py-1 rounded-pill">
                     {FREQ_LABEL[task.frequency]}
                   </span>
-                  <span className="text-xs text-on-surface-variant">
-                    {formatDue(task.nextDueDate)}
-                  </span>
+                  <DueChip due={task.nextDueDate} today={today} />
                 </div>
                 <div className="flex items-center gap-1">
                   {task.nextAssigneeMembershipId === active.id && (
@@ -205,7 +209,7 @@ export default async function TareasPage({
                       householdId={task.householdId}
                     />
                   )}
-                  <CompleteTaskButton taskId={task.id} householdId={task.householdId} />
+                  <CompleteTaskButton taskId={task.id} householdId={task.householdId} cycleNumber={task.cycleNumber} />
                 </div>
               </div>
             </li>
@@ -234,10 +238,11 @@ export default async function TareasPage({
 type TaskExecutionProp = {
   id: string;
   completedAt: Date;
-  task: { title: string; household: { name: string } };
+  task: { title: string; household: { name: string }; _count: { participants: number } };
   completedBy: { name: string };
   assignedTo: { name: string } | null;
   pointsEarned: number;
+  wasAssigned: boolean;
 };
 
 function TasksHistoryCard({ executions }: { executions: TaskExecutionProp[] }) {
@@ -246,22 +251,28 @@ function TasksHistoryCard({ executions }: { executions: TaskExecutionProp[] }) {
       <header className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Sparkles size={18} className="text-primary" />
-          <h2 className="font-display font-semibold text-[16px]">Tareas hechas (24h)</h2>
+          <h2 className="font-display font-semibold text-[16px]">Últimas 24 horas</h2>
         </div>
       </header>
 
       <ul className="divide-y divide-outline-variant -mx-1">
         {executions.map((exec) => {
           const samePerson = !exec.assignedTo || exec.completedBy.name === exec.assignedTo.name;
-          
+          const personal = isPersonal(exec.task._count.participants);
+          const skipped = exec.pointsEarned === 0 && !personal;
+
           return (
             <li key={exec.id} className="flex items-center gap-3 px-1 py-3">
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-[15px] truncate line-through text-on-surface-variant">
+                <p className={cn("font-semibold text-[15px] truncate text-on-surface-variant", !skipped && "line-through")}>
                   {exec.task.title}
                 </p>
                 <p className="text-xs text-on-surface-variant mt-0.5 leading-snug">
-                  {samePerson ? (
+                  {skipped ? (
+                    <span className="text-error">
+                      Nadie la hizo · le tocaba a <span className="font-semibold">{exec.completedBy.name}</span>
+                    </span>
+                  ) : samePerson ? (
                     <span>Turno: <span className="font-semibold">{exec.completedBy.name}</span></span>
                   ) : (
                     <span>
@@ -270,9 +281,9 @@ function TasksHistoryCard({ executions }: { executions: TaskExecutionProp[] }) {
                   )}
                 </p>
               </div>
-              <div className="text-right shrink-0">
-                <span className="text-[11px] font-bold text-primary">+{exec.pointsEarned} RC</span>
-              </div>
+              {exec.pointsEarned > 0 && (
+                <span className="text-[11px] font-bold text-primary shrink-0">+{exec.pointsEarned} RC</span>
+              )}
             </li>
           );
         })}

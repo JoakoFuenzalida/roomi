@@ -11,6 +11,9 @@ type PushPayload = {
   title: string;
   body: string;
   url?: string;
+  tag?: string;
+  // Si viene, el service worker agrega el botón "Listo" (Android/desktop; iOS no muestra acciones).
+  task?: { id: string; cycle: number; title: string };
 };
 
 export async function sendPushToUser(userId: string, payload: PushPayload) {

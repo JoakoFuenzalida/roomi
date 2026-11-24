@@ -1,0 +1,34 @@
+Cambios Roomi 2026-11-24 (sesión con Claude)
+
+1) Descomprime este zip en la raíz de tu clon del repo (sobrescribe los archivos).
+2) BORRA a mano este archivo (endpoint público que exponía usuarios):
+     src/app/api/fix-emails/route.ts
+3) Revisa con: git status / git diff  (antes de commitear)
+4) npx tsc --noEmit  -> debe pasar limpio
+
+Archivos incluidos (25):
+HANDOFF.md
+vercel.json
+public/sw.js
+src/actions/household.ts
+src/actions/shopping.ts
+src/actions/task.ts
+src/app/(app)/compras/page.tsx
+src/app/(app)/hoy/page.tsx
+src/app/(app)/tareas/page.tsx
+src/app/(app)/tareas/nueva/page.tsx
+src/app/api/cron/advance-overdue/route.ts
+src/app/api/cron/daily-reminder/route.ts
+src/app/api/tasks/complete/route.ts
+src/components/auto-capitalize.tsx
+src/components/due-chip.tsx
+src/components/household-forms.tsx
+src/components/shopping-actions.tsx
+src/components/task-actions.tsx
+src/lib/complete-task.ts
+src/lib/dates.ts
+src/lib/effort.ts
+src/lib/push.ts
+src/lib/realtime-server.ts
+src/lib/rotation.ts
+src/lib/validators.ts

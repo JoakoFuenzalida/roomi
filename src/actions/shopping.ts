@@ -237,3 +237,35 @@ export async function eliminarItem(itemId: string, householdId: string) {
 
   revalidatePath("/compras");
 }
+
+export async function eliminarGasto(expenseId: string, householdId: string) {
+  const user = await requireUser();
+  const membership = await assertMemberOf(user.id, householdId);
+
+  const expense = await db.expense.findUnique({
+    where: { id: expenseId, householdId },
+    select: { payerId: true, title: true, amount: true },
+  });
+  if (!expense) return { error: "El gasto ya no existe" };
+  if (expense.payerId !== user.id && membership.role !== "ADMIN") {
+    return { error: "Solo quien pagó o un admin puede borrar este gasto" };
+  }
+
+  await db.expense.delete({ where: { id: expenseId } });
+
+  const notice = await db.notice.create({
+    data: {
+      householdId,
+      authorId: user.id,
+      content: `🗑️ ${user.name} borró el gasto "${expense.title}" de $${expense.amount.toLocaleString("es-CL")}`,
+    },
+    include: {
+      author: { select: { name: true, image: true } },
+      reactions: true,
+    },
+  });
+
+  revalidatePath("/compras");
+  revalidatePath("/hoy");
+  return { success: true, notice };
+}

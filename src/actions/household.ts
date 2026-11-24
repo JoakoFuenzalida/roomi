@@ -88,7 +88,7 @@ export async function joinHousehold(
     return { error: parsed.error.issues[0]?.message ?? "Código inválido" };
   }
 
-  let codeToUse = parsed.data.code;
+  let codeToUse = parsed.data.code.toLowerCase();
   if (codeToUse.includes("/unirse/")) {
     codeToUse = codeToUse.split("/unirse/")[1].split("?")[0].split("#")[0];
   }

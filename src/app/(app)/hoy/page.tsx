@@ -8,6 +8,9 @@ import { UserHeaderNav } from "@/components/user-header-nav";
 import { OnboardingEmpty } from "@/components/onboarding-empty";
 import { getBalances } from "@/actions/settlement";
 import { HoyTabs } from "./client";
+import { DueChip } from "@/components/due-chip";
+import { chileToday, daysUntil } from "@/lib/dates";
+import { isPersonal } from "@/lib/effort";
 
 function formatPrice(n: number) {
   return "$" + n.toLocaleString("es-CL");
@@ -35,20 +38,42 @@ export default async function HoyPage({
   const householdIds = activeMemberships.map((m) => m.household.id);
   const mainHouseholdId = householdIds[0];
 
-  // 1. Tareas pendientes de hoy
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-
-  const pendingTasks = await db.task.findMany({
+  // 1. Tareas: las mías (atrasadas, hoy, próximos 7 días) y las de otros donde puedo ayudar
+  const today = chileToday();
+  const myMembershipIds = activeMemberships.map((m) => m.id);
+  const weekTasks = await db.task.findMany({
     where: {
-      nextAssigneeMembershipId: { in: activeMemberships.map((m) => m.id) },
+      householdId: { in: householdIds },
       active: true,
-      nextDueDate: { lte: endOfToday },
+      nextDueDate: { lt: new Date(today.getTime() + 8 * 86_400_000) },
     },
-    include: { household: { select: { name: true } } },
+    include: {
+      household: { select: { name: true } },
+      nextAssignee: { select: { user: { select: { name: true } } } },
+      participants: { select: { membershipId: true } },
+    },
     orderBy: { nextDueDate: "asc" },
-    take: 5,
   });
+
+  const isMine = (t: (typeof weekTasks)[number]) =>
+    myMembershipIds.includes(t.nextAssigneeMembershipId ?? "");
+  const mine = weekTasks.filter(isMine);
+  const taskGroups = {
+    overdue: mine.filter((t) => daysUntil(t.nextDueDate, today) < 0),
+    today: mine.filter((t) => daysUntil(t.nextDueDate, today) === 0),
+    upcoming: mine.filter((t) => daysUntil(t.nextDueDate, today) > 0).slice(0, 5),
+    help: weekTasks
+      .filter(
+        (t) =>
+          !isMine(t) &&
+          daysUntil(t.nextDueDate, today) <= 0 &&
+          !isPersonal(t.participants.length) &&
+          (t.participants.length === 0 ||
+            t.participants.some((p) => myMembershipIds.includes(p.membershipId))),
+      )
+      .slice(0, 5),
+  };
+  const pendingTaskCount = taskGroups.overdue.length + taskGroups.today.length;
 
   // 2. Cuentas (Mensuales) por pagar por el usuario
   const pendingBillsRaw = await db.monthlyBill.findMany({
@@ -110,7 +135,7 @@ export default async function HoyPage({
   const myDebts = myDebtsArrays.flat();
 
   const firstName = userName.split(" ")[0] ?? "";
-  const totalPendingItems = pendingTasks.length + pendingBills.length + myDebts.length;
+  const totalPendingItems = pendingTaskCount + pendingBills.length + myDebts.length;
 
   // CHAT DATA
   let chatMessages: any[] = [];
@@ -181,13 +206,15 @@ export default async function HoyPage({
               <p className="text-on-surface-variant text-sm mt-1">
                 {totalPendingItems === 0
                   ? "No tienes pendientes hoy. ¡Aprovecha el día!"
-                  : `Tienes pendientes por resolver.`}
+                  : pendingTaskCount > 0
+                    ? `Tienes ${pendingTaskCount} tarea${pendingTaskCount === 1 ? "" : "s"} para hoy.`
+                    : "Tienes pendientes por resolver."}
               </p>
             </div>
 
             <div className="space-y-4">
               {/* TAREAS */}
-              <TasksCard tasks={pendingTasks} />
+              <TasksCard groups={taskGroups} today={today} showHousehold={householdIds.length > 1} />
 
               {/* DEUDAS COMPRAS */}
               {myDebts.length > 0 && (
@@ -213,52 +240,75 @@ export default async function HoyPage({
 
 // ===================== WIDGETS ===================== //
 
-type PendingTask = {
+type HoyTask = {
   id: string;
   householdId: string;
   title: string;
   points: number;
+  cycleNumber: number;
   nextDueDate: Date;
   household: { name: string };
+  nextAssignee: { user: { name: string } } | null;
+  participants: { membershipId: string }[];
 };
 
-function TasksCard({ tasks }: { tasks: PendingTask[] }) {
-  if (tasks.length === 0) return null;
+type TaskGroups = { overdue: HoyTask[]; today: HoyTask[]; upcoming: HoyTask[]; help: HoyTask[] };
+
+function TasksCard({
+  groups,
+  today,
+  showHousehold,
+}: {
+  groups: TaskGroups;
+  today: Date;
+  showHousehold: boolean;
+}) {
+  const sections = [
+    { key: "overdue", title: "Atrasadas", tasks: groups.overdue, helping: false },
+    { key: "today", title: "Para hoy", tasks: groups.today, helping: false },
+    { key: "upcoming", title: "Próximos días", tasks: groups.upcoming, helping: false },
+    { key: "help", title: "Puedes ayudar (+50% RC)", tasks: groups.help, helping: true },
+  ].filter((s) => s.tasks.length > 0);
+
+  if (sections.length === 0) return null;
 
   return (
     <section className="rounded-[14px] bg-surface-container-lowest border border-outline-variant p-4 shadow-[0_2px_10px_rgba(15,23,42,0.05)]">
-      <header className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Sparkles size={18} className="text-primary" />
-          <h2 className="font-display font-semibold text-[16px]">Tus tareas de hoy</h2>
-        </div>
-        <span className="bg-primary-container text-on-primary-container text-[11px] font-bold px-[9px] py-[3px] rounded-pill">
-          {tasks.length}
-        </span>
+      <header className="flex items-center gap-2 mb-1">
+        <Sparkles size={18} className="text-primary" />
+        <h2 className="font-display font-semibold text-[16px]">Tus tareas</h2>
       </header>
 
-      <ul className="divide-y divide-outline-variant -mx-1">
-        {tasks.map((task) => {
-          const overdue = task.nextDueDate < new Date();
-          return (
-            <li key={task.id} className="flex items-center gap-3 px-1 py-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-[15px] truncate">{task.title}</p>
-                <p className="text-xs text-on-surface-variant flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className="bg-secondary-container text-on-secondary-container text-[10px] font-semibold px-2 py-0.5 rounded-pill">
-                    {task.household.name}
-                  </span>
-                  <span>{task.points} RC</span>
-                  {overdue && <span className="text-error font-bold">· Atrasada</span>}
-                </p>
-              </div>
-              <CompleteTaskButton taskId={task.id} householdId={task.householdId} />
-            </li>
-          );
-        })}
-      </ul>
+      {sections.map((s) => (
+        <div key={s.key} className="mt-3">
+          <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">{s.title}</p>
+          <ul className="divide-y divide-outline-variant -mx-1">
+            {s.tasks.map((task) => {
+              const personal = isPersonal(task.participants.length);
+              const rc = s.helping ? Math.ceil(task.points * 1.5) : task.points;
+              return (
+                <li key={task.id} className="flex items-center gap-3 px-1 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[15px] truncate">{task.title}</p>
+                    <div className="text-xs text-on-surface-variant flex items-center gap-2 mt-1 flex-wrap">
+                      <DueChip due={task.nextDueDate} today={today} />
+                      {s.helping && task.nextAssignee && (
+                        <span>Le toca a {task.nextAssignee.user.name.split(" ")[0]}</span>
+                      )}
+                      {!personal && <span className="font-semibold">{s.helping ? "+" : ""}{rc} RC</span>}
+                      {showHousehold && <span>· {task.household.name}</span>}
+                    </div>
+                  </div>
+                  <CompleteTaskButton taskId={task.id} householdId={task.householdId} cycleNumber={task.cycleNumber} />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+
       <Link href="/tareas" className="block text-center text-primary text-[13px] font-semibold mt-1 py-1">
-        Ver módulo de tareas →
+        Ver todas las tareas →
       </Link>
     </section>
   );

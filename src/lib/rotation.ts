@@ -1,11 +1,39 @@
 import { TaskFrequency } from "@/generated/prisma/client";
+import { chileToday } from "@/lib/dates";
+
+// Todo en UTC: el día calendario UTC de una fecha guardada es el día real (ver lib/dates.ts).
 
 function daysInMonth(year: number, monthIndex: number): number {
-  return new Date(year, monthIndex + 1, 0).getDate();
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
 }
 
 function uniqSorted(arr: number[]): number[] {
   return Array.from(new Set(arr)).sort((a, b) => a - b);
+}
+
+function addDays(base: Date, n: number): Date {
+  const r = new Date(base);
+  r.setUTCDate(r.getUTCDate() + n);
+  return r;
+}
+
+// Día `day` del mes base+monthOffset, ajustado al último día si el mes es más corto (31 → 30/28).
+function dayOfMonth(base: Date, monthOffset: number, day: number): Date {
+  const r = new Date(base);
+  r.setUTCDate(1);
+  r.setUTCMonth(r.getUTCMonth() + monthOffset);
+  r.setUTCDate(Math.min(day, daysInMonth(r.getUTCFullYear(), r.getUTCMonth())));
+  return r;
+}
+
+function nextMonthly(from: Date, days: number[], inclusive: boolean): Date {
+  for (const offset of [0, 1]) {
+    for (const d of days) {
+      const candidate = dayOfMonth(from, offset, d);
+      if (inclusive ? candidate >= from : candidate > from) return candidate;
+    }
+  }
+  return dayOfMonth(from, 1, days[0]);
 }
 
 export function computeInitialDueDate(
@@ -13,41 +41,22 @@ export function computeInitialDueDate(
   daysOfWeek: number[],
   daysOfMonth: number[],
 ): Date {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (frequency === "DAILY") return today;
+  const today = chileToday();
 
   if (frequency === "WEEKLY" || frequency === "BIWEEKLY") {
     const days = uniqSorted(daysOfWeek);
     if (days.length === 0) return today;
-    const currentDay = today.getDay();
+    const currentDay = today.getUTCDay();
     const sameOrAfter = days.find((d) => d >= currentDay);
-    const result = new Date(today);
-    if (sameOrAfter !== undefined) {
-      result.setDate(today.getDate() + (sameOrAfter - currentDay));
-    } else {
-      // Next week's first scheduled day
-      result.setDate(today.getDate() + (7 - currentDay) + days[0]);
-    }
-    return result;
+    return sameOrAfter !== undefined
+      ? addDays(today, sameOrAfter - currentDay)
+      : addDays(today, 7 - currentDay + days[0]);
   }
 
   if (frequency === "MONTHLY") {
     const days = uniqSorted(daysOfMonth);
     if (days.length === 0) return today;
-    const currentDate = today.getDate();
-    const result = new Date(today);
-    const sameOrAfter = days.find((d) => d >= currentDate);
-    if (sameOrAfter !== undefined) {
-      const lastDay = daysInMonth(result.getFullYear(), result.getMonth());
-      result.setDate(Math.min(sameOrAfter, lastDay));
-    } else {
-      result.setMonth(result.getMonth() + 1);
-      const lastDay = daysInMonth(result.getFullYear(), result.getMonth());
-      result.setDate(Math.min(days[0], lastDay));
-    }
-    return result;
+    return nextMonthly(today, days, true);
   }
 
   return today;
@@ -59,69 +68,23 @@ export function computeNextDueDate(
   daysOfWeek: number[],
   daysOfMonth: number[],
 ): Date {
-  if (frequency === "DAILY") {
-    const r = new Date(current);
-    r.setDate(r.getDate() + 1);
-    return r;
-  }
+  if (frequency === "DAILY") return addDays(current, 1);
 
-  if (frequency === "WEEKLY") {
+  if (frequency === "WEEKLY" || frequency === "BIWEEKLY") {
+    const gap = frequency === "WEEKLY" ? 0 : 7;
     const days = uniqSorted(daysOfWeek);
-    if (days.length === 0) {
-      const r = new Date(current);
-      r.setDate(r.getDate() + 7);
-      return r;
-    }
-    const currentDay = current.getDay();
+    if (days.length === 0) return addDays(current, 7 + gap);
+    const currentDay = current.getUTCDay();
     const nextInWeek = days.find((d) => d > currentDay);
-    const r = new Date(current);
-    if (nextInWeek !== undefined) {
-      r.setDate(current.getDate() + (nextInWeek - currentDay));
-    } else {
-      // Jump to next week's first scheduled day
-      r.setDate(current.getDate() + (7 - currentDay) + days[0]);
-    }
-    return r;
-  }
-
-  if (frequency === "BIWEEKLY") {
-    const days = uniqSorted(daysOfWeek);
-    if (days.length === 0) {
-      const r = new Date(current);
-      r.setDate(r.getDate() + 14);
-      return r;
-    }
-    const currentDay = current.getDay();
-    const nextInWeek = days.find((d) => d > currentDay);
-    const r = new Date(current);
-    if (nextInWeek !== undefined) {
-      r.setDate(current.getDate() + (nextInWeek - currentDay));
-    } else {
-      // Skip a full week + jump to first scheduled day of the week after
-      r.setDate(current.getDate() + (7 - currentDay) + 7 + days[0]);
-    }
-    return r;
+    return nextInWeek !== undefined
+      ? addDays(current, nextInWeek - currentDay)
+      : addDays(current, 7 - currentDay + gap + days[0]);
   }
 
   if (frequency === "MONTHLY") {
     const days = uniqSorted(daysOfMonth);
-    if (days.length === 0) {
-      const r = new Date(current);
-      r.setMonth(r.getMonth() + 1);
-      return r;
-    }
-    const currentDate = current.getDate();
-    const nextInMonth = days.find((d) => d > currentDate);
-    const r = new Date(current);
-    if (nextInMonth !== undefined) {
-      const lastDay = daysInMonth(r.getFullYear(), r.getMonth());
-      r.setDate(Math.min(nextInMonth, lastDay));
-    } else {
-      r.setMonth(r.getMonth() + 1);
-      const lastDay = daysInMonth(r.getFullYear(), r.getMonth());
-      r.setDate(Math.min(days[0], lastDay));
-    }
-    return r;
+    if (days.length === 0) return dayOfMonth(current, 1, current.getUTCDate());
+    return nextMonthly(current, days, false);
   }
 
   return current;

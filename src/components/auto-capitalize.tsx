@@ -16,7 +16,8 @@ export function AutoCapitalize() {
           type === "password" ||
           type === "url" ||
           type === "number" ||
-          type === "hidden"
+          type === "hidden" ||
+          ["none", "off"].includes(target.getAttribute("autocapitalize") ?? "")
         ) {
           return;
         }

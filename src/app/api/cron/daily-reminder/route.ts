@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendPushToUser } from "@/lib/push";
+import { chileToday, daysUntil } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+const MAX_PER_USER = 3;
 
 export async function POST(req: NextRequest) {
   const auth = req.headers.get("authorization");
@@ -11,44 +14,44 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-
+  const today = chileToday();
   const dueTasks = await db.task.findMany({
     where: {
       active: true,
-      nextDueDate: { lte: endOfToday },
+      nextDueDate: { lt: new Date(today.getTime() + 86_400_000) },
       nextAssigneeMembershipId: { not: null },
     },
-    include: {
-      nextAssignee: {
-        select: { userId: true, user: { select: { name: true } } },
-      },
-    },
+    include: { nextAssignee: { select: { userId: true } } },
+    orderBy: { nextDueDate: "asc" },
   });
 
-  const byUser = new Map<string, string[]>();
+  const byUser = new Map<string, typeof dueTasks>();
   for (const task of dueTasks) {
     if (!task.nextAssignee) continue;
     const uid = task.nextAssignee.userId;
-    const list = byUser.get(uid) ?? [];
-    list.push(task.title);
-    byUser.set(uid, list);
+    byUser.set(uid, [...(byUser.get(uid) ?? []), task]);
   }
 
   let sent = 0;
-  for (const [userId, titles] of byUser) {
-    const body =
-      titles.length === 1
-        ? titles[0]
-        : `${titles[0]} y ${titles.length - 1} más`;
-
-    await sendPushToUser(userId, {
-      title: `Hoy te toca 🧹`,
-      body,
-      url: "/tareas",
-    }).catch(() => {});
-
+  for (const [userId, tasks] of byUser) {
+    for (const task of tasks.slice(0, MAX_PER_USER)) {
+      const overdue = daysUntil(task.nextDueDate, today) < 0;
+      await sendPushToUser(userId, {
+        title: overdue ? "Tarea atrasada ⏰" : "Hoy te toca 🧹",
+        body: task.title,
+        url: "/hoy",
+        tag: `task-${task.id}`,
+        task: { id: task.id, cycle: task.cycleNumber, title: task.title },
+      }).catch(() => {});
+    }
+    if (tasks.length > MAX_PER_USER) {
+      await sendPushToUser(userId, {
+        title: "Tienes más tareas pendientes",
+        body: `Y ${tasks.length - MAX_PER_USER} más. Revísalas en Roomi.`,
+        url: "/hoy",
+        tag: "tasks-more",
+      }).catch(() => {});
+    }
     sent++;
   }
 

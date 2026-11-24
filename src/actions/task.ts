@@ -3,10 +3,12 @@
 import { db } from "@/lib/db";
 import { requireUser, assertMemberOf } from "@/lib/session";
 import { taskSchema } from "@/lib/validators";
-import { computeInitialDueDate, computeNextDueDate } from "@/lib/rotation";
+import { computeInitialDueDate } from "@/lib/rotation";
 import { revalidatePath } from "next/cache";
 import { TaskFrequency } from "@/generated/prisma/client";
-import { sendPushToHousehold, sendPushToUser } from "@/lib/push";
+import { sendPushToUser } from "@/lib/push";
+import { EFFORT_POINTS, isPersonal } from "@/lib/effort";
+import { completeTask } from "@/lib/complete-task";
 
 export async function createTask(
   householdId: string,
@@ -14,7 +16,7 @@ export async function createTask(
   formData: FormData,
 ) {
   const user = await requireUser();
-  await assertMemberOf(user.id, householdId);
+  const membership = await assertMemberOf(user.id, householdId);
 
   const daysOfWeekRaw = formData
     .getAll("daysOfWeek")
@@ -54,8 +56,12 @@ export async function createTask(
     return { error: "No hay miembros activos en el hogar" };
   }
 
-  const participantIdsRaw = formData.getAll("participantIds").map(String);
+  const participantIdsRaw = formData
+    .getAll("participantIds")
+    .map(String)
+    .filter((id) => activeMemberships.some((m) => m.id === id));
   const participantIds = participantIdsRaw.length > 0 ? participantIdsRaw : activeMemberships.map(m => m.id);
+  const effortPoints = isPersonal(participantIds.length) ? 0 : membership.role === "ADMIN" ? points : 1;
 
   let nextDueDate: Date;
   if (frequency === "ONCE" && onceDate) {
@@ -73,7 +79,7 @@ export async function createTask(
       householdId,
       title,
       frequency: frequency as TaskFrequency,
-      points,
+      points: effortPoints,
       daysOfWeek,
       daysOfMonth,
       active: true,
@@ -111,154 +117,25 @@ export async function deleteTask(taskId: string, householdId: string) {
   revalidatePath("/hoy");
 }
 
-export async function completarTarea(taskId: string) {
+export async function setTaskEffort(taskId: string, householdId: string, points: number) {
   const user = await requireUser();
+  const membership = await assertMemberOf(user.id, householdId);
+  if (membership.role !== "ADMIN") return { error: "Solo un admin puede cambiar el esfuerzo" };
+  if (!EFFORT_POINTS.includes(points)) return { error: "Esfuerzo inválido" };
 
-  const task = await db.task.findUnique({
-    where: { id: taskId, active: true },
-    select: {
-      id: true,
-      householdId: true,
-      cycleNumber: true,
-      nextAssigneeMembershipId: true,
-      nextAssignee: { select: { userId: true } },
-      points: true,
-      frequency: true,
-      nextDueDate: true,
-      daysOfWeek: true,
-      daysOfMonth: true,
-      participants: {
-        orderBy: { order: "asc" }
-      }
-    },
+  await db.task.update({
+    where: { id: taskId, householdId },
+    data: { points },
   });
 
-  if (!task) {
-    throw new Error("Tarea no encontrada o inactiva");
-  }
-
-  const membership = await assertMemberOf(user.id, task.householdId);
-
-  await db.$transaction(async (tx) => {
-    await tx.taskExecution.create({
-      data: {
-        taskId,
-        cycleNumber: task.cycleNumber,
-        completedById: user.id,
-        assignedToUserId: task.nextAssignee?.userId,
-        wasAssigned: task.nextAssigneeMembershipId === membership.id,
-        pointsEarned: task.nextAssigneeMembershipId === membership.id ? task.points : Math.ceil(task.points * 1.5),
-      },
-    });
-
-    let nextAssigneeId = task.nextAssigneeMembershipId;
-
-    if (task.participants && task.participants.length > 0) {
-      // Use explicit participants rotation
-      const activeParticipants = task.participants.filter(p => {
-        // Here we'd need to fetch memberships to check if they left or are on vacation.
-        // Actually, let's fetch active members and filter the participants list.
-        return true; // We'll compute this in the next block
-      });
-      
-      const activeMembers = await tx.membership.findMany({
-        where: {
-          id: { in: task.participants.map(p => p.membershipId) },
-          leftAt: null,
-          OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],
-        }
-      });
-      
-      // Filter out participants who are not active
-      const validParticipants = task.participants.filter(p => activeMembers.some(m => m.id === p.membershipId));
-
-      if (validParticipants.length > 0) {
-        const currentIndex = validParticipants.findIndex(
-          (p) => p.membershipId === task.nextAssigneeMembershipId,
-        );
-        const nextIndex =
-          currentIndex === -1 ? 0 : (currentIndex + 1) % validParticipants.length;
-        nextAssigneeId = validParticipants[nextIndex].membershipId;
-      }
-
-    } else {
-      // Fallback to global rotation
-      const activeMembers = await tx.membership.findMany({
-        where: {
-          householdId: task.householdId,
-          leftAt: null,
-          OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],
-        },
-        orderBy: { rotationOrder: "asc" },
-      });
-
-      if (activeMembers.length > 0) {
-        const currentIndex = activeMembers.findIndex(
-          (m) => m.id === task.nextAssigneeMembershipId,
-        );
-        const nextIndex =
-          currentIndex === -1 ? 0 : (currentIndex + 1) % activeMembers.length;
-        nextAssigneeId = activeMembers[nextIndex].id;
-      }
-    }
-
-    if (task.frequency === "ONCE") {
-      await tx.task.update({
-        where: { id: taskId },
-        data: {
-          active: false,
-        },
-      });
-    } else {
-      await tx.task.update({
-        where: { id: taskId },
-        data: {
-          nextAssigneeMembershipId: nextAssigneeId,
-          nextDueDate: computeNextDueDate(
-            task.nextDueDate,
-            task.frequency,
-            task.daysOfWeek,
-            task.daysOfMonth,
-          ),
-          cycleNumber: { increment: 1 },
-        },
-      });
-    }
-  });
-
-  revalidatePath("/hoy");
   revalidatePath("/tareas");
+  revalidatePath("/hoy");
+  return { success: true };
+}
 
-  let notice = null;
-  const taskData = await db.task.findUnique({
-    where: { id: taskId },
-    select: { title: true, householdId: true, points: true },
-  });
-  if (taskData) {
-    notice = await db.notice.create({
-      data: {
-        householdId: taskData.householdId,
-        authorId: user.id,
-        content: `✨ ${user.name} completó la tarea "${taskData.title}" y ganó ${taskData.points} puntos.`,
-      },
-      include: {
-        author: { select: { name: true, image: true } },
-        reactions: true,
-      },
-    });
-
-    sendPushToHousehold(
-      taskData.householdId,
-      {
-        title: "Tarea completada ✨",
-        body: `${user.name} completó "${taskData.title}"`,
-        url: "/hoy",
-      },
-      user.id,
-    ).catch(() => {});
-  }
-
-  return { success: true, notice };
+export async function completarTarea(taskId: string, expectedCycle: number) {
+  const user = await requireUser();
+  return completeTask(user, taskId, expectedCycle);
 }
 
 export async function swapTurno(taskId: string, toMembershipId: string) {

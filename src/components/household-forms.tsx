@@ -39,6 +39,9 @@ export function JoinHouseholdForm() {
       <input
         name="code"
         required
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         placeholder="Pega el código o link"
         className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors text-[16px]"
         style={{ fontFamily: "ui-monospace, monospace" }}

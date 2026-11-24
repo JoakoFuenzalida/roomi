@@ -1,0 +1,1526 @@
+warning: in the working copy of 'HANDOFF.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public/sw.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/actions/household.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/actions/shopping.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/actions/task.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/(app)/compras/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/(app)/hoy/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/(app)/tareas/nueva/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/(app)/tareas/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/cron/advance-overdue/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/cron/daily-reminder/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/auto-capitalize.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/household-forms.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/shopping-actions.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/task-actions.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/push.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/rotation.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/validators.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'vercel.json', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/HANDOFF.md b/HANDOFF.md[m
+[1mindex 8403f3c..8bebdb0 100644[m
+[1m--- a/HANDOFF.md[m
+[1m+++ b/HANDOFF.md[m
+[36m@@ -39,9 +39,18 @@[m [mHoy (2026-11-10) el árbol de trabajo está limpio, en `main`, sin cambios sin c[m
+ [m
+ ### A medias / con problemas conocidos[m
+ [m
+[31m-- **`src/app/api/fix-emails/route.ts`**: GET público sin autenticación que devuelve todos los usuarios con `findMany()` sin `select` (incluye `hashedPassword`, emails y hogares). Lo agregó un commit de debug del 2026-08-25. Está en producción si se desplegó.[m
+[32m+[m[32m- **`src/app/api/fix-emails/route.ts`**: borrado el 2026-11-24 (exponía usuarios con `hashedPassword` sin auth). Falta desplegar y decidir si rotar algo.[m
+ - **Activar push desde perfil probablemente falla**: `perfil/page.tsx` pasa `process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY`, que no existe en `.env` local; el layout usa `VAPID_PUBLIC_KEY`. [VERIFICAR si está definida en Vercel.] Si no, `pushManager.subscribe` recibe `undefined`.[m
+[31m-- **Código de invitación vs `AutoCapitalize`**: el input del código no tiene `type`, así que el listener global pone en mayúscula el primer carácter. Los códigos son `cuid()` o `randomUUID()` (minúsculas) y la búsqueda es exacta → unirse escribiendo/pegando el código pelado probablemente falla. Por link `/unirse/[code]` funciona. [VERIFICAR probando.][m
+[32m+[m[32m- ~~Código de invitación vs `AutoCapitalize`~~ (arreglado 2026-11-24, verificado): `joinHousehold` pasa el código a minúscula y `AutoCapitalize` respeta `autocapitalize="none"/"off"` (opt-out para inputs futuros).[m
+[32m+[m[32m- ~~Doble tap en "Listo" completaba la tarea 2 veces~~ (arreglado 2026-11-24, verificado): `completarTarea(taskId, expectedCycle)` solo completa si el ciclo coincide y captura `P2002` (dos usuarios a la vez) devolviendo `{ error }`. El mensaje del chat ahora muestra los puntos reales (1,5x si era de otro).[m
+[32m+[m[32m- ~~Tareas pegadas en el cron~~ (arreglado 2026-11-24, falta deploy): las mensuales con día 31 quedaban fijas en el 30 de meses cortos (`computeNextDueDate` devolvía la misma fecha) y las ONCE vencidas también; cada noche se registraba un "salto" y rotaba el asignado (en prod: 2 mensuales con 55 saltos, 1 ONCE con 107). Ahora `rotation.ts` usa `dayOfMonth()`/`nextMonthly()` (sin overflow de `setMonth`, siempre avanza), el cron ignora ONCE (queda pendiente con la misma persona) y se pone al día en un solo salto. Dry-run contra prod: las 2 mensuales pasan al 2026-11-30 en la primera corrida. Las ~217 ejecuciones falsas de 0 pts siguen en la DB (no afectan puntos).[m
+[32m+[m[32m- Borrar gastos (2026-11-24): `eliminarGasto` en `actions/shopping.ts`, solo quien pagó o un admin; deja mensaje 🗑️ en el chat. Botón en "Últimas compras".[m
+[32m+[m[32m- Velocidad (2026-11-24): `vercel.json` con `regions: ["gru1"]` (antes default `iad1`, con la DB en sa-east-1: cada query cruzaba el continente). [VERIFICAR] que el dashboard de Vercel no tenga otra región forzada. "Listo" muestra el check al instante (estado local por `cycleNumber`).[m
+[32m+[m[32m- ~~Zona horaria~~ (arreglado 2026-11-24): las fechas guardadas están entre 00:00 y 05:24 UTC, así que su día calendario UTC es el día real. `lib/dates.ts` calcula "hoy" en America/Santiago (`chileToday()` = medianoche UTC del día chileno), `daysUntil`, `dueInfo`. `rotation.ts` usa solo métodos UTC (da igual la TZ de la máquina). Cron `advance-overdue` usa `chileToday()` y pasó a 04:05 UTC (00:05/01:05 en Chile todo el año).[m
+[32m+[m[32m- Rediseño de puntos (2026-11-24): esfuerzo fijo Liviana 1 / Media 3 / Pesada 5 (`lib/effort.ts`). Solo el admin lo elige al crear (los demás crean "Liviana") y lo cambia desde el chip de la tarjeta (`EffortBadge`, `setTaskEffort`). Tarea con 1 participante = personal: 0 RC, chip "Personal". Tareas viejas con otros valores (2, 4…) se muestran con la etiqueta más cercana hasta que el admin las ajuste. `createTask` ahora filtra `participantIds` a miembros del hogar.[m
+[32m+[m[32m- Hoy rediseñado (2026-11-24): "Tus tareas" con Atrasadas / Para hoy / Próximos días (7) / Puedes ayudar (+50% RC, tareas de otros vencidas u hoy donde participo). `DueChip` con colores (rojo atrasada, amarillo hoy) también en `/tareas`. El historial de 24 h marca los saltos del cron como "Nadie la hizo".[m
+[32m+[m[32m- "Listo" desde la notificación (2026-11-24): el recordatorio diario (`daily-reminder`) manda una notificación por tarea (máx. 3 por persona + 1 de resumen) con `tag` y datos de la tarea; `sw.js` le agrega el botón "✅ Listo" (Android/desktop, iOS no muestra acciones) que hace POST a `/api/tasks/complete` (sesión por cookie, `{ taskId, cycle }`) y reemplaza la notificación por una confirmación silenciosa. La lógica de completar vive en `lib/complete-task.ts` (la usan la server action y el endpoint). `lib/realtime-server.ts` hace broadcast vía REST de Supabase Realtime para que los demás vean el cambio sin app abierta. Endpoint verificado (401/400/409/200 + refresco en vivo); la notificación real en Android [VERIFICAR] tras deploy.[m
+[32m+[m[32m- Hogar de prueba en prod: "Zz Prueba Claude" con Test Ana (admin) y Test Beto. Credenciales en `.env.test` (ignorado).[m
+ - **Reset de contraseña a terceros**: sin `EMAIL_FROM` con dominio verificado en Resend, los emails solo llegan al dueño de la cuenta de Resend. [VERIFICAR qué hay en Vercel.][m
+ - **Emails viejos con mayúsculas**: el login ahora busca en minúscula. Usuarios creados antes del 2026-08-25 con mayúsculas en el email no podrían entrar con credenciales. [VERIFICAR si se normalizaron en la DB; probablemente para eso era `fix-emails`.][m
+ - Scripts de debug versionados en la raíz: `check.js`, `check.ts`, `check2.ts`, `test-db.ts`.[m
+[36m@@ -114,7 +123,7 @@[m [mAbiertos: los de §2 "A medias".[m
+ [m
+ ## 6. Próximos pasos (en orden)[m
+ [m
+[31m-1. **Borrar `src/app/api/fix-emails/route.ts`** y desplegar. Después, con Joako, decidir si rotar algo: el endpoint expuso hashes bcrypt y emails.[m
+[32m+[m[32m1. ~~Borrar `src/app/api/fix-emails/route.ts`~~ (hecho 2026-11-24). Desplegar y, con Joako, decidir si rotar algo: el endpoint expuso hashes bcrypt y emails.[m
+ 2. Arreglar la key VAPID en `perfil/page.tsx` (usar `VAPID_PUBLIC_KEY`, que ya está en el server) y probar "Activar" desde perfil en un navegador real.[m
+ 3. Probar unirse pegando un código pelado. Si falla, excluir ese input de `AutoCapitalize` (atributo opt-out) y/o hacer la búsqueda del código insensible a mayúsculas.[m
+ 4. Confirmar `EMAIL_FROM` / dominio verificado en Resend para que el reset llegue a cualquier usuario.[m
+[1mdiff --git a/public/sw.js b/public/sw.js[m
+[1mindex 657ab6d..e4f3c58 100644[m
+[1m--- a/public/sw.js[m
+[1m+++ b/public/sw.js[m
+[36m@@ -34,7 +34,9 @@[m [mself.addEventListener("push", (event) => {[m
+       body: data.body,[m
+       icon: "/icon-192.png",[m
+       badge: "/badge.svg",[m
+[31m-      data: { url: data.url },[m
+[32m+[m[32m      tag: data.tag,[m
+[32m+[m[32m      data: { url: data.url, task: data.task },[m
+[32m+[m[32m      actions: data.task ? [{ action: "complete", title: "✅ Listo" }] : [],[m
+       vibrate: [200, 100, 200],[m
+     })[m
+   );[m
+[36m@@ -42,13 +44,57 @@[m [mself.addEventListener("push", (event) => {[m
+ [m
+ self.addEventListener("notificationclick", (event) => {[m
+   event.notification.close();[m
+[31m-  const url = event.notification.data?.url || "/hoy";[m
+[32m+[m[32m  const { url = "/hoy", task } = event.notification.data || {};[m
+ [m
+[31m-  event.waitUntil([m
+[31m-    self.clients.matchAll({ type: "window" }).then((clients) => {[m
+[31m-      const existing = clients.find((c) => c.url.includes(url));[m
+[31m-      if (existing) return existing.focus();[m
+[31m-      return self.clients.openWindow(url);[m
+[31m-    })[m
+[31m-  );[m
+[32m+[m[32m  if (event.action === "complete" && task) {[m
+[32m+[m[32m    event.waitUntil(completeFromNotification(task, event.notification.tag));[m
+[32m+[m[32m    return;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  event.waitUntil(openOrFocus(url));[m
+ });[m
+[32m+[m
+[32m+[m[32mfunction openOrFocus(url) {[m
+[32m+[m[32m  return self.clients.matchAll({ type: "window" }).then((clients) => {[m
+[32m+[m[32m    const existing = clients.find((c) => c.url.includes(url));[m
+[32m+[m[32m    if (existing) return existing.focus();[m
+[32m+[m[32m    return self.clients.openWindow(url);[m
+[32m+[m[32m  });[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32masync function completeFromNotification(task, tag) {[m
+[32m+[m[32m  let title = "¡Listo! ✅";[m
+[32m+[m[32m  let body = `"${task.title}" quedó marcada.`;[m
+[32m+[m[32m  let url = "/hoy";[m
+[32m+[m
+[32m+[m[32m  try {[m
+[32m+[m[32m    const res = await fetch("/api/tasks/complete", {[m
+[32m+[m[32m      method: "POST",[m
+[32m+[m[32m      credentials: "include",[m
+[32m+[m[32m      headers: { "Content-Type": "application/json" },[m
+[32m+[m[32m      body: JSON.stringify({ taskId: task.id, cycle: task.cycle }),[m
+[32m+[m[32m    });[m
+[32m+[m[32m    if (res.status === 409) {[m
+[32m+[m[32m      title = "Ya estaba lista";[m
+[32m+[m[32m      body = `Alguien ya marcó "${task.title}".`;[m
+[32m+[m[32m    } else if (res.status === 401) {[m
+[32m+[m[32m      title = "Entra a Roomi";[m
+[32m+[m[32m      body = "Tu sesión expiró. Toca para entrar y marcarla.";[m
+[32m+[m[32m      url = "/login";[m
+[32m+[m[32m    } else if (!res.ok) {[m
+[32m+[m[32m      throw new Error(String(res.status));[m
+[32m+[m[32m    }[m
+[32m+[m[32m  } catch {[m
+[32m+[m[32m    title = "No se pudo marcar";[m
+[32m+[m[32m    body = `Toca para abrir Roomi y marcar "${task.title}".`;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  await self.registration.showNotification(title, {[m
+[32m+[m[32m    body,[m
+[32m+[m[32m    icon: "/icon-192.png",[m
+[32m+[m[32m    badge: "/badge.svg",[m
+[32m+[m[32m    tag,[m
+[32m+[m[32m    silent: true,[m
+[32m+[m[32m    data: { url },[m
+[32m+[m[32m  });[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/actions/household.ts b/src/actions/household.ts[m
+[1mindex eaa60ff..34f9017 100644[m
+[1m--- a/src/actions/household.ts[m
+[1m+++ b/src/actions/household.ts[m
+[36m@@ -88,7 +88,7 @@[m [mexport async function joinHousehold([m
+     return { error: parsed.error.issues[0]?.message ?? "Código inválido" };[m
+   }[m
+ [m
+[31m-  let codeToUse = parsed.data.code;[m
+[32m+[m[32m  let codeToUse = parsed.data.code.toLowerCase();[m
+   if (codeToUse.includes("/unirse/")) {[m
+     codeToUse = codeToUse.split("/unirse/")[1].split("?")[0].split("#")[0];[m
+   }[m
+[1mdiff --git a/src/actions/shopping.ts b/src/actions/shopping.ts[m
+[1mindex 701c3ac..a044721 100644[m
+[1m--- a/src/actions/shopping.ts[m
+[1m+++ b/src/actions/shopping.ts[m
+[36m@@ -237,3 +237,35 @@[m [mexport async function eliminarItem(itemId: string, householdId: string) {[m
+ [m
+   revalidatePath("/compras");[m
+ }[m
+[32m+[m
+[32m+[m[32mexport async function eliminarGasto(expenseId: string, householdId: string) {[m
+[32m+[m[32m  const user = await requireUser();[m
+[32m+[m[32m  const membership = await assertMemberOf(user.id, householdId);[m
+[32m+[m
+[32m+[m[32m  const expense = await db.expense.findUnique({[m
+[32m+[m[32m    where: { id: expenseId, householdId },[m
+[32m+[m[32m    select: { payerId: true, title: true, amount: true },[m
+[32m+[m[32m  });[m
+[32m+[m[32m  if (!expense) return { error: "El gasto ya no existe" };[m
+[32m+[m[32m  if (expense.payerId !== user.id && membership.role !== "ADMIN") {[m
+[32m+[m[32m    return { error: "Solo quien pagó o un admin puede borrar este gasto" };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  await db.expense.delete({ where: { id: expenseId } });[m
+[32m+[m
+[32m+[m[32m  const notice = await db.notice.create({[m
+[32m+[m[32m    data: {[m
+[32m+[m[32m      householdId,[m
+[32m+[m[32m      authorId: user.id,[m
+[32m+[m[32m      content: `🗑️ ${user.name} borró el gasto "${expense.title}" de $${expense.amount.toLocaleString("es-CL")}`,[m
+[32m+[m[32m    },[m
+[32m+[m[32m    include: {[m
+[32m+[m[32m      author: { select: { name: true, image: true } },[m
+[32m+[m[32m      reactions: true,[m
+[32m+[m[32m    },[m
+[32m+[m[32m  });[m
+[32m+[m
+[32m+[m[32m  revalidatePath("/compras");[m
+[32m+[m[32m  revalidatePath("/hoy");[m
+[32m+[m[32m  return { success: true, notice };[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/actions/task.ts b/src/actions/task.ts[m
+[1mindex de2c563..3642452 100644[m
+[1m--- a/src/actions/task.ts[m
+[1m+++ b/src/actions/task.ts[m
+[36m@@ -3,10 +3,12 @@[m
+ import { db } from "@/lib/db";[m
+ import { requireUser, assertMemberOf } from "@/lib/session";[m
+ import { taskSchema } from "@/lib/validators";[m
+[31m-import { computeInitialDueDate, computeNextDueDate } from "@/lib/rotation";[m
+[32m+[m[32mimport { computeInitialDueDate } from "@/lib/rotation";[m
+ import { revalidatePath } from "next/cache";[m
+ import { TaskFrequency } from "@/generated/prisma/client";[m
+[31m-import { sendPushToHousehold, sendPushToUser } from "@/lib/push";[m
+[32m+[m[32mimport { sendPushToUser } from "@/lib/push";[m
+[32m+[m[32mimport { EFFORT_POINTS, isPersonal } from "@/lib/effort";[m
+[32m+[m[32mimport { completeTask } from "@/lib/complete-task";[m
+ [m
+ export async function createTask([m
+   householdId: string,[m
+[36m@@ -14,7 +16,7 @@[m [mexport async function createTask([m
+   formData: FormData,[m
+ ) {[m
+   const user = await requireUser();[m
+[31m-  await assertMemberOf(user.id, householdId);[m
+[32m+[m[32m  const membership = await assertMemberOf(user.id, householdId);[m
+ [m
+   const daysOfWeekRaw = formData[m
+     .getAll("daysOfWeek")[m
+[36m@@ -54,8 +56,12 @@[m [mexport async function createTask([m
+     return { error: "No hay miembros activos en el hogar" };[m
+   }[m
+ [m
+[31m-  const participantIdsRaw = formData.getAll("participantIds").map(String);[m
+[32m+[m[32m  const participantIdsRaw = formData[m
+[32m+[m[32m    .getAll("participantIds")[m
+[32m+[m[32m    .map(String)[m
+[32m+[m[32m    .filter((id) => activeMemberships.some((m) => m.id === id));[m
+   const participantIds = participantIdsRaw.length > 0 ? participantIdsRaw : activeMemberships.map(m => m.id);[m
+[32m+[m[32m  const effortPoints = isPersonal(participantIds.length) ? 0 : membership.role === "ADMIN" ? points : 1;[m
+ [m
+   let nextDueDate: Date;[m
+   if (frequency === "ONCE" && onceDate) {[m
+[36m@@ -73,7 +79,7 @@[m [mexport async function createTask([m
+       householdId,[m
+       title,[m
+       frequency: frequency as TaskFrequency,[m
+[31m-      points,[m
+[32m+[m[32m      points: effortPoints,[m
+       daysOfWeek,[m
+       daysOfMonth,[m
+       active: true,[m
+[36m@@ -111,154 +117,25 @@[m [mexport async function deleteTask(taskId: string, householdId: string) {[m
+   revalidatePath("/hoy");[m
+ }[m
+ [m
+[31m-export async function completarTarea(taskId: string) {[m
+[32m+[m[32mexport async function setTaskEffort(taskId: string, householdId: string, points: number) {[m
+   const user = await requireUser();[m
+[32m+[m[32m  const membership = await assertMemberOf(user.id, householdId);[m
+[32m+[m[32m  if (membership.role !== "ADMIN") return { error: "Solo un admin puede cambiar el esfuerzo" };[m
+[32m+[m[32m  if (!EFFORT_POINTS.includes(points)) return { error: "Esfuerzo inválido" };[m
+ [m
+[31m-  const task = await db.task.findUnique({[m
+[31m-    where: { id: taskId, active: true },[m
+[31m-    select: {[m
+[31m-      id: true,[m
+[31m-      householdId: true,[m
+[31m-      cycleNumber: true,[m
+[31m-      nextAssigneeMembershipId: true,[m
+[31m-      nextAssignee: { select: { userId: true } },[m
+[31m-      points: true,[m
+[31m-      frequency: true,[m
+[31m-      nextDueDate: true,[m
+[31m-      daysOfWeek: true,[m
+[31m-      daysOfMonth: true,[m
+[31m-      participants: {[m
+[31m-        orderBy: { order: "asc" }[m
+[31m-      }[m
+[31m-    },[m
+[31m-  });[m
+[31m-[m
+[31m-  if (!task) {[m
+[31m-    throw new Error("Tarea no encontrada o inactiva");[m
+[31m-  }[m
+[31m-[m
+[31m-  const membership = await assertMemberOf(user.id, task.householdId);[m
+[31m-[m
+[31m-  await db.$transaction(async (tx) => {[m
+[31m-    await tx.taskExecution.create({[m
+[31m-      data: {[m
+[31m-        taskId,[m
+[31m-        cycleNumber: task.cycleNumber,[m
+[31m-        completedById: user.id,[m
+[31m-        assignedToUserId: task.nextAssignee?.userId,[m
+[31m-        wasAssigned: task.nextAssigneeMembershipId === membership.id,[m
+[31m-        pointsEarned: task.nextAssigneeMembershipId === membership.id ? task.points : Math.ceil(task.points * 1.5),[m
+[31m-      },[m
+[31m-    });[m
+[31m-[m
+[31m-    let nextAssigneeId = task.nextAssigneeMembershipId;[m
+[31m-[m
+[31m-    if (task.participants && task.participants.length > 0) {[m
+[31m-      // Use explicit participants rotation[m
+[31m-      const activeParticipants = task.participants.filter(p => {[m
+[31m-        // Here we'd need to fetch memberships to check if they left or are on vacation.[m
+[31m-        // Actually, let's fetch active members and filter the participants list.[m
+[31m-        return true; // We'll compute this in the next block[m
+[31m-      });[m
+[31m-      [m
+[31m-      const activeMembers = await tx.membership.findMany({[m
+[31m-        where: {[m
+[31m-          id: { in: task.participants.map(p => p.membershipId) },[m
+[31m-          leftAt: null,[m
+[31m-          OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],[m
+[31m-        }[m
+[31m-      });[m
+[31m-      [m
+[31m-      // Filter out participants who are not active[m
+[31m-      const validParticipants = task.participants.filter(p => activeMembers.some(m => m.id === p.membershipId));[m
+[31m-[m
+[31m-      if (validParticipants.length > 0) {[m
+[31m-        const currentIndex = validParticipants.findIndex([m
+[31m-          (p) => p.membershipId === task.nextAssigneeMembershipId,[m
+[31m-        );[m
+[31m-        const nextIndex =[m
+[31m-          currentIndex === -1 ? 0 : (currentIndex + 1) % validParticipants.length;[m
+[31m-        nextAssigneeId = validParticipants[nextIndex].membershipId;[m
+[31m-      }[m
+[31m-[m
+[31m-    } else {[m
+[31m-      // Fallback to global rotation[m
+[31m-      const activeMembers = await tx.membership.findMany({[m
+[31m-        where: {[m
+[31m-          householdId: task.householdId,[m
+[31m-          leftAt: null,[m
+[31m-          OR: [{ onVacationUntil: null }, { onVacationUntil: { lt: new Date() } }],[m
+[31m-        },[m
+[31m-        orderBy: { rotationOrder: "asc" },[m
+[31m-      });[m
+[31m-[m
+[31m-      if (activeMembers.length > 0) {[m
+[31m-        const currentIndex = activeMembers.findIndex([m
+[31m-          (m) => m.id === task.nextAssigneeMembershipId,[m
+[31m-        );[m
+[31m-        const nextIndex =[m
+[31m-          currentIndex === -1 ? 0 : (currentIndex + 1) % activeMembers.length;[m
+[31m-        nextAssigneeId = activeMembers[nextIndex].id;[m
+[31m-      }[m
+[31m-    }[m
+[31m-[m
+[31m-    if (task.frequency === "ONCE") {[m
+[31m-      await tx.task.update({[m
+[31m-        where: { id: taskId },[m
+[31m-        data: {[m
+[31m-          active: false,[m
+[31m-        },[m
+[31m-      });[m
+[31m-    } else {[m
+[31m-      await tx.task.update({[m
+[31m-        where: { id: taskId },[m
+[31m-        data: {[m
+[31m-          nextAssigneeMembershipId: nextAssigneeId,[m
+[31m-          nextDueDate: computeNextDueDate([m
+[31m-            task.nextDueDate,[m
+[31m-            task.frequency,[m
+[31m-            task.daysOfWeek,[m
+[31m-            task.daysOfMonth,[m
+[31m-          ),[m
+[31m-          cycleNumber: { increment: 1 },[m
+[31m-        },[m
+[31m-      });[m
+[31m-    }[m
+[32m+[m[32m  await db.task.update({[m
+[32m+[m[32m    where: { id: taskId, householdId },[m
+[32m+[m[32m    data: { points },[m
+   });[m
+ [m
+[31m-  revalidatePath("/hoy");[m
+   revalidatePath("/tareas");[m
+[32m+[m[32m  revalidatePath("/hoy");[m
+[32m+[m[32m  return { success: true };[m
+[32m+[m[32m}[m
+ [m
+[31m-  let notice = null;[m
+[31m-  const taskData = await db.task.findUnique({[m
+[31m-    where: { id: taskId },[m
+[31m-    select: { title: true, householdId: true, points: true },[m
+[31m-  });[m
+[31m-  if (taskData) {[m
+[31m-    notice = await db.notice.create({[m
+[31m-      data: {[m
+[31m-        householdId: taskData.householdId,[m
+[31m-        authorId: user.id,[m
+[31m-        content: `✨ ${user.name} completó la tarea "${taskData.title}" y ganó ${taskData.points} puntos.`,[m
+[31m-      },[m
+[31m-      include: {[m
+[31m-        author: { select: { name: true, image: true } },[m
+[31m-        reactions: true,[m
+[31m-      },[m
+[31m-    });[m
+[31m-[m
+[31m-    sendPushToHousehold([m
+[31m-      taskData.householdId,[m
+[31m-      {[m
+[31m-        title: "Tarea completada ✨",[m
+[31m-        body: `${user.name} completó "${taskData.title}"`,[m
+[31m-        url: "/hoy",[m
+[31m-      },[m
+[31m-      user.id,[m
+[31m-    ).catch(() => {});[m
+[31m-  }[m
+[31m-[m
+[31m-  return { success: true, notice };[m
+[32m+[m[32mexport async function completarTarea(taskId: string, expectedCycle: number) {[m
+[32m+[m[32m  const user = await requireUser();[m
+[32m+[m[32m  return completeTask(user, taskId, expectedCycle);[m
+ }[m
+ [m
+ export async function swapTurno(taskId: string, toMembershipId: string) {[m
+[1mdiff --git a/src/app/(app)/compras/page.tsx b/src/app/(app)/compras/page.tsx[m
+[1mindex 33bce31..2ecfa38 100644[m
+[1m--- a/src/app/(app)/compras/page.tsx[m
+[1m+++ b/src/app/(app)/compras/page.tsx[m
+[36m@@ -14,6 +14,7 @@[m [mimport {[m
+   DebtPayButton,[m
+   ConfirmSettlementButton,[m
+   ReportErrorButton,[m
+[32m+[m[32m  DeleteExpenseButton,[m
+ } from "@/components/shopping-actions";[m
+ import { RealtimeRefresh } from "@/components/realtime-refresh";[m
+ import { cn } from "@/lib/utils";[m
+[36m@@ -214,9 +215,18 @@[m [mexport default async function ComprasPage({[m
+                       </p>[m
+                     </div>[m
+                   </div>[m
+[31m-                  <span className="text-[14px] font-bold text-on-surface shrink-0">[m
+[31m-                    {formatPrice(exp.amount)}[m
+[31m-                  </span>[m
+[32m+[m[32m                  <div className="flex items-center gap-1 shrink-0">[m
+[32m+[m[32m                    <span className="text-[14px] font-bold text-on-surface">[m
+[32m+[m[32m                      {formatPrice(exp.amount)}[m
+[32m+[m[32m                    </span>[m
+[32m+[m[32m                    {(exp.payerId === user.id || active.role === "ADMIN") && ([m
+[32m+[m[32m                      <DeleteExpenseButton[m
+[32m+[m[32m                        expenseId={exp.id}[m
+[32m+[m[32m                        householdId={active.householdId}[m
+[32m+[m[32m                        title={exp.title}[m
+[32m+[m[32m                      />[m
+[32m+[m[32m                    )}[m
+[32m+[m[32m                  </div>[m
+                 </li>[m
+               ))}[m
+             </ul>[m
+[1mdiff --git a/src/app/(app)/hoy/page.tsx b/src/app/(app)/hoy/page.tsx[m
+[1mindex 755312b..13170b8 100644[m
+[1m--- a/src/app/(app)/hoy/page.tsx[m
+[1m+++ b/src/app/(app)/hoy/page.tsx[m
+[36m@@ -8,6 +8,9 @@[m [mimport { UserHeaderNav } from "@/components/user-header-nav";[m
+ import { OnboardingEmpty } from "@/components/onboarding-empty";[m
+ import { getBalances } from "@/actions/settlement";[m
+ import { HoyTabs } from "./client";[m
+[32m+[m[32mimport { DueChip } from "@/components/due-chip";[m
+[32m+[m[32mimport { chileToday, daysUntil } from "@/lib/dates";[m
+[32m+[m[32mimport { isPersonal } from "@/lib/effort";[m
+ [m
+ function formatPrice(n: number) {[m
+   return "$" + n.toLocaleString("es-CL");[m
+[36m@@ -35,21 +38,43 @@[m [mexport default async function HoyPage({[m
+   const householdIds = activeMemberships.map((m) => m.household.id);[m
+   const mainHouseholdId = householdIds[0];[m
+ [m
+[31m-  // 1. Tareas pendientes de hoy[m
+[31m-  const endOfToday = new Date();[m
+[31m-  endOfToday.setHours(23, 59, 59, 999);[m
+[31m-[m
+[31m-  const pendingTasks = await db.task.findMany({[m
+[32m+[m[32m  // 1. Tareas: las mías (atrasadas, hoy, próximos 7 días) y las de otros donde puedo ayudar[m
+[32m+[m[32m  const today = chileToday();[m
+[32m+[m[32m  const myMembershipIds = activeMemberships.map((m) => m.id);[m
+[32m+[m[32m  const weekTasks = await db.task.findMany({[m
+     where: {[m
+[31m-      nextAssigneeMembershipId: { in: activeMemberships.map((m) => m.id) },[m
+[32m+[m[32m      householdId: { in: householdIds },[m
+       active: true,[m
+[31m-      nextDueDate: { lte: endOfToday },[m
+[32m+[m[32m      nextDueDate: { lt: new Date(today.getTime() + 8 * 86_400_000) },[m
+[32m+[m[32m    },[m
+[32m+[m[32m    include: {[m
+[32m+[m[32m      household: { select: { name: true } },[m
+[32m+[m[32m      nextAssignee: { select: { user: { select: { name: true } } } },[m
+[32m+[m[32m      participants: { select: { membershipId: true } },[m
+     },[m
+[31m-    include: { household: { select: { name: true } } },[m
+     orderBy: { nextDueDate: "asc" },[m
+[31m-    take: 5,[m
+   });[m
+ [m
+[32m+[m[32m  const isMine = (t: (typeof weekTasks)[number]) =>[m
+[32m+[m[32m    myMembershipIds.includes(t.nextAssigneeMembershipId ?? "");[m
+[32m+[m[32m  const mine = weekTasks.filter(isMine);[m
+[32m+[m[32m  const taskGroups = {[m
+[32m+[m[32m    overdue: mine.filter((t) => daysUntil(t.nextDueDate, today) < 0),[m
+[32m+[m[32m    today: mine.filter((t) => daysUntil(t.nextDueDate, today) === 0),[m
+[32m+[m[32m    upcoming: mine.filter((t) => daysUntil(t.nextDueDate, today) > 0).slice(0, 5),[m
+[32m+[m[32m    help: weekTasks[m
+[32m+[m[32m      .filter([m
+[32m+[m[32m        (t) =>[m
+[32m+[m[32m          !isMine(t) &&[m
+[32m+[m[32m          daysUntil(t.nextDueDate, today) <= 0 &&[m
+[32m+[m[32m          !isPersonal(t.participants.length) &&[m
+[32m+[m[32m          (t.participants.length === 0 ||[m
+[32m+[m[32m            t.participants.some((p) => myMembershipIds.includes(p.membershipId))),[m
+[32m+[m[32m      )[m
+[32m+[m[32m      .slice(0, 5),[m
+[32m+[m[32m  };[m
+[32m+[m[32m  const pendingTaskCount = taskGroups.overdue.length + taskGroups.today.length;[m
+[32m+[m
+   // 2. Cuentas (Mensuales) por pagar por el usuario[m
+   const pendingBillsRaw = await db.monthlyBill.findMany({[m
+     where: {[m
+[36m@@ -110,7 +135,7 @@[m [mexport default async function HoyPage({[m
+   const myDebts = myDebtsArrays.flat();[m
+ [m
+   const firstName = userName.split(" ")[0] ?? "";[m
+[31m-  const totalPendingItems = pendingTasks.length + pendingBills.length + myDebts.length;[m
+[32m+[m[32m  const totalPendingItems = pendingTaskCount + pendingBills.length + myDebts.length;[m
+ [m
+   // CHAT DATA[m
+   let chatMessages: any[] = [];[m
+[36m@@ -181,13 +206,15 @@[m [mexport default async function HoyPage({[m
+               <p className="text-on-surface-variant text-sm mt-1">[m
+                 {totalPendingItems === 0[m
+                   ? "No tienes pendientes hoy. ¡Aprovecha el día!"[m
+[31m-                  : `Tienes pendientes por resolver.`}[m
+[32m+[m[32m                  : pendingTaskCount > 0[m
+[32m+[m[32m                    ? `Tienes ${pendingTaskCount} tarea${pendingTaskCount === 1 ? "" : "s"} para hoy.`[m
+[32m+[m[32m                    : "Tienes pendientes por resolver."}[m
+               </p>[m
+             </div>[m
+ [m
+             <div className="space-y-4">[m
+               {/* TAREAS */}[m
+[31m-              <TasksCard tasks={pendingTasks} />[m
+[32m+[m[32m              <TasksCard groups={taskGroups} today={today} showHousehold={householdIds.length > 1} />[m
+ [m
+               {/* DEUDAS COMPRAS */}[m
+               {myDebts.length > 0 && ([m
+[36m@@ -213,52 +240,75 @@[m [mexport default async function HoyPage({[m
+ [m
+ // ===================== WIDGETS ===================== //[m
+ [m
+[31m-type PendingTask = {[m
+[32m+[m[32mtype HoyTask = {[m
+   id: string;[m
+   householdId: string;[m
+   title: string;[m
+   points: number;[m
+[32m+[m[32m  cycleNumber: number;[m
+   nextDueDate: Date;[m
+   household: { name: string };[m
+[32m+[m[32m  nextAssignee: { user: { name: string } } | null;[m
+[32m+[m[32m  participants: { membershipId: string }[];[m
+ };[m
+ [m
+[31m-function TasksCard({ tasks }: { tasks: PendingTask[] }) {[m
+[31m-  if (tasks.length === 0) return null;[m
+[32m+[m[32mtype TaskGroups = { overdue: HoyTask[]; today: HoyTask[]; upcoming: HoyTask[]; help: HoyTask[] };[m
+[32m+[m
+[32m+[m[32mfunction TasksCard({[m
+[32m+[m[32m  groups,[m
+[32m+[m[32m  today,[m
+[32m+[m[32m  showHousehold,[m
+[32m+[m[32m}: {[m
+[32m+[m[32m  groups: TaskGroups;[m
+[32m+[m[32m  today: Date;[m
+[32m+[m[32m  showHousehold: boolean;[m
+[32m+[m[32m}) {[m
+[32m+[m[32m  const sections = [[m
+[32m+[m[32m    { key: "overdue", title: "Atrasadas", tasks: groups.overdue, helping: false },[m
+[32m+[m[32m    { key: "today", title: "Para hoy", tasks: groups.today, helping: false },[m
+[32m+[m[32m    { key: "upcoming", title: "Próximos días", tasks: groups.upcoming, helping: false },[m
+[32m+[m[32m    { key: "help", title: "Puedes ayudar (+50% RC)", tasks: groups.help, helping: true },[m
+[32m+[m[32m  ].filter((s) => s.tasks.length > 0);[m
+[32m+[m
+[32m+[m[32m  if (sections.length === 0) return null;[m
+ [m
+   return ([m
+     <section className="rounded-[14px] bg-surface-container-lowest border border-outline-variant p-4 shadow-[0_2px_10px_rgba(15,23,42,0.05)]">[m
+[31m-      <header className="flex items-center justify-between mb-3">[m
+[31m-        <div className="flex items-center gap-2">[m
+[31m-          <Sparkles size={18} className="text-primary" />[m
+[31m-          <h2 className="font-display font-semibold text-[16px]">Tus tareas de hoy</h2>[m
+[31m-        </div>[m
+[31m-        <span className="bg-primary-container text-on-primary-container text-[11px] font-bold px-[9px] py-[3px] rounded-pill">[m
+[31m-          {tasks.length}[m
+[31m-        </span>[m
+[32m+[m[32m      <header className="flex items-center gap-2 mb-1">[m
+[32m+[m[32m        <Sparkles size={18} className="text-primary" />[m
+[32m+[m[32m        <h2 className="font-display font-semibold text-[16px]">Tus tareas</h2>[m
+       </header>[m
+ [m
+[31m-      <ul className="divide-y divide-outline-variant -mx-1">[m
+[31m-        {tasks.map((task) => {[m
+[31m-          const overdue = task.nextDueDate < new Date();[m
+[31m-          return ([m
+[31m-            <li key={task.id} className="flex items-center gap-3 px-1 py-3">[m
+[31m-              <div className="flex-1 min-w-0">[m
+[31m-                <p className="font-semibold text-[15px] truncate">{task.title}</p>[m
+[31m-                <p className="text-xs text-on-surface-variant flex items-center gap-2 mt-0.5 flex-wrap">[m
+[31m-                  <span className="bg-secondary-container text-on-secondary-container text-[10px] font-semibold px-2 py-0.5 rounded-pill">[m
+[31m-                    {task.household.name}[m
+[31m-                  </span>[m
+[31m-                  <span>{task.points} RC</span>[m
+[31m-                  {overdue && <span className="text-error font-bold">· Atrasada</span>}[m
+[31m-                </p>[m
+[31m-              </div>[m
+[31m-              <CompleteTaskButton taskId={task.id} householdId={task.householdId} />[m
+[31m-            </li>[m
+[31m-          );[m
+[31m-        })}[m
+[31m-      </ul>[m
+[32m+[m[32m      {sections.map((s) => ([m
+[32m+[m[32m        <div key={s.key} className="mt-3">[m
+[32m+[m[32m          <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">{s.title}</p>[m
+[32m+[m[32m          <ul className="divide-y divide-outline-variant -mx-1">[m
+[32m+[m[32m            {s.tasks.map((task) => {[m
+[32m+[m[32m              const personal = isPersonal(task.participants.length);[m
+[32m+[m[32m              const rc = s.helping ? Math.ceil(task.points * 1.5) : task.points;[m
+[32m+[m[32m              return ([m
+[32m+[m[32m                <li key={task.id} className="flex items-center gap-3 px-1 py-3">[m
+[32m+[m[32m                  <div className="flex-1 min-w-0">[m
+[32m+[m[32m                    <p className="font-semibold text-[15px] truncate">{task.title}</p>[m
+[32m+[m[32m                    <div className="text-xs text-on-surface-variant flex items-center gap-2 mt-1 flex-wrap">[m
+[32m+[m[32m                      <DueChip due={task.nextDueDate} today={today} />[m
+[32m+[m[32m                      {s.helping && task.nextAssignee && ([m
+[32m+[m[32m                        <span>Le toca a {task.nextAssignee.user.name.split(" ")[0]}</span>[m
+[32m+[m[32m                      )}[m
+[32m+[m[32m                      {!personal && <span className="font-semibold">{s.helping ? "+" : ""}{rc} RC</span>}[m
+[32m+[m[32m                      {showHousehold && <span>· {task.household.name}</span>}[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                  <CompleteTaskButton taskId={task.id} householdId={task.householdId} cycleNumber={task.cycleNumber} />[m
+[32m+[m[32m                </li>[m
+[32m+[m[32m              );[m
+[32m+[m[32m            })}[m
+[32m+[m[32m          </ul>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      ))}[m
+[32m+[m
+       <Link href="/tareas" className="block text-center text-primary text-[13px] font-semibold mt-1 py-1">[m
+[31m-        Ver módulo de tareas →[m
+[32m+[m[32m        Ver todas las tareas →[m
+       </Link>[m
+     </section>[m
+   );[m
+[1mdiff --git a/src/app/(app)/tareas/nueva/page.tsx b/src/app/(app)/tareas/nueva/page.tsx[m
+[1mindex 42b1449..e12a10c 100644[m
+[1m--- a/src/app/(app)/tareas/nueva/page.tsx[m
+[1m+++ b/src/app/(app)/tareas/nueva/page.tsx[m
+[36m@@ -15,8 +15,7 @@[m [mexport default async function NuevaTareaPage({[m
+ [m
+   if (!hogarId) redirect("/tareas");[m
+ [m
+[31m-  // Cualquier miembro del hogar puede crear tareas[m
+[31m-  await assertMemberOf(user.id, hogarId);[m
+[32m+[m[32m  const membership = await assertMemberOf(user.id, hogarId);[m
+ [m
+   const members = await db.membership.findMany({[m
+     where: {[m
+[36m@@ -44,9 +43,10 @@[m [mexport default async function NuevaTareaPage({[m
+         <div className="w-[38px]" />[m
+       </header>[m
+ [m
+[31m-      <CreateTaskForm [m
+[31m-        householdId={hogarId} [m
+[31m-        members={members.map(m => ({ id: m.id, name: m.user.name, image: m.user.image }))} [m
+[32m+[m[32m      <CreateTaskForm[m
+[32m+[m[32m        householdId={hogarId}[m
+[32m+[m[32m        members={members.map(m => ({ id: m.id, name: m.user.name, image: m.user.image }))}[m
+[32m+[m[32m        isAdmin={membership.role === "ADMIN"}[m
+       />[m
+     </main>[m
+   );[m
+[1mdiff --git a/src/app/(app)/tareas/page.tsx b/src/app/(app)/tareas/page.tsx[m
+[1mindex 25f2464..dabc4b4 100644[m
+[1m--- a/src/app/(app)/tareas/page.tsx[m
+[1m+++ b/src/app/(app)/tareas/page.tsx[m
+[36m@@ -6,29 +6,21 @@[m [mimport { Button } from "@/components/ui/button";[m
+ import { RoomiHeader, RoomiSymbol } from "@/components/roomi-logo";[m
+ import { AvatarInitials } from "@/components/avatar-initials";[m
+ import { UserHeaderNav } from "@/components/user-header-nav";[m
+[31m-import { CompleteTaskButton, DeleteTaskButton, SwapButton } from "@/components/task-actions";[m
+[32m+[m[32mimport { CompleteTaskButton, DeleteTaskButton, EffortBadge, SwapButton } from "@/components/task-actions";[m
+ import { RealtimeRefresh } from "@/components/realtime-refresh";[m
+[32m+[m[32mimport { DueChip } from "@/components/due-chip";[m
+[32m+[m[32mimport { chileToday } from "@/lib/dates";[m
+[32m+[m[32mimport { isPersonal } from "@/lib/effort";[m
+ import { cn } from "@/lib/utils";[m
+ [m
+ const FREQ_LABEL: Record<string, string> = {[m
+[32m+[m[32m  ONCE: "Una vez",[m
+   DAILY: "Diaria",[m
+   WEEKLY: "Semanal",[m
+   BIWEEKLY: "Quincenal",[m
+   MONTHLY: "Mensual",[m
+ };[m
+ [m
+[31m-function formatDue(d: Date) {[m
+[31m-  const now = new Date();[m
+[31m-  now.setHours(0, 0, 0, 0);[m
+[31m-  const due = new Date(d);[m
+[31m-  due.setHours(0, 0, 0, 0);[m
+[31m-  const diff = Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));[m
+[31m-  if (diff < 0) return `Venció hace ${Math.abs(diff)} día${Math.abs(diff) === 1 ? "" : "s"}`;[m
+[31m-  if (diff === 0) return "Vence hoy";[m
+[31m-  if (diff === 1) return "Vence mañana";[m
+[31m-  return `Vence en ${diff} días`;[m
+[31m-}[m
+[31m-[m
+ export default async function TareasPage({[m
+   searchParams,[m
+ }: {[m
+[36m@@ -74,9 +66,13 @@[m [mexport default async function TareasPage({[m
+ [m
+   const tasks = await db.task.findMany({[m
+     where: { householdId: active.householdId, active: true },[m
+[31m-    include: { nextAssignee: { include: { user: true } } },[m
+[32m+[m[32m    include: {[m
+[32m+[m[32m      nextAssignee: { include: { user: true } },[m
+[32m+[m[32m      _count: { select: { participants: true } },[m
+[32m+[m[32m    },[m
+     orderBy: { nextDueDate: "asc" },[m
+   });[m
+[32m+[m[32m  const today = chileToday();[m
+ [m
+   const isAdmin = active.role === "ADMIN";[m
+ [m
+[36m@@ -93,7 +89,13 @@[m [mexport default async function TareasPage({[m
+       completedAt: { gte: last24h },[m
+     },[m
+     include: {[m
+[31m-      task: { select: { title: true, household: { select: { name: true } } } },[m
+[32m+[m[32m      task: {[m
+[32m+[m[32m        select: {[m
+[32m+[m[32m          title: true,[m
+[32m+[m[32m          household: { select: { name: true } },[m
+[32m+[m[32m          _count: { select: { participants: true } },[m
+[32m+[m[32m        },[m
+[32m+[m[32m      },[m
+       completedBy: { select: { name: true } },[m
+       assignedTo: { select: { name: true } },[m
+     },[m
+[36m@@ -159,9 +161,13 @@[m [mexport default async function TareasPage({[m
+                     {task.title}[m
+                   </h3>[m
+                 </div>[m
+[31m-                <span className="bg-primary-container text-on-primary-container text-[11px] font-bold px-2.5 py-1 rounded-pill">[m
+[31m-                  {task.points} RC[m
+[31m-                </span>[m
+[32m+[m[32m                <EffortBadge[m
+[32m+[m[32m                  taskId={task.id}[m
+[32m+[m[32m                  householdId={task.householdId}[m
+[32m+[m[32m                  points={task.points}[m
+[32m+[m[32m                  personal={isPersonal(task._count.participants)}[m
+[32m+[m[32m                  isAdmin={isAdmin}[m
+[32m+[m[32m                />[m
+               </div>[m
+ [m
+               {task.nextAssignee && ([m
+[36m@@ -185,9 +191,7 @@[m [mexport default async function TareasPage({[m
+                   <span className="bg-secondary-container text-on-secondary-container text-[11px] font-semibold px-2.5 py-1 rounded-pill">[m
+                     {FREQ_LABEL[task.frequency]}[m
+                   </span>[m
+[31m-                  <span className="text-xs text-on-surface-variant">[m
+[31m-                    {formatDue(task.nextDueDate)}[m
+[31m-                  </span>[m
+[32m+[m[32m                  <DueChip due={task.nextDueDate} today={today} />[m
+                 </div>[m
+                 <div className="flex items-center gap-1">[m
+                   {task.nextAssigneeMembershipId === active.id && ([m
+[36m@@ -205,7 +209,7 @@[m [mexport default async function TareasPage({[m
+                       householdId={task.householdId}[m
+                     />[m
+                   )}[m
+[31m-                  <CompleteTaskButton taskId={task.id} householdId={task.householdId} />[m
+[32m+[m[32m                  <CompleteTaskButton taskId={task.id} householdId={task.householdId} cycleNumber={task.cycleNumber} />[m
+                 </div>[m
+               </div>[m
+             </li>[m
+[36m@@ -234,10 +238,11 @@[m [mexport default async function TareasPage({[m
+ type TaskExecutionProp = {[m
+   id: string;[m
+   completedAt: Date;[m
+[31m-  task: { title: string; household: { name: string } };[m
+[32m+[m[32m  task: { title: string; household: { name: string }; _count: { participants: number } };[m
+   completedBy: { name: string };[m
+   assignedTo: { name: string } | null;[m
+   pointsEarned: number;[m
+[32m+[m[32m  wasAssigned: boolean;[m
+ };[m
+ [m
+ function TasksHistoryCard({ executions }: { executions: TaskExecutionProp[] }) {[m
+[36m@@ -246,22 +251,28 @@[m [mfunction TasksHistoryCard({ executions }: { executions: TaskExecutionProp[] }) {[m
+       <header className="flex items-center justify-between mb-3">[m
+         <div className="flex items-center gap-2">[m
+           <Sparkles size={18} className="text-primary" />[m
+[31m-          <h2 className="font-display font-semibold text-[16px]">Tareas hechas (24h)</h2>[m
+[32m+[m[32m          <h2 className="font-display font-semibold text-[16px]">Últimas 24 horas</h2>[m
+         </div>[m
+       </header>[m
+ [m
+       <ul className="divide-y divide-outline-variant -mx-1">[m
+         {executions.map((exec) => {[m
+           const samePerson = !exec.assignedTo || exec.completedBy.name === exec.assignedTo.name;[m
+[31m-          [m
+[32m+[m[32m          const personal = isPersonal(exec.task._count.participants);[m
+[32m+[m[32m          const skipped = exec.pointsEarned === 0 && !personal;[m
+[32m+[m
+           return ([m
+             <li key={exec.id} className="flex items-center gap-3 px-1 py-3">[m
+               <div className="flex-1 min-w-0">[m
+[31m-                <p className="font-semibold text-[15px] truncate line-through text-on-surface-variant">[m
+[32m+[m[32m                <p className={cn("font-semibold text-[15px] truncate text-on-surface-variant", !skipped && "line-through")}>[m
+                   {exec.task.title}[m
+                 </p>[m
+                 <p className="text-xs text-on-surface-variant mt-0.5 leading-snug">[m
+[31m-                  {samePerson ? ([m
+[32m+[m[32m                  {skipped ? ([m
+[32m+[m[32m                    <span className="text-error">[m
+[32m+[m[32m                      Nadie la hizo · le tocaba a <span className="font-semibold">{exec.completedBy.name}</span>[m
+[32m+[m[32m                    </span>[m
+[32m+[m[32m                  ) : samePerson ? ([m
+                     <span>Turno: <span className="font-semibold">{exec.completedBy.name}</span></span>[m
+                   ) : ([m
+                     <span>[m
+[36m@@ -270,9 +281,9 @@[m [mfunction TasksHistoryCard({ executions }: { executions: TaskExecutionProp[] }) {[m
+                   )}[m
+                 </p>[m
+               </div>[m
+[31m-              <div className="text-right shrink-0">[m
+[31m-                <span className="text-[11px] font-bold text-primary">+{exec.pointsEarned} RC</span>[m
+[31m-              </div>[m
+[32m+[m[32m              {exec.pointsEarned > 0 && ([m
+[32m+[m[32m                <span className="text-[11px] font-bold text-primary shrink-0">+{exec.pointsEarned} RC</span>[m
+[32m+[m[32m              )}[m
+             </li>[m
+           );[m
+         })}[m
+[1mdiff --git a/src/app/api/cron/advance-overdue/route.ts b/src/app/api/cron/advance-overdue/route.ts[m
+[1mindex bd2fd14..b12365c 100644[m
+[1m--- a/src/app/api/cron/advance-overdue/route.ts[m
+[1m+++ b/src/app/api/cron/advance-overdue/route.ts[m
+[36m@@ -1,6 +1,7 @@[m
+ import { NextRequest, NextResponse } from "next/server";[m
+ import { db } from "@/lib/db";[m
+ import { computeNextDueDate } from "@/lib/rotation";[m
+[32m+[m[32mimport { chileToday } from "@/lib/dates";[m
+ [m
+ export const dynamic = "force-dynamic";[m
+ export const runtime = "nodejs";[m
+[36m@@ -11,12 +12,12 @@[m [mexport async function POST(req: NextRequest) {[m
+     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });[m
+   }[m
+ [m
+[31m-  const startOfToday = new Date();[m
+[31m-  startOfToday.setHours(0, 0, 0, 0);[m
+[32m+[m[32m  const startOfToday = chileToday();[m
+ [m
+   const overdue = await db.task.findMany({[m
+     where: {[m
+       active: true,[m
+[32m+[m[32m      frequency: { not: "ONCE" },[m
+       nextDueDate: { lt: startOfToday },[m
+       nextAssigneeMembershipId: { not: null },[m
+     },[m
+[36m@@ -55,6 +56,7 @@[m [mexport async function POST(req: NextRequest) {[m
+             taskId: task.id,[m
+             cycleNumber: task.cycleNumber,[m
+             completedById: assignedMembership.userId,[m
+[32m+[m[32m            assignedToUserId: assignedMembership.userId,[m
+             wasAssigned: true,[m
+             pointsEarned: 0,[m
+           },[m
+[36m@@ -103,16 +105,16 @@[m [mexport async function POST(req: NextRequest) {[m
+           }[m
+         }[m
+ [m
+[32m+[m[32m        let nextDueDate = task.nextDueDate;[m
+[32m+[m[32m        for (let i = 0; i < 1000 && nextDueDate < startOfToday; i++) {[m
+[32m+[m[32m          nextDueDate = computeNextDueDate(nextDueDate, task.frequency, task.daysOfWeek, task.daysOfMonth);[m
+[32m+[m[32m        }[m
+[32m+[m
+         await tx.task.update({[m
+           where: { id: task.id },[m
+           data: {[m
+             nextAssigneeMembershipId: nextAssigneeId,[m
+[31m-            nextDueDate: computeNextDueDate([m
+[31m-              task.nextDueDate,[m
+[31m-              task.frequency,[m
+[31m-              task.daysOfWeek,[m
+[31m-              task.daysOfMonth,[m
+[31m-            ),[m
+[32m+[m[32m            nextDueDate,[m
+             cycleNumber: { increment: 1 },[m
+           },[m
+         });[m
+[1mdiff --git a/src/app/api/cron/daily-reminder/route.ts b/src/app/api/cron/daily-reminder/route.ts[m
+[1mindex af4e44f..eb5302e 100644[m
+[1m--- a/src/app/api/cron/daily-reminder/route.ts[m
+[1m+++ b/src/app/api/cron/daily-reminder/route.ts[m
+[36m@@ -1,54 +1,57 @@[m
+ import { NextRequest, NextResponse } from "next/server";[m
+ import { db } from "@/lib/db";[m
+ import { sendPushToUser } from "@/lib/push";[m
+[32m+[m[32mimport { chileToday, daysUntil } from "@/lib/dates";[m
+ [m
+ export const dynamic = "force-dynamic";[m
+ export const runtime = "nodejs";[m
+ [m
+[32m+[m[32mconst MAX_PER_USER = 3;[m
+[32m+[m
+ export async function POST(req: NextRequest) {[m
+   const auth = req.headers.get("authorization");[m
+   if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {[m
+     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });[m
+   }[m
+ [m
+[31m-  const endOfToday = new Date();[m
+[31m-  endOfToday.setHours(23, 59, 59, 999);[m
+[31m-[m
+[32m+[m[32m  const today = chileToday();[m
+   const dueTasks = await db.task.findMany({[m
+     where: {[m
+       active: true,[m
+[31m-      nextDueDate: { lte: endOfToday },[m
+[32m+[m[32m      nextDueDate: { lt: new Date(today.getTime() + 86_400_000) },[m
+       nextAssigneeMembershipId: { not: null },[m
+     },[m
+[31m-    include: {[m
+[31m-      nextAssignee: {[m
+[31m-        select: { userId: true, user: { select: { name: true } } },[m
+[31m-      },[m
+[31m-    },[m
+[32m+[m[32m    include: { nextAssignee: { select: { userId: true } } },[m
+[32m+[m[32m    orderBy: { nextDueDate: "asc" },[m
+   });[m
+ [m
+[31m-  const byUser = new Map<string, string[]>();[m
+[32m+[m[32m  const byUser = new Map<string, typeof dueTasks>();[m
+   for (const task of dueTasks) {[m
+     if (!task.nextAssignee) continue;[m
+     const uid = task.nextAssignee.userId;[m
+[31m-    const list = byUser.get(uid) ?? [];[m
+[31m-    list.push(task.title);[m
+[31m-    byUser.set(uid, list);[m
+[32m+[m[32m    byUser.set(uid, [...(byUser.get(uid) ?? []), task]);[m
+   }[m
+ [m
+   let sent = 0;[m
+[31m-  for (const [userId, titles] of byUser) {[m
+[31m-    const body =[m
+[31m-      titles.length === 1[m
+[31m-        ? titles[0][m
+[31m-        : `${titles[0]} y ${titles.length - 1} más`;[m
+[31m-[m
+[31m-    await sendPushToUser(userId, {[m
+[31m-      title: `Hoy te toca 🧹`,[m
+[31m-      body,[m
+[31m-      url: "/tareas",[m
+[31m-    }).catch(() => {});[m
+[31m-[m
+[32m+[m[32m  for (const [userId, tasks] of byUser) {[m
+[32m+[m[32m    for (const task of tasks.slice(0, MAX_PER_USER)) {[m
+[32m+[m[32m      const overdue = daysUntil(task.nextDueDate, today) < 0;[m
+[32m+[m[32m      await sendPushToUser(userId, {[m
+[32m+[m[32m        title: overdue ? "Tarea atrasada ⏰" : "Hoy te toca 🧹",[m
+[32m+[m[32m        body: task.title,[m
+[32m+[m[32m        url: "/hoy",[m
+[32m+[m[32m        tag: `task-${task.id}`,[m
+[32m+[m[32m        task: { id: task.id, cycle: task.cycleNumber, title: task.title },[m
+[32m+[m[32m      }).catch(() => {});[m
+[32m+[m[32m    }[m
+[32m+[m[32m    if (tasks.length > MAX_PER_USER) {[m
+[32m+[m[32m      await sendPushToUser(userId, {[m
+[32m+[m[32m        title: "Tienes más tareas pendientes",[m
+[32m+[m[32m        body: `Y ${tasks.length - MAX_PER_USER} más. Revísalas en Roomi.`,[m
+[32m+[m[32m        url: "/hoy",[m
+[32m+[m[32m        tag: "tasks-more",[m
+[32m+[m[32m      }).catch(() => {});[m
+[32m+[m[32m    }[m
+     sent++;[m
+   }[m
+ [m
+[1mdiff --git a/src/components/auto-capitalize.tsx b/src/components/auto-capitalize.tsx[m
+[1mindex 58f5e88..b2f8073 100644[m
+[1m--- a/src/components/auto-capitalize.tsx[m
+[1m+++ b/src/components/auto-capitalize.tsx[m
+[36m@@ -16,7 +16,8 @@[m [mexport function AutoCapitalize() {[m
+           type === "password" ||[m
+           type === "url" ||[m
+           type === "number" ||[m
+[31m-          type === "hidden"[m
+[32m+[m[32m          type === "hidden" ||[m
+[32m+[m[32m          ["none", "off"].includes(target.getAttribute("autocapitalize") ?? "")[m
+         ) {[m
+           return;[m
+         }[m
+[1mdiff --git a/src/components/household-forms.tsx b/src/components/household-forms.tsx[m
+[1mindex 0787338..a310e60 100644[m
+[1m--- a/src/components/household-forms.tsx[m
+[1m+++ b/src/components/household-forms.tsx[m
+[36m@@ -39,6 +39,9 @@[m [mexport function JoinHouseholdForm() {[m
+       <input[m
+         name="code"[m
+         required[m
+[32m+[m[32m        autoCapitalize="none"[m
+[32m+[m[32m        autoCorrect="off"[m
+[32m+[m[32m        spellCheck={false}[m
+         placeholder="Pega el código o link"[m
+         className="w-full rounded-[12px] border-[1.5px] border-outline px-[14px] py-[13px] bg-surface-container-lowest text-on-surface outline-none focus:border-primary transition-colors text-[16px]"[m
+         style={{ fontFamily: "ui-monospace, monospace" }}[m
+[1mdiff --git a/src/components/shopping-actions.tsx b/src/components/shopping-actions.tsx[m
+[1mindex 42e1d5b..b746141 100644[m
+[1m--- a/src/components/shopping-actions.tsx[m
+[1m+++ b/src/components/shopping-actions.tsx[m
+[36m@@ -1,7 +1,7 @@[m
+ "use client";[m
+ [m
+ import { useActionState, useTransition, useState, useEffect } from "react";[m
+[31m-import { agregarItem, marcarComprado, eliminarItem } from "@/actions/shopping";[m
+[32m+[m[32mimport { agregarItem, marcarComprado, eliminarItem, eliminarGasto } from "@/actions/shopping";[m
+ import { marcarPagado, confirmarPago, reportarErrorPago } from "@/actions/settlement";[m
+ import { broadcastUpdate, broadcastNotice } from "./realtime-refresh";[m
+ import { Button } from "@/components/ui/button";[m
+[36m@@ -406,6 +406,40 @@[m [mexport function DeleteItemButton({[m
+   );[m
+ }[m
+ [m
+[32m+[m[32mexport function DeleteExpenseButton({[m
+[32m+[m[32m  expenseId,[m
+[32m+[m[32m  householdId,[m
+[32m+[m[32m  title,[m
+[32m+[m[32m}: {[m
+[32m+[m[32m  expenseId: string;[m
+[32m+[m[32m  householdId: string;[m
+[32m+[m[32m  title: string;[m
+[32m+[m[32m}) {[m
+[32m+[m[32m  const [pending, startTransition] = useTransition();[m
+[32m+[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <button[m
+[32m+[m[32m      disabled={pending}[m
+[32m+[m[32m      aria-label="Borrar gasto"[m
+[32m+[m[32m      onClick={() => {[m
+[32m+[m[32m        if (!confirm(`¿Borrar el gasto "${title}"? Se recalculan las deudas de todos.`)) return;[m
+[32m+[m[32m        startTransition(async () => {[m
+[32m+[m[32m          const res = await eliminarGasto(expenseId, householdId);[m
+[32m+[m[32m          if ("error" in res) {[m
+[32m+[m[32m            alert(res.error);[m
+[32m+[m[32m            return;[m
+[32m+[m[32m          }[m
+[32m+[m[32m          broadcastUpdate(householdId);[m
+[32m+[m[32m          broadcastNotice(householdId, res.notice);[m
+[32m+[m[32m        });[m
+[32m+[m[32m      }}[m
+[32m+[m[32m      className="p-2 -mr-2 rounded-[10px] text-on-surface-variant hover:text-error hover:bg-error-container transition-colors disabled:opacity-50"[m
+[32m+[m[32m    >[m
+[32m+[m[32m      <Trash2 size={16} />[m
+[32m+[m[32m    </button>[m
+[32m+[m[32m  );[m
+[32m+[m[32m}[m
+[32m+[m
+ /* ────────────── Mark Paid Sheet ────────────── */[m
+ [m
+ type MyDebt = { toUserId: string; amount: number; pendingAmount: number; };[m
+[1mdiff --git a/src/components/task-actions.tsx b/src/components/task-actions.tsx[m
+[1mindex 1bd41d9..f39bb72 100644[m
+[1m--- a/src/components/task-actions.tsx[m
+[1m+++ b/src/components/task-actions.tsx[m
+[36m@@ -2,14 +2,14 @@[m
+ [m
+ import { useActionState, useEffect, useState, useTransition } from "react";[m
+ import { useRouter } from "next/navigation";[m
+[31m-import { ArrowLeftRight, Minus, Plus, Trash2 } from "lucide-react";[m
+[31m-import { createTask, completarTarea, deleteTask, swapTurno } from "@/actions/task";[m
+[32m+[m[32mimport { ArrowLeftRight, Check, Trash2 } from "lucide-react";[m
+[32m+[m[32mimport { createTask, completarTarea, deleteTask, setTaskEffort, swapTurno } from "@/actions/task";[m
+[32m+[m[32mimport { EFFORTS, effortLabel, isPersonal } from "@/lib/effort";[m
+ import { AvatarInitials } from "./avatar-initials";[m
+ import { TaskParticipantsOrder } from "./task-participants-order";[m
+ import { Button } from "@/components/ui/button";[m
+ import { cn } from "@/lib/utils";[m
+ import { broadcastUpdate, broadcastNotice } from "./realtime-refresh";[m
+[31m-import Image from "next/image";[m
+ [m
+ const FREQUENCIES = [[m
+   { value: "ONCE", label: "Una vez" },[m
+[36m@@ -34,12 +34,14 @@[m [mfunction toggle<T>(arr: T[], v: T): T[] {[m
+   return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];[m
+ }[m
+ [m
+[31m-export function CreateTaskForm({ [m
+[32m+[m[32mexport function CreateTaskForm({[m
+   householdId,[m
+[31m-  members [m
+[31m-}: { [m
+[32m+[m[32m  members,[m
+[32m+[m[32m  isAdmin,[m
+[32m+[m[32m}: {[m
+   householdId: string;[m
+   members: { id: string; name: string; image: string | null }[];[m
+[32m+[m[32m  isAdmin: boolean;[m
+ }) {[m
+   const router = useRouter();[m
+   const [state, formAction, isPending] = useActionState([m
+[36m@@ -61,7 +63,7 @@[m [mexport function CreateTaskForm({[m
+   const today = new Date();[m
+   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([today.getDay()]);[m
+   const [daysOfMonth, setDaysOfMonth] = useState<number[]>([today.getDate()]);[m
+[31m-  const [onceDate, setOnceDate] = useState<string>(today.toISOString().split("T")[0]);[m
+[32m+[m[32m  const [onceDate, setOnceDate] = useState<string>(today.toLocaleDateString("sv-SE"));[m
+   const [participants, setParticipants] = useState<string[]>(members.map(m => m.id));[m
+ [m
+   const needsWeek = freq === "WEEKLY" || freq === "BIWEEKLY";[m
+[36m@@ -230,37 +232,40 @@[m [mexport function CreateTaskForm({[m
+ [m
+         <div className="space-y-2">[m
+           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">[m
+[31m-            RoomiCoins[m
+[32m+[m[32m            Esfuerzo[m
+           </p>[m
+[31m-          <div className="flex items-center gap-4 justify-center py-2">[m
+[31m-            <button[m
+[31m-              type="button"[m
+[31m-              onClick={() => setPoints((p) => Math.max(1, p - 1))}[m
+[31m-              disabled={points <= 1}[m
+[31m-              className="w-12 h-12 rounded-full border-[1.5px] border-outline flex items-center justify-center disabled:opacity-30 hover:bg-surface-container"[m
+[31m-            >[m
+[31m-              <Minus size={20} />[m
+[31m-            </button>[m
+[31m-            <div className="flex items-center gap-1 justify-center w-24">[m
+[31m-              <span[m
+[31m-                className="font-display font-semibold text-center"[m
+[31m-                style={{ fontSize: 34, lineHeight: 1 }}[m
+[31m-              >[m
+[31m-                {points}[m
+[31m-              </span>[m
+[31m-              <div className="w-8 h-8 flex items-center justify-center shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.15)]">[m
+[31m-                <Image src="/coins.png" alt="RC" width={32} height={32} className="object-contain w-full h-full" />[m
+[31m-              </div>[m
+[32m+[m[32m          {isPersonal(participants.length) ? ([m
+[32m+[m[32m            <p className="text-[13px] text-on-surface-variant rounded-[12px] bg-surface-container-low border border-outline-variant px-4 py-3">[m
+[32m+[m[32m              Con un solo participante es una <span className="font-semibold text-on-surface">tarea personal</span>: no rota y no suma RoomiCoins.[m
+[32m+[m[32m            </p>[m
+[32m+[m[32m          ) : isAdmin ? ([m
+[32m+[m[32m            <div className="grid gap-2">[m
+[32m+[m[32m              {EFFORTS.map((e) => ([m
+[32m+[m[32m                <button[m
+[32m+[m[32m                  key={e.points}[m
+[32m+[m[32m                  type="button"[m
+[32m+[m[32m                  onClick={() => setPoints(e.points)}[m
+[32m+[m[32m                  aria-pressed={points === e.points}[m
+[32m+[m[32m                  className={cn([m
+[32m+[m[32m                    "flex items-center justify-between gap-3 rounded-[12px] border-[1.5px] px-4 py-3 text-left transition-colors",[m
+[32m+[m[32m                    points === e.points[m
+[32m+[m[32m                      ? "border-primary bg-primary-container text-on-primary-container"[m
+[32m+[m[32m                      : "border-outline-variant bg-surface-container-lowest",[m
+[32m+[m[32m                  )}[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <span>[m
+[32m+[m[32m                    <span className="block font-semibold text-[15px]">{e.label}</span>[m
+[32m+[m[32m                    <span className="block text-[12px] text-on-surface-variant">{e.hint}</span>[m
+[32m+[m[32m                  </span>[m
+[32m+[m[32m                  <span className="font-bold text-[14px] shrink-0">{e.points} RC</span>[m
+[32m+[m[32m                </button>[m
+[32m+[m[32m              ))}[m
+             </div>[m
+[31m-            <button[m
+[31m-              type="button"[m
+[31m-              onClick={() => setPoints((p) => Math.min(10, p + 1))}[m
+[31m-              disabled={points >= 10}[m
+[31m-              className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center disabled:opacity-30 shadow-[0_3px_9px_rgba(255,107,107,0.35)]"[m
+[31m-            >[m
+[31m-              <Plus size={20} />[m
+[31m-            </button>[m
+[31m-          </div>[m
+[32m+[m[32m          ) : ([m
+[32m+[m[32m            <p className="text-[13px] text-on-surface-variant rounded-[12px] bg-surface-container-low border border-outline-variant px-4 py-3">[m
+[32m+[m[32m              Se crea como <span className="font-semibold text-on-surface">Liviana (1 RC)</span>. El admin del hogar puede subirle el esfuerzo.[m
+[32m+[m[32m            </p>[m
+[32m+[m[32m          )}[m
+         </div>[m
+ [m
+ [m
+[36m@@ -353,24 +358,41 @@[m [mfunction MonthCalendarPicker({[m
+   );[m
+ }[m
+ [m
+[31m-export function CompleteTaskButton({ taskId, householdId }: { taskId: string; householdId: string }) {[m
+[31m-  const [isPending, startTransition] = useTransition();[m
+[32m+[m[32mexport function CompleteTaskButton({[m
+[32m+[m[32m  taskId,[m
+[32m+[m[32m  householdId,[m
+[32m+[m[32m  cycleNumber,[m
+[32m+[m[32m}: {[m
+[32m+[m[32m  taskId: string;[m
+[32m+[m[32m  householdId: string;[m
+[32m+[m[32m  cycleNumber: number;[m
+[32m+[m[32m}) {[m
+[32m+[m[32m  const [, startTransition] = useTransition();[m
+[32m+[m[32m  const [doneCycle, setDoneCycle] = useState<number | null>(null);[m
+[32m+[m[32m  const done = doneCycle === cycleNumber;[m
+[32m+[m[32m  const router = useRouter();[m
+ [m
+   return ([m
+     <Button[m
+[31m-      disabled={isPending}[m
+[32m+[m[32m      disabled={done}[m
+       onClick={() => {[m
+[32m+[m[32m        setDoneCycle(cycleNumber);[m
+         startTransition(async () => {[m
+[31m-          const res = await completarTarea(taskId);[m
+[31m-          broadcastUpdate(householdId);[m
+[31m-          if (res?.notice) {[m
+[31m-            broadcastNotice(householdId, res.notice);[m
+[32m+[m[32m          const res = await completarTarea(taskId, cycleNumber);[m
+[32m+[m[32m          if ("error" in res) {[m
+[32m+[m[32m            router.refresh();[m
+[32m+[m[32m            return;[m
+           }[m
+[32m+[m[32m          broadcastUpdate(householdId);[m
+[32m+[m[32m          broadcastNotice(householdId, res.notice);[m
+         });[m
+       }}[m
+[31m-      className="h-9 rounded-pill px-4 text-sm font-bold shadow-[0_3px_9px_rgba(255,107,107,0.35)]"[m
+[32m+[m[32m      className={cn([m
+[32m+[m[32m        "h-9 rounded-pill px-4 text-sm font-bold shadow-[0_3px_9px_rgba(255,107,107,0.35)]",[m
+[32m+[m[32m        done && "bg-success-container text-on-success-container shadow-none disabled:opacity-100",[m
+[32m+[m[32m      )}[m
+     >[m
+[31m-      {isPending ? "..." : "Listo"}[m
+[32m+[m[32m      {done ? <Check size={18} strokeWidth={3} /> : "Listo"}[m
+     </Button>[m
+   );[m
+ }[m
+[36m@@ -432,6 +454,73 @@[m [mexport function SwapButton({[m
+   );[m
+ }[m
+ [m
+[32m+[m[32mexport function EffortBadge({[m
+[32m+[m[32m  taskId,[m
+[32m+[m[32m  householdId,[m
+[32m+[m[32m  points,[m
+[32m+[m[32m  personal,[m
+[32m+[m[32m  isAdmin,[m
+[32m+[m[32m}: {[m
+[32m+[m[32m  taskId: string;[m
+[32m+[m[32m  householdId: string;[m
+[32m+[m[32m  points: number;[m
+[32m+[m[32m  personal: boolean;[m
+[32m+[m[32m  isAdmin: boolean;[m
+[32m+[m[32m}) {[m
+[32m+[m[32m  const [open, setOpen] = useState(false);[m
+[32m+[m[32m  const [pending, startTransition] = useTransition();[m
+[32m+[m[32m  const chip = "text-[11px] font-bold px-2.5 py-1 rounded-pill whitespace-nowrap";[m
+[32m+[m
+[32m+[m[32m  if (personal) {[m
+[32m+[m[32m    return <span className={cn(chip, "bg-surface-container text-on-surface-variant")}>Personal</span>;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const label = `${effortLabel(points)} · ${points} RC`;[m
+[32m+[m[32m  if (!isAdmin) {[m
+[32m+[m[32m    return <span className={cn(chip, "bg-primary-container text-on-primary-container")}>{label}</span>;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <div className="relative shrink-0">[m
+[32m+[m[32m      <button[m
+[32m+[m[32m        type="button"[m
+[32m+[m[32m        onClick={() => setOpen(!open)}[m
+[32m+[m[32m        aria-label="Cambiar esfuerzo"[m
+[32m+[m[32m        className={cn(chip, "bg-primary-container text-on-primary-container border border-primary/40")}[m
+[32m+[m[32m      >[m
+[32m+[m[32m        {label} ▾[m
+[32m+[m[32m      </button>[m
+[32m+[m[32m      {open && ([m
+[32m+[m[32m        <div className="absolute right-0 top-8 z-20 bg-surface-container-lowest border border-outline-variant rounded-[12px] shadow-lg p-2 min-w-[190px]">[m
+[32m+[m[32m          <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide px-2 pb-1">[m
+[32m+[m[32m            Esfuerzo[m
+[32m+[m[32m          </p>[m
+[32m+[m[32m          {EFFORTS.map((e) => ([m
+[32m+[m[32m            <button[m
+[32m+[m[32m              key={e.points}[m
+[32m+[m[32m              disabled={pending}[m
+[32m+[m[32m              onClick={() => {[m
+[32m+[m[32m                startTransition(async () => {[m
+[32m+[m[32m                  await setTaskEffort(taskId, householdId, e.points);[m
+[32m+[m[32m                  broadcastUpdate(householdId);[m
+[32m+[m[32m                  setOpen(false);[m
+[32m+[m[32m                });[m
+[32m+[m[32m              }}[m
+[32m+[m[32m              className={cn([m
+[32m+[m[32m                "w-full flex items-center justify-between gap-3 px-2 py-2 rounded-[8px] hover:bg-surface-container transition-colors text-left disabled:opacity-50",[m
+[32m+[m[32m                e.points === points && "bg-surface-container",[m
+[32m+[m[32m              )}[m
+[32m+[m[32m            >[m
+[32m+[m[32m              <span className="text-[13px] font-semibold">{e.label}</span>[m
+[32m+[m[32m              <span className="text-[12px] text-on-surface-variant">{e.points} RC</span>[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          ))}[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      )}[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m  );[m
+[32m+[m[32m}[m
+[32m+[m
+ export function DeleteTaskButton({[m
+   taskId,[m
+   householdId,[m
+[1mdiff --git a/src/lib/push.ts b/src/lib/push.ts[m
+[1mindex 6ce4dc4..6a64365 100644[m
+[1m--- a/src/lib/push.ts[m
+[1m+++ b/src/lib/push.ts[m
+[36m@@ -11,6 +11,9 @@[m [mtype PushPayload = {[m
+   title: string;[m
+   body: string;[m
+   url?: string;[m
+[32m+[m[32m  tag?: string;[m
+[32m+[m[32m  // Si viene, el service worker agrega el botón "Listo" (Android/desktop; iOS no muestra acciones).[m
+[32m+[m[32m  task?: { id: string; cycle: number; title: string };[m
+ };[m
+ [m
+ export async function sendPushToUser(userId: string, payload: PushPayload) {[m
+[1mdiff --git a/src/lib/rotation.ts b/src/lib/rotation.ts[m
+[1mindex 960554c..5d7786c 100644[m
+[1m--- a/src/lib/rotation.ts[m
+[1m+++ b/src/lib/rotation.ts[m
+[36m@@ -1,53 +1,62 @@[m
+ import { TaskFrequency } from "@/generated/prisma/client";[m
+[32m+[m[32mimport { chileToday } from "@/lib/dates";[m
+[32m+[m
+[32m+[m[32m// Todo en UTC: el día calendario UTC de una fecha guardada es el día real (ver lib/dates.ts).[m
+ [m
+ function daysInMonth(year: number, monthIndex: number): number {[m
+[31m-  return new Date(year, monthIndex + 1, 0).getDate();[m
+[32m+[m[32m  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();[m
+ }[m
+ [m
+ function uniqSorted(arr: number[]): number[] {[m
+   return Array.from(new Set(arr)).sort((a, b) => a - b);[m
+ }[m
+ [m
+[32m+[m[32mfunction addDays(base: Date, n: number): Date {[m
+[32m+[m[32m  const r = new Date(base);[m
+[32m+[m[32m  r.setUTCDate(r.getUTCDate() + n);[m
+[32m+[m[32m  return r;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// Día `day` del mes base+monthOffset, ajustado al último día si el mes es más corto (31 → 30/28).[m
+[32m+[m[32mfunction dayOfMonth(base: Date, monthOffset: number, day: number): Date {[m
+[32m+[m[32m  const r = new Date(base);[m
+[32m+[m[32m  r.setUTCDate(1);[m
+[32m+[m[32m  r.setUTCMonth(r.getUTCMonth() + monthOffset);[m
+[32m+[m[32m  r.setUTCDate(Math.min(day, daysInMonth(r.getUTCFullYear(), r.getUTCMonth())));[m
+[32m+[m[32m  return r;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mfunction nextMonthly(from: Date, days: number[], inclusive: boolean): Date {[m
+[32m+[m[32m  for (const offset of [0, 1]) {[m
+[32m+[m[32m    for (const d of days) {[m
+[32m+[m[32m      const candidate = dayOfMonth(from, offset, d);[m
+[32m+[m[32m      if (inclusive ? candidate >= from : candidate > from) return candidate;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m[32m  return dayOfMonth(from, 1, days[0]);[m
+[32m+[m[32m}[m
+[32m+[m
+ export function computeInitialDueDate([m
+   frequency: TaskFrequency,[m
+   daysOfWeek: number[],[m
+   daysOfMonth: number[],[m
+ ): Date {[m
+[31m-  const today = new Date();[m
+[31m-  today.setHours(0, 0, 0, 0);[m
+[31m-[m
+[31m-  if (frequency === "DAILY") return today;[m
+[32m+[m[32m  const today = chileToday();[m
+ [m
+   if (frequency === "WEEKLY" || frequency === "BIWEEKLY") {[m
+     const days = uniqSorted(daysOfWeek);[m
+     if (days.length === 0) return today;[m
+[31m-    const currentDay = today.getDay();[m
+[32m+[m[32m    const currentDay = today.getUTCDay();[m
+     const sameOrAfter = days.find((d) => d >= currentDay);[m
+[31m-    const result = new Date(today);[m
+[31m-    if (sameOrAfter !== undefined) {[m
+[31m-      result.setDate(today.getDate() + (sameOrAfter - currentDay));[m
+[31m-    } else {[m
+[31m-      // Next week's first scheduled day[m
+[31m-      result.setDate(today.getDate() + (7 - currentDay) + days[0]);[m
+[31m-    }[m
+[31m-    return result;[m
+[32m+[m[32m    return sameOrAfter !== undefined[m
+[32m+[m[32m      ? addDays(today, sameOrAfter - currentDay)[m
+[32m+[m[32m      : addDays(today, 7 - currentDay + days[0]);[m
+   }[m
+ [m
+   if (frequency === "MONTHLY") {[m
+     const days = uniqSorted(daysOfMonth);[m
+     if (days.length === 0) return today;[m
+[31m-    const currentDate = today.getDate();[m
+[31m-    const result = new Date(today);[m
+[31m-    const sameOrAfter = days.find((d) => d >= currentDate);[m
+[31m-    if (sameOrAfter !== undefined) {[m
+[31m-      const lastDay = daysInMonth(result.getFullYear(), result.getMonth());[m
+[31m-      result.setDate(Math.min(sameOrAfter, lastDay));[m
+[31m-    } else {[m
+[31m-      result.setMonth(result.getMonth() + 1);[m
+[31m-      const lastDay = daysInMonth(result.getFullYear(), result.getMonth());[m
+[31m-      result.setDate(Math.min(days[0], lastDay));[m
+[31m-    }[m
+[31m-    return result;[m
+[32m+[m[32m    return nextMonthly(today, days, true);[m
+   }[m
+ [m
+   return today;[m
+[36m@@ -59,69 +68,23 @@[m [mexport function computeNextDueDate([m
+   daysOfWeek: number[],[m
+   daysOfMonth: number[],[m
+ ): Date {[m
+[31m-  if (frequency === "DAILY") {[m
+[31m-    const r = new Date(current);[m
+[31m-    r.setDate(r.getDate() + 1);[m
+[31m-    return r;[m
+[31m-  }[m
+[31m-[m
+[31m-  if (frequency === "WEEKLY") {[m
+[31m-    const days = uniqSorted(daysOfWeek);[m
+[31m-    if (days.length === 0) {[m
+[31m-      const r = new Date(current);[m
+[31m-      r.setDate(r.getDate() + 7);[m
+[31m-      return r;[m
+[31m-    }[m
+[31m-    const currentDay = current.getDay();[m
+[31m-    const nextInWeek = days.find((d) => d > currentDay);[m
+[31m-    const r = new Date(current);[m
+[31m-    if (nextInWeek !== undefined) {[m
+[31m-      r.setDate(current.getDate() + (nextInWeek - currentDay));[m
+[31m-    } else {[m
+[31m-      // Jump to next week's first scheduled day[m
+[31m-      r.setDate(current.getDate() + (7 - currentDay) + days[0]);[m
+[31m-    }[m
+[31m-    return r;[m
+[31m-  }[m
+[32m+[m[32m  if (frequency === "DAILY") return addDays(current, 1);[m
+ [m
+[31m-  if (frequency === "BIWEEKLY") {[m
+[32m+[m[32m  if (frequency === "WEEKLY" || frequency === "BIWEEKLY") {[m
+[32m+[m[32m    const gap = frequency === "WEEKLY" ? 0 : 7;[m
+     const days = uniqSorted(daysOfWeek);[m
+[31m-    if (days.length === 0) {[m
+[31m-      const r = new Date(current);[m
+[31m-      r.setDate(r.getDate() + 14);[m
+[31m-      return r;[m
+[31m-    }[m
+[31m-    const currentDay = current.getDay();[m
+[32m+[m[32m    if (days.length === 0) return addDays(current, 7 + gap);[m
+[32m+[m[32m    const currentDay = current.getUTCDay();[m
+     const nextInWeek = days.find((d) => d > currentDay);[m
+[31m-    const r = new Date(current);[m
+[31m-    if (nextInWeek !== undefined) {[m
+[31m-      r.setDate(current.getDate() + (nextInWeek - currentDay));[m
+[31m-    } else {[m
+[31m-      // Skip a full week + jump to first scheduled day of the week after[m
+[31m-      r.setDate(current.getDate() + (7 - currentDay) + 7 + days[0]);[m
+[31m-    }[m
+[31m-    return r;[m
+[32m+[m[32m    return nextInWeek !== undefined[m
+[32m+[m[32m      ? addDays(current, nextInWeek - currentDay)[m
+[32m+[m[32m      : addDays(current, 7 - currentDay + gap + days[0]);[m
+   }[m
+ [m
+   if (frequency === "MONTHLY") {[m
+     const days = uniqSorted(daysOfMonth);[m
+[31m-    if (days.length === 0) {[m
+[31m-      const r = new Date(current);[m
+[31m-      r.setMonth(r.getMonth() + 1);[m
+[31m-      return r;[m
+[31m-    }[m
+[31m-    const currentDate = current.getDate();[m
+[31m-    const nextInMonth = days.find((d) => d > currentDate);[m
+[31m-    const r = new Date(current);[m
+[31m-    if (nextInMonth !== undefined) {[m
+[31m-      const lastDay = daysInMonth(r.getFullYear(), r.getMonth());[m
+[31m-      r.setDate(Math.min(nextInMonth, lastDay));[m
+[31m-    } else {[m
+[31m-      r.setMonth(r.getMonth() + 1);[m
+[31m-      const lastDay = daysInMonth(r.getFullYear(), r.getMonth());[m
+[31m-      r.setDate(Math.min(days[0], lastDay));[m
+[31m-    }[m
+[31m-    return r;[m
+[32m+[m[32m    if (days.length === 0) return dayOfMonth(current, 1, current.getUTCDate());[m
+[32m+[m[32m    return nextMonthly(current, days, false);[m
+   }[m
+ [m
+   return current;[m
+[1mdiff --git a/src/lib/validators.ts b/src/lib/validators.ts[m
+[1mindex 5b52c97..245d251 100644[m
+[1m--- a/src/lib/validators.ts[m
+[1m+++ b/src/lib/validators.ts[m
+[36m@@ -1,4 +1,5 @@[m
+ import { z } from "zod";[m
+[32m+[m[32mimport { EFFORT_POINTS } from "@/lib/effort";[m
+ [m
+ export const registerSchema = z.object({[m
+   name: z.string().trim().min(2, "Nombre muy corto"),[m
+[36m@@ -32,8 +33,7 @@[m [mexport const taskSchema = z[m
+     points: z.coerce[m
+       .number()[m
+       .int()[m
+[31m-      .min(1, "Mínimo 1")[m
+[31m-      .max(100, "Máx 100")[m
+[32m+[m[32m      .refine((p) => EFFORT_POINTS.includes(p), "Esfuerzo inválido")[m
+       .default(1),[m
+     daysOfWeek: z.array(z.coerce.number().int().min(0).max(6)).default([]),[m
+     daysOfMonth: z.array(z.coerce.number().int().min(1).max(31)).default([]),[m
+[1mdiff --git a/vercel.json b/vercel.json[m
+[1mindex 2cedbee..c76be97 100644[m
+[1m--- a/vercel.json[m
+[1m+++ b/vercel.json[m
+[36m@@ -1,6 +1,7 @@[m
+ {[m
+[32m+[m[32m  "regions": ["gru1"],[m
+   "crons": [[m
+[31m-    { "path": "/api/cron/advance-overdue", "schedule": "5 3 * * *" },[m
+[32m+[m[32m    { "path": "/api/cron/advance-overdue", "schedule": "5 4 * * *" },[m
+     { "path": "/api/cron/daily-reminder", "schedule": "0 14 * * *" }[m
+   ][m
+ }[m

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { computeNextDueDate } from "@/lib/rotation";
+import { chileToday } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -11,12 +12,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  const startOfToday = chileToday();
 
   const overdue = await db.task.findMany({
     where: {
       active: true,
+      frequency: { not: "ONCE" },
       nextDueDate: { lt: startOfToday },
       nextAssigneeMembershipId: { not: null },
     },
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
             taskId: task.id,
             cycleNumber: task.cycleNumber,
             completedById: assignedMembership.userId,
+            assignedToUserId: assignedMembership.userId,
             wasAssigned: true,
             pointsEarned: 0,
           },
@@ -103,16 +105,16 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        let nextDueDate = task.nextDueDate;
+        for (let i = 0; i < 1000 && nextDueDate < startOfToday; i++) {
+          nextDueDate = computeNextDueDate(nextDueDate, task.frequency, task.daysOfWeek, task.daysOfMonth);
+        }
+
         await tx.task.update({
           where: { id: task.id },
           data: {
             nextAssigneeMembershipId: nextAssigneeId,
-            nextDueDate: computeNextDueDate(
-              task.nextDueDate,
-              task.frequency,
-              task.daysOfWeek,
-              task.daysOfMonth,
-            ),
+            nextDueDate,
             cycleNumber: { increment: 1 },
           },
         });

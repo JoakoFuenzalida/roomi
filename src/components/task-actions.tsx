@@ -2,14 +2,14 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeftRight, Minus, Plus, Trash2 } from "lucide-react";
-import { createTask, completarTarea, deleteTask, swapTurno } from "@/actions/task";
+import { ArrowLeftRight, Check, Trash2 } from "lucide-react";
+import { createTask, completarTarea, deleteTask, setTaskEffort, swapTurno } from "@/actions/task";
+import { EFFORTS, effortLabel, isPersonal } from "@/lib/effort";
 import { AvatarInitials } from "./avatar-initials";
 import { TaskParticipantsOrder } from "./task-participants-order";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { broadcastUpdate, broadcastNotice } from "./realtime-refresh";
-import Image from "next/image";
 
 const FREQUENCIES = [
   { value: "ONCE", label: "Una vez" },
@@ -34,12 +34,14 @@ function toggle<T>(arr: T[], v: T): T[] {
   return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
 }
 
-export function CreateTaskForm({ 
+export function CreateTaskForm({
   householdId,
-  members 
-}: { 
+  members,
+  isAdmin,
+}: {
   householdId: string;
   members: { id: string; name: string; image: string | null }[];
+  isAdmin: boolean;
 }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
@@ -61,7 +63,7 @@ export function CreateTaskForm({
   const today = new Date();
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([today.getDay()]);
   const [daysOfMonth, setDaysOfMonth] = useState<number[]>([today.getDate()]);
-  const [onceDate, setOnceDate] = useState<string>(today.toISOString().split("T")[0]);
+  const [onceDate, setOnceDate] = useState<string>(today.toLocaleDateString("sv-SE"));
   const [participants, setParticipants] = useState<string[]>(members.map(m => m.id));
 
   const needsWeek = freq === "WEEKLY" || freq === "BIWEEKLY";
@@ -230,37 +232,40 @@ export function CreateTaskForm({
 
         <div className="space-y-2">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-            RoomiCoins
+            Esfuerzo
           </p>
-          <div className="flex items-center gap-4 justify-center py-2">
-            <button
-              type="button"
-              onClick={() => setPoints((p) => Math.max(1, p - 1))}
-              disabled={points <= 1}
-              className="w-12 h-12 rounded-full border-[1.5px] border-outline flex items-center justify-center disabled:opacity-30 hover:bg-surface-container"
-            >
-              <Minus size={20} />
-            </button>
-            <div className="flex items-center gap-1 justify-center w-24">
-              <span
-                className="font-display font-semibold text-center"
-                style={{ fontSize: 34, lineHeight: 1 }}
-              >
-                {points}
-              </span>
-              <div className="w-8 h-8 flex items-center justify-center shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.15)]">
-                <Image src="/coins.png" alt="RC" width={32} height={32} className="object-contain w-full h-full" />
-              </div>
+          {isPersonal(participants.length) ? (
+            <p className="text-[13px] text-on-surface-variant rounded-[12px] bg-surface-container-low border border-outline-variant px-4 py-3">
+              Con un solo participante es una <span className="font-semibold text-on-surface">tarea personal</span>: no rota y no suma RoomiCoins.
+            </p>
+          ) : isAdmin ? (
+            <div className="grid gap-2">
+              {EFFORTS.map((e) => (
+                <button
+                  key={e.points}
+                  type="button"
+                  onClick={() => setPoints(e.points)}
+                  aria-pressed={points === e.points}
+                  className={cn(
+                    "flex items-center justify-between gap-3 rounded-[12px] border-[1.5px] px-4 py-3 text-left transition-colors",
+                    points === e.points
+                      ? "border-primary bg-primary-container text-on-primary-container"
+                      : "border-outline-variant bg-surface-container-lowest",
+                  )}
+                >
+                  <span>
+                    <span className="block font-semibold text-[15px]">{e.label}</span>
+                    <span className="block text-[12px] text-on-surface-variant">{e.hint}</span>
+                  </span>
+                  <span className="font-bold text-[14px] shrink-0">{e.points} RC</span>
+                </button>
+              ))}
             </div>
-            <button
-              type="button"
-              onClick={() => setPoints((p) => Math.min(10, p + 1))}
-              disabled={points >= 10}
-              className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center disabled:opacity-30 shadow-[0_3px_9px_rgba(255,107,107,0.35)]"
-            >
-              <Plus size={20} />
-            </button>
-          </div>
+          ) : (
+            <p className="text-[13px] text-on-surface-variant rounded-[12px] bg-surface-container-low border border-outline-variant px-4 py-3">
+              Se crea como <span className="font-semibold text-on-surface">Liviana (1 RC)</span>. El admin del hogar puede subirle el esfuerzo.
+            </p>
+          )}
         </div>
 
 
@@ -353,24 +358,41 @@ function MonthCalendarPicker({
   );
 }
 
-export function CompleteTaskButton({ taskId, householdId }: { taskId: string; householdId: string }) {
-  const [isPending, startTransition] = useTransition();
+export function CompleteTaskButton({
+  taskId,
+  householdId,
+  cycleNumber,
+}: {
+  taskId: string;
+  householdId: string;
+  cycleNumber: number;
+}) {
+  const [, startTransition] = useTransition();
+  const [doneCycle, setDoneCycle] = useState<number | null>(null);
+  const done = doneCycle === cycleNumber;
+  const router = useRouter();
 
   return (
     <Button
-      disabled={isPending}
+      disabled={done}
       onClick={() => {
+        setDoneCycle(cycleNumber);
         startTransition(async () => {
-          const res = await completarTarea(taskId);
-          broadcastUpdate(householdId);
-          if (res?.notice) {
-            broadcastNotice(householdId, res.notice);
+          const res = await completarTarea(taskId, cycleNumber);
+          if ("error" in res) {
+            router.refresh();
+            return;
           }
+          broadcastUpdate(householdId);
+          broadcastNotice(householdId, res.notice);
         });
       }}
-      className="h-9 rounded-pill px-4 text-sm font-bold shadow-[0_3px_9px_rgba(255,107,107,0.35)]"
+      className={cn(
+        "h-9 rounded-pill px-4 text-sm font-bold shadow-[0_3px_9px_rgba(255,107,107,0.35)]",
+        done && "bg-success-container text-on-success-container shadow-none disabled:opacity-100",
+      )}
     >
-      {isPending ? "..." : "Listo"}
+      {done ? <Check size={18} strokeWidth={3} /> : "Listo"}
     </Button>
   );
 }
@@ -424,6 +446,73 @@ export function SwapButton({
               <span className="text-[13px] font-semibold truncate">
                 {m.userName}
               </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function EffortBadge({
+  taskId,
+  householdId,
+  points,
+  personal,
+  isAdmin,
+}: {
+  taskId: string;
+  householdId: string;
+  points: number;
+  personal: boolean;
+  isAdmin: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const chip = "text-[11px] font-bold px-2.5 py-1 rounded-pill whitespace-nowrap";
+
+  if (personal) {
+    return <span className={cn(chip, "bg-surface-container text-on-surface-variant")}>Personal</span>;
+  }
+
+  const label = `${effortLabel(points)} · ${points} RC`;
+  if (!isAdmin) {
+    return <span className={cn(chip, "bg-primary-container text-on-primary-container")}>{label}</span>;
+  }
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-label="Cambiar esfuerzo"
+        className={cn(chip, "bg-primary-container text-on-primary-container border border-primary/40")}
+      >
+        {label} ▾
+      </button>
+      {open && (
+        <div className="absolute right-0 top-8 z-20 bg-surface-container-lowest border border-outline-variant rounded-[12px] shadow-lg p-2 min-w-[190px]">
+          <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide px-2 pb-1">
+            Esfuerzo
+          </p>
+          {EFFORTS.map((e) => (
+            <button
+              key={e.points}
+              disabled={pending}
+              onClick={() => {
+                startTransition(async () => {
+                  await setTaskEffort(taskId, householdId, e.points);
+                  broadcastUpdate(householdId);
+                  setOpen(false);
+                });
+              }}
+              className={cn(
+                "w-full flex items-center justify-between gap-3 px-2 py-2 rounded-[8px] hover:bg-surface-container transition-colors text-left disabled:opacity-50",
+                e.points === points && "bg-surface-container",
+              )}
+            >
+              <span className="text-[13px] font-semibold">{e.label}</span>
+              <span className="text-[12px] text-on-surface-variant">{e.points} RC</span>
             </button>
           ))}
         </div>

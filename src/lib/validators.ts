@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EFFORT_POINTS } from "@/lib/effort";
 
 export const registerSchema = z.object({
   name: z.string().trim().min(2, "Nombre muy corto"),
@@ -32,8 +33,7 @@ export const taskSchema = z
     points: z.coerce
       .number()
       .int()
-      .min(1, "Mínimo 1")
-      .max(100, "Máx 100")
+      .refine((p) => EFFORT_POINTS.includes(p), "Esfuerzo inválido")
       .default(1),
     daysOfWeek: z.array(z.coerce.number().int().min(0).max(6)).default([]),
     daysOfMonth: z.array(z.coerce.number().int().min(1).max(31)).default([]),

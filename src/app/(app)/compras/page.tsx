@@ -14,6 +14,7 @@ import {
   DebtPayButton,
   ConfirmSettlementButton,
   ReportErrorButton,
+  DeleteExpenseButton,
 } from "@/components/shopping-actions";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { cn } from "@/lib/utils";
@@ -214,9 +215,18 @@ export default async function ComprasPage({
                       </p>
                     </div>
                   </div>
-                  <span className="text-[14px] font-bold text-on-surface shrink-0">
-                    {formatPrice(exp.amount)}
-                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-[14px] font-bold text-on-surface">
+                      {formatPrice(exp.amount)}
+                    </span>
+                    {(exp.payerId === user.id || active.role === "ADMIN") && (
+                      <DeleteExpenseButton
+                        expenseId={exp.id}
+                        householdId={active.householdId}
+                        title={exp.title}
+                      />
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

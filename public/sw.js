@@ -34,7 +34,9 @@ self.addEventListener("push", (event) => {
       body: data.body,
       icon: "/icon-192.png",
       badge: "/badge.svg",
-      data: { url: data.url },
+      tag: data.tag,
+      data: { url: data.url, task: data.task },
+      actions: data.task ? [{ action: "complete", title: "✅ Listo" }] : [],
       vibrate: [200, 100, 200],
     })
   );
@@ -42,13 +44,57 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || "/hoy";
+  const { url = "/hoy", task } = event.notification.data || {};
 
-  event.waitUntil(
-    self.clients.matchAll({ type: "window" }).then((clients) => {
-      const existing = clients.find((c) => c.url.includes(url));
-      if (existing) return existing.focus();
-      return self.clients.openWindow(url);
-    })
-  );
+  if (event.action === "complete" && task) {
+    event.waitUntil(completeFromNotification(task, event.notification.tag));
+    return;
+  }
+
+  event.waitUntil(openOrFocus(url));
 });
+
+function openOrFocus(url) {
+  return self.clients.matchAll({ type: "window" }).then((clients) => {
+    const existing = clients.find((c) => c.url.includes(url));
+    if (existing) return existing.focus();
+    return self.clients.openWindow(url);
+  });
+}
+
+async function completeFromNotification(task, tag) {
+  let title = "¡Listo! ✅";
+  let body = `"${task.title}" quedó marcada.`;
+  let url = "/hoy";
+
+  try {
+    const res = await fetch("/api/tasks/complete", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskId: task.id, cycle: task.cycle }),
+    });
+    if (res.status === 409) {
+      title = "Ya estaba lista";
+      body = `Alguien ya marcó "${task.title}".`;
+    } else if (res.status === 401) {
+      title = "Entra a Roomi";
+      body = "Tu sesión expiró. Toca para entrar y marcarla.";
+      url = "/login";
+    } else if (!res.ok) {
+      throw new Error(String(res.status));
+    }
+  } catch {
+    title = "No se pudo marcar";
+    body = `Toca para abrir Roomi y marcar "${task.title}".`;
+  }
+
+  await self.registration.showNotification(title, {
+    body,
+    icon: "/icon-192.png",
+    badge: "/badge.svg",
+    tag,
+    silent: true,
+    data: { url },
+  });
+}
